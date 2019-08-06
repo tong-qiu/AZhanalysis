@@ -1,0 +1,7 @@
+source
+sample
+getscalefactor
+*.pdf
+package/__pycache__/
+__pycache__/
+*.pyc
