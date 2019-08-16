@@ -23,6 +23,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         "ylabeldown": "Data/Simulation",
         "title1": r"$\mathbf{ATLAS}$",# \newline Ptl next-leading, full cuts, 2 b-tags $",
         "title1_1": r"$\mathit{Internal}$",
+        #"title1_1": r"$\mathit{Working\:in\:progress}$",
         "title2": r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$",# Ptl next-leading, full cuts, 2 b-tags $",
         #"title3": r"$\mathbf{2\;lep.,2\;b-tag}$",
         "title3": "2 lep., 2 b-tag",

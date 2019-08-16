@@ -1,13 +1,18 @@
 import numpy as np
 
-def cut_btag_more(data,b):
+def cut_btag_more(data, b):
     mask = data[b'nbJets'] > b
     return mask
 
-def cut_btag_is(data,b):
-    mask = data[b'nbJets'] == b
+def cut_btag_is(data, b):
+    mask = data[b"nSigJets"] >= 2
+    mask = np.logical_and(data[b'nbJets'] == b, mask)
     return mask
 
+def cut_btag(data):
+    mask = data[b"nSigJets"] >= 2
+    mask = np.logical_and(data[b'nbJets'] == 0, mask)
+    return mask
 
 def cut_basic(data):
     # two singal jets
@@ -94,7 +99,7 @@ def srcut(data):
 
 def crmbbcut(data):
     mask = data[b"nSigJets"] >= 2 # essential
-    mask = np.logical_and(data[b'nbJets'] >= 1, mask)
+    #mask = np.logical_and(data[b'nbJets'] >= 1, mask)
     mask = np.logical_and(data[b"passedTrigger"] == 1, mask)
     mask = np.logical_and(data[b'flavL1'] == data[b'flavL2'], mask)
     mask = np.logical_and(np.logical_or(data[b'flavL1'] == 1, data[b'chargeL1'] != data[b'chargeL2']), mask)
@@ -110,9 +115,9 @@ def crmbbcut(data):
     mask = np.logical_and(data[b'pTB1']/1000. > 45, mask) # essential
     mask = np.logical_and(data[b'ptL1']/1000. > 27, mask) # essential
     mask = np.logical_and(data[b'ptL2']/1000. > 7, mask) # essential
-    mask = np.logical_and(np.logical_or(data[b'mBBres']/1000. >= 145, 100 >= data[b'mBBres']/1000.), mask)
-    mask = np.logical_and(data[b'mBBres']/1000. < 200, mask)
-    mask = np.logical_and(50 < data[b'mBBres']/1000., mask)
+    # mask = np.logical_and(np.logical_or(data[b'mBBres']/1000. >= 145, 100 >= data[b'mBBres']/1000.), mask)
+    # mask = np.logical_and(data[b'mBBres']/1000. < 200, mask)
+    # mask = np.logical_and(50 < data[b'mBBres']/1000., mask)
     return mask
 
 def crlowmbbcut(data):

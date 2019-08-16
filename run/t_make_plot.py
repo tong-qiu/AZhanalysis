@@ -20,42 +20,44 @@ import multiprocessing
 
 
 def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, m_allsamples):
-        sample = load_CxAODs(sample_directory,each_names,branches_list_data, debug, 
-                            colour=each_color,alias=each_alias)
-        if not sample:
-            print("Warning: No "+each_alias+" samples found!")
-        if cut and sample:
-            sample.cut(srcut)
-            #sample.cut(wpjcut)
-            #sample.more()
-            #sample.cut(crtopcut)
-            #sample.cut(crlowmbbcut)
-            m_allsamples.append(sample)
-        if not cut:
-            m_allsamples.append(sample)
+    sample = load_CxAODs(sample_directory,each_names,branches_list_data, debug, 
+                        colour=each_color,alias=each_alias)
+    if not sample:
+        print("Warning: No "+each_alias+" samples found!")
+    if cut and sample:
+        sample.cut_parameter(cut_btag_is, 1)
+        #sample.cut(srcut)
+        #sample.cut(cut_btag)
+        #sample.cut(wpjcut)
+        #sample.more()
+        #sample.cut(crtopcut)
+        sample.cut(crmbbcut)
+        m_allsamples.append(sample)
+    if not cut:
+        m_allsamples.append(sample)
 
-        #print(each_alias)
-        return 0
+    #print(each_alias)
+    return 0
 
 if __name__ == '__main__':
     debug = False
     cut = True
     sample_directory = ["../CxAOD31_01a/"]
-    tag = "run2 "
+    tag = "run2"
 
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
     if tag == "a":
         t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
-        sample_directory = ["../CxAOD32_06" + tag + "/"]
+        sample_directory = ["../sample/CxAOD32_06" + tag + "/"]
     if tag == "d":
         t2 = r"$\mathit{\sqrt{s}=13\:TeV,43.6\:fb^{-1}}$"
-        sample_directory = ["../CxAOD32_06" + tag + "/"]
+        sample_directory = ["../sample/CxAOD32_06" + tag + "/"]
     if tag == "e":
         t2 = r"$\mathit{\sqrt{s}=13\:TeV,58.5\:fb^{-1}}$"
-        sample_directory = ["../CxAOD32_06" + tag + "/"]
+        sample_directory = ["../sample/CxAOD32_06" + tag + "/"]
     if tag == "run2":
         t2 = r"$\mathit{\sqrt{s}=13\:TeV,138.2\:fb^{-1}}$"
-        sample_directory = ["../CxAOD32_06a/", "../CxAOD32_06d/", "../CxAOD32_06e/"]
+        sample_directory = ["../sample/CxAOD32_06a/", "../sample/CxAOD32_06d/", "../sample/CxAOD32_06e/"]
         #sample_directory = ["../phi/a/", "../phi/d/", "../phi/e/"]
         #sample_directory = ["../phi/a/"]
     mc_Wlvjet = ["Wenu_Sh221", "WenuB_Sh221", "WenuC_Sh221", "WenuL_Sh221", "Wmunu_Sh221", "WmunuB_Sh221", "WmunuC_Sh221", "WmunuL_Sh221", "Wtaunu_Sh221", "WtaunuB_Sh221", "WtaunuC_Sh221", "WtaunuL_Sh221"]
@@ -133,14 +135,14 @@ if __name__ == '__main__':
     #bins = np.linspace(100,1200,50)
     #bins = range(0,40000,20000)
     #bins = range(0,100,1)
-    bins = range(0,1500,50)
+    bins = range(0,1000,40)
     all_sample_after = [each for each in all_sample]
     # stackplot(all_sample_after,b'ptL1',bins,1000.,
     #         xlabel=r"$pt_{l1}[GeV]$", title3="loose selection, 2 btags", filename="ptL1", print_height=True,
     #         title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
-    bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
-    stackplot(all_sample_after,b'mVH',bins,1000.,
-            xlabel=r"$m_{VH}[GeV]$", title3="srcut, 1, 2 btags",title4="ptl2 < 20 GeV", filename="mVH", print_height=True,
+    #bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+    stackplot(all_sample_after,b'pTV',bins,1000.,
+            xlabel=r"$p_{TV}[GeV]$", title3="no mBB cut 1 btags", filename="output/t_make_plot/" + "pTV-nombbcut-1", print_height=True,
             title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
     # bins = range(0,1000,50)
     # stackplot(all_sample_after,b'pTB1',bins,1000.,

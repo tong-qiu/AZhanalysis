@@ -65,7 +65,7 @@ def load_CxAODs(directories, sample_names, branches, debug=False, sys_name=None,
                     if not file_is_missing:
                         break
             if not sample_exist:
-                print("Warning: cannot find sample " + each_sample_name + ".")
+                print("Warning: cannot find sample " + file_address + each_sample_name + ".")
     if not data.keys():
         return False
     return Events(data, weight, **kwargs)
@@ -122,7 +122,7 @@ def load_CxAOD(directory, sample_names, branches, debug=False, sys_name=None, **
                 if not file_is_missing:
                     break
         if not sample_exist:
-            print("Warning: cannot find sample " + each_sample_name + ".")
+            print("Warning: cannot find sample " + directory + each_sample_name + ".")
     if not data.keys():
         return False
     return Events(data, weight, **kwargs)
@@ -252,6 +252,11 @@ class Events:
     def __len__(self):
         for each in self.data:
             return len(self.data[each])
+
+    def __mul__(self, other):
+        return_class = copy.deepcopy(self)
+        return_class.weight = return_class.weight * other
+        return return_class
 
     def __add__(self, events):
         data = dict()

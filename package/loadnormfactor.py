@@ -4,6 +4,7 @@ def loadnorm(configpath, normpath):
     sysdic = {}
     with open(configpath) as f:
         for eachline in f:
+            eachline = eachline.replace(" ", "")
             eachline = eachline.replace("\n", "")
             eachline = eachline.split("#")[0]
             if len(eachline) < 1:

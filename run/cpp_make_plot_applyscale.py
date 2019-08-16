@@ -10,6 +10,7 @@ import package
 from package.events import *
 from package.stackplot import *
 from termcolor import colored
+from package.loadnormfactor import *
 
 def fake_data(bins, hist, variable, stat2, sys2, alias, color):
     is_fake_data = True
@@ -95,8 +96,10 @@ def bincheck(orginal, userbin):
 
 
 if __name__ == '__main__':
-    rebin_factor = 1
-    filename = "a_mVH_SR_2tag2pjet-_.json"
+    rescale = False
+    rebin_factor = 0
+    ul = 3000
+    filename = "run2_mVH_topemucr_3ptag2pjet-_.json"
     #filename = "e_mVH_mBBcr_2tag2pjet-_.json"
     sub_filename = filename.split('_')
     period = sub_filename[0]
@@ -125,6 +128,10 @@ if __name__ == '__main__':
     alias = ["Diboson", "ttbar", "singletop", "Zlljet", "Wlvjet", "smHiggs"]
     colors = ['g',    'yellow', 'tab:orange','royalblue', 'm',     'r']
 
+    if rescale:
+        rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
+        "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
+
     all_sample = []
     binning = []
     with open("../../postreader/PlotTool_Root/jsonoutput/"+filename, 'r') as f:
@@ -143,13 +150,20 @@ if __name__ == '__main__':
                         content = jsondic[each_sample]["content"]
                         stat = np.array(jsondic[each_sample]["stat"])
                         sys = [0 for each in content]
+                        # rescale
+                        if rescale:
+                            if each_sample in rescaledic:
+                                if "ALL" in rescaledic[each_sample]:
+                                    content = [each * (1 + rescaledic[each_sample]["ALL"]) for each in content]
+                                if region in rescaledic[each_sample]:
+                                    content = [each * (1 + rescaledic[each_sample][region]) for each in content]
                         if not sys_done:
                             sys = np.array(jsondic["nominal"]["syst"])**2
                             sys_done = True
                         if data == "nodata":
-                            data = fake_data(binning,content,"mVH",stat**2,sys,each_alias,each_color)
+                            data = fake_data(binning,content, variable_name, stat**2,sys,each_alias,each_color)
                         else: 
-                            data = data + fake_data(binning,content,"mVH",stat**2,sys,each_alias,each_color)
+                            data = data + fake_data(binning,content, variable_name, stat**2,sys,each_alias,each_color)
                     all_sample.append(data)
                 #all_sample[0].fake_sys2_per_event = np.array(jsondic["nominal"]["syst"])**2
             if i == 1:
@@ -157,18 +171,32 @@ if __name__ == '__main__':
                 content = jsondic["nominal"]["content"]
                 stat = np.array(jsondic["nominal"]["stat"])
                 sys = [0 for each in content]
-                data = fake_data(binning,content,"mVH",stat**2,sys,"data",'k')
+                data = fake_data(binning,content, variable_name ,stat**2,sys,"data",'k')
                 all_sample.append(data)
-        bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
-        bincheck(binning, bins)
+        if rebin_factor == 0:
+            bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+            bincheck(binning, bins)
+        else:
+            bins = []
+            for i, each in enumerate(binning):
+                if each >= ul:
+                    bins.append(ul)
+                    break
+                if i%rebin_factor == 0:
+                    bins.append(each)
+
+
         all_sample1 = []
         for each in all_sample:
             #print(type(each))
             if isinstance(each, str):
                 continue
             all_sample1.append(each)
+        postfix = ""
+        if rescale:
+            postfix = "_rescale"
         stackplot(all_sample1,variable_name,bins,1.,
-                xlabel=r"$m_{VH}[GeV]$", title3="2 lep.," + btag +" b-tag " + region, filename="output/cpp_make_plot/" + filename[0:-5], print_height=False,
+                xlabel=r"$m_{VH}[GeV]$", title3="2 lep.," + btag +" b-tag " + region, filename="output/cpp_make_plot" + postfix + "/" + filename[0:-5], print_height=False,
                 title2=t2,auto_colour=False, limit_y = 0.6, upper_y=2.6, sys=True, log_y=True)
     '''
     sample_list = {"Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc", "WZ", "WW",              "Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb", "ZZ", "stopWt", "stops", "stopt", "ttbar", "ggZllH125", "qqZllH125", "stopWt_dilep"}
