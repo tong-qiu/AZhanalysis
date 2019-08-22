@@ -8,6 +8,7 @@ import numpy as np
 import pickle
 from matplotlib import rc
 import sys
+import zlib
 
 lib_path = os.path.abspath(os.path.join(__file__, '..', '..'))
 sys.path.append(lib_path)
@@ -16,22 +17,26 @@ from package.events import *
 from package.cut import *
 from package.stackplot import *
 from curveplot import *
+from cutstring import *
 import multiprocessing
+from package.loadnormfactor import *
 
-
-def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, m_allsamples):
+def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, m_allsamples, matas=None):
     sample = load_CxAODs(sample_directory,each_names,branches_list_data, debug, 
-                        colour=each_color,alias=each_alias)
+                        colour=each_color,alias=each_alias,matanames=matas)
     if not sample:
         print("Warning: No "+each_alias+" samples found!")
     if cut and sample:
+        sample.matacut(s_mbbcr)
+        sample.matacut(s_resolved)
         sample.cut_parameter(cut_btag_is, 1)
         #sample.cut(srcut)
         #sample.cut(cut_btag)
-        #sample.cut(wpjcut)
+        sample.cut(cut_muon)
         #sample.more()
         #sample.cut(crtopcut)
-        sample.cut(crmbbcut)
+        #sample.cut(crmbbcut)
+
         m_allsamples.append(sample)
     if not cut:
         m_allsamples.append(sample)
@@ -44,6 +49,7 @@ if __name__ == '__main__':
     cut = True
     sample_directory = ["../CxAOD31_01a/"]
     tag = "run2"
+    rescale = True
 
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
     if tag == "a":
@@ -86,22 +92,25 @@ if __name__ == '__main__':
     colors = [None,   'g',       'yellow',     'tab:orange',   'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm',    'teal']#, 'k', 'dimgrey']
 
 
-    branches_list_data = [b"mBBres", b"nSigJets", b"pTB1", b"pTB2", b"ptL1", b"ptL2", b"METHT",b'mVH', b'mLL', b'nbJets', b"EventWeight", b"pTV", b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b'passedTrigger', b'etaL1', b'nJets',b'mBB', b'MET',]# b'PhiL1',b'PhiL2', b'PhiMET']
-    #branches_list_MC = [b"mBBres", b"nSigJets", b"pTB1", b"pTB2", b"ptL1", b"ptL2", b"METHT", b'mVH', b'mLL', b'nbJets', b"EventWeight", b"pTV", b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b'passedTrigger', b'etaL1', b'nJets']
+    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mBB', b'mVH', b'nbJets', b'flavL1', b'flavL1']
+    matas = ["Regime", "Sample", "Description"]
     branches_list_MC = branches_list_data
     bins = range(100,1400,50)
     bins = range(100,145,5)
     #bins = np.linspace(100,140,16)
     #all_sample = []
-
+    rescaledic = None
+    if rescale:
+        rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
+        "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
     processes = []
     manager = multiprocessing.Manager()
     all_sample = manager.list()
     for each_names, each_alias, each_color in zip(file_name_array,alias,colors):
         if "data" in each_alias:
-            t = multiprocessing.Process(target=stack_cxaod, args=(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, all_sample))
+            t = multiprocessing.Process(target=stack_cxaod, args=(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, all_sample, matas))
         else:
-            t = multiprocessing.Process(target=stack_cxaod, args=(sample_directory, each_names, each_alias, each_color, branches_list_MC, debug, cut, all_sample))
+            t = multiprocessing.Process(target=stack_cxaod, args=(sample_directory, each_names, each_alias, each_color, branches_list_MC, debug, cut, all_sample, matas))
         processes.append(t)
         t.start()
 
@@ -112,6 +121,17 @@ if __name__ == '__main__':
         each_process.join()
         print(i, each_alias + " finished.")
     print("All done.")
+    print(rescaledic)
+    all_sample_after = [each for each in all_sample]
+    if rescale:
+        for i in range(len(all_sample_after)):
+            for each_key in rescaledic.keys():
+                if 'ALL' in rescaledic[each_key]:
+                    factor = rescaledic[each_key]['ALL'] + 1
+                    mask = all_sample_after[i].mata["Sample"] == zlib.adler32(each_key.encode())
+                    if True in mask:
+                        all_sample_after[i].rescale(factor, mask)
+
 
     '''
     stackplot(all_sample,b'mBB',bins,1000.,
@@ -136,13 +156,13 @@ if __name__ == '__main__':
     #bins = range(0,40000,20000)
     #bins = range(0,100,1)
     bins = range(0,1000,40)
-    all_sample_after = [each for each in all_sample]
+    bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
     # stackplot(all_sample_after,b'ptL1',bins,1000.,
     #         xlabel=r"$pt_{l1}[GeV]$", title3="loose selection, 2 btags", filename="ptL1", print_height=True,
     #         title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
     #bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
     stackplot(all_sample_after,b'mVH',bins,1000.,
-            xlabel=r"$p_{TV}[GeV]$", title3="mBB 1 btags", filename="output/t_make_plot/" + "mVH-mbbcr", print_height=True,
+            xlabel=r"$m_{VH}[GeV]$", title3="mBBcr muon 1 btags", filename="output/t_make_plot_rescale/" + "mVH-mbbcut-muon_rescale", print_height=True,
             title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
     # bins = range(0,1000,50)
     # stackplot(all_sample_after,b'pTB1',bins,1000.,

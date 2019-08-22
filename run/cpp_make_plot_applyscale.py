@@ -96,10 +96,10 @@ def bincheck(orginal, userbin):
 
 
 if __name__ == '__main__':
-    rescale = False
+    rescale = True
     rebin_factor = 0
     ul = 3000
-    filename = "run2_mVH_topemucr_3ptag2pjet-_.json"
+    filename = "run2_mVH_mBBcr_1tag2pjet-_.json"
     #filename = "e_mVH_mBBcr_2tag2pjet-_.json"
     sub_filename = filename.split('_')
     period = sub_filename[0]

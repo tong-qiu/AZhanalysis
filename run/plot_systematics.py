@@ -5,8 +5,9 @@ from package.events import *
 from package.stackplot import *
 import pandas as pd
 from package.curveplot import histplot, curveplot, histplot_withsub
+from package.loadnormfactor import *
 
-def fake_data(bins, hist, variable, stat2, sys2, alias, color):
+def fake_data(bins, hist, variable, stat2, sys2, alias, color, rescaledic=None, rescaledicalias=None):
     is_fake_data = True
     new_data = []
     weight = []
@@ -24,16 +25,28 @@ def fake_data(bins, hist, variable, stat2, sys2, alias, color):
     sample = Events(new_data, weight, alias=alias, colour=color, fake_data=is_fake_data)
     sample.fake_stat2_per_event = stat2
     sample.fake_sys2_per_event = sys2
+    if rescaledic is not None and rescaledicalias is not None:
+        if rescaledicalias not in rescaledic:
+            print("Warning: " + rescaledicalias + "rescale is not applied.")
+            return sample
+
+        if "ALL" in rescaledic[rescaledicalias]:
+            sample = sample * (1 + rescaledic[rescaledicalias]["ALL"])
+
     return sample
 
 bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+bins = range(0,900,30)
 file = uproot.open("../sample/histo/run2_fit.root")
 region = "_mBBcr_"
-variable = "mVH"
+variable = "pTV"
 btag = "1tag2pjet"
-systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_VlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph", "SysMODEL_ZlJets_MadGraph"]
+rescale = True
+#systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_VlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph", "SysMODEL_ZlJets_MadGraph"]
 
-
+systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph"]
+#systematics = ["SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph"]
+#systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph"]
 mc_Wlvjet = ["Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc"]
 mc_Zlljet = ["Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb"]
 mc_tt_bar = ["ttbar"]
@@ -45,7 +58,10 @@ file_name_array = [num for elem in file_name_array for num in elem]
 #alias = ["Diboson", "ttbar", "singletop", "Zlljet", "Wlvjet", "smHiggs"]
 #colors = ['g',    'yellow', 'tab:orange','royalblue', 'm',     'r']
 
-
+rescaledic = None
+if rescale:
+    rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
+    "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
 allhistname = file["Systematics"].keys()
 allhistname_nominal = file.keys()
 nominal_dic = {}
@@ -82,14 +98,14 @@ for each_mc_name in file_name_array + ["data"]:
         error.append(row.variance)
     edge.append(row.Index.right)
     if each_mc_name == "data":
-        data = fake_data(edge, count, variable, error, None, "data", 'k')
+        data = fake_data(edge, count, variable, error, None, "data", 'k', rescaledic, each_mc_name)
         continue
-    data_tem = fake_data(edge, count, variable, error, None, "sys", 'b')
+    data_tem = fake_data(edge, count, variable, error, None, "sys", 'b', rescaledic, each_mc_name)
     nominal_dic[each_mc_name] = data_tem
     if nominal is None:
-        nominal = fake_data(edge, count, variable, error, None, "Nominal", 'r')
+        nominal = fake_data(edge, count, variable, error, None, "Nominal", 'r', rescaledic, each_mc_name)
     else:
-        nominal = nominal + fake_data(edge, count, variable, error, None, "Nominal", 'r')
+        nominal = nominal + fake_data(edge, count, variable, error, None, "Nominal", 'r', rescaledic, each_mc_name)
 if data is None:
     print("Warning: no data found!")
 # histplot_withsub([[nominal], [nominal],[data]], variable, bins,labels = ["nominal", "nominal2","data"] )
@@ -120,6 +136,7 @@ for each_mc_name in file_name_array:
         if not findit:
             continue
         thename = each_name
+        #print(thename)
         break
     if thename is None:
         if each_mc_name not in nominal_dic:
@@ -131,9 +148,10 @@ for each_mc_name in file_name_array:
         else:
             datasys = datasys + nominal_dic[each_mc_name]
         continue
-    if each_mc_name in alreadyfound:
-        print("Error: double count of " + each_mc_name)
-        continue
+    # if each_mc_name in alreadyfound:
+    #     print("Error: double count of " + each_mc_name)
+    #     exit(1)
+    #     continue
     alreadyfound.append(each_mc_name)
 
     histpd = file["Systematics"][thename].pandas()
@@ -148,11 +166,11 @@ for each_mc_name in file_name_array:
     if each_mc_name == "data":
         continue
     if datasys is None:
-        datasys = fake_data(edge, count, variable, error, None, "sys", 'b')
+        datasys = fake_data(edge, count, variable, error, None, "sys", 'b', rescaledic, each_mc_name)
     else:
-        datasys = datasys + fake_data(edge, count, variable, error, None, "sys", 'b')
+        datasys = datasys + fake_data(edge, count, variable, error, None, "sys", 'b', rescaledic, each_mc_name)
 
-histplot_withsub([[nominal],[data], [datasys]], variable, bins,labels =["nominal","data", "sys"] )
+histplot_withsub([[nominal],[data], [datasys]], variable, bins,labels =["nominal","data", "sys"], xlabel=r"$p_{TV}[GeV]$" )
 
 # height_nominal, sigma2_mominal = nominal.binned_weight_variation(variable,bins,1)
 # height_data, sigma2_data = data.binned_weight_variation(variable,bins,1)

@@ -5,13 +5,23 @@ def cut_btag_more(data, b):
     return mask
 
 def cut_btag_is(data, b):
-    mask = data[b"nSigJets"] >= 2
-    mask = np.logical_and(data[b'nbJets'] == b, mask)
+    #mask = data[b"nSigJets"] >= 2
+    mask = data[b'nbJets'] == b
     return mask
 
 def cut_btag(data):
-    mask = data[b"nSigJets"] >= 2
-    mask = np.logical_and(data[b'nbJets'] == 0, mask)
+    #mask = data[b"nSigJets"] >= 2
+    mask = data[b'nbJets'] == 0
+    return mask
+
+def cut_electron(data):
+    mask = data[b'flavL1'] == 1
+    mask = np.logical_and(data[b'flavL1'] == data[b'flavL2'], mask)
+    return mask
+
+def cut_muon(data):
+    mask = data[b'flavL1'] == 0
+    mask = np.logical_and(data[b'flavL1'] == data[b'flavL2'], mask)
     return mask
 
 def cut_basic(data):
@@ -115,9 +125,9 @@ def crmbbcut(data):
     mask = np.logical_and(data[b'pTB1']/1000. > 45, mask) # essential
     mask = np.logical_and(data[b'ptL1']/1000. > 27, mask) # essential
     mask = np.logical_and(data[b'ptL2']/1000. > 7, mask) # essential
-    # mask = np.logical_and(np.logical_or(data[b'mBBres']/1000. >= 145, 100 >= data[b'mBBres']/1000.), mask)
-    # mask = np.logical_and(data[b'mBBres']/1000. < 200, mask)
-    # mask = np.logical_and(50 < data[b'mBBres']/1000., mask)
+    mask = np.logical_and(np.logical_or(data[b'mBBres']/1000. >= 145, 100 >= data[b'mBBres']/1000.), mask)
+    mask = np.logical_and(data[b'mBBres']/1000. < 200, mask)
+    mask = np.logical_and(50 < data[b'mBBres']/1000., mask)
     return mask
 
 def crlowmbbcut(data):

@@ -4,6 +4,7 @@ import os
 import copy
 import math
 import sys
+import zlib
 sys.path.append(os.path.abspath(os.path.join(__file__, '..')))
 from fourvector import *
 
@@ -13,13 +14,17 @@ def delphi(phi1, phi2):
         return 2 * math.pi - diff
     return diff
 
-def load_CxAODs(directories, sample_names, branches, debug=False, sys_name=None, **kwargs):
+def defaulthash(s):
+    #return abs(hash(s))% 100000
+    return zlib.adler32(s)
+
+def load_CxAODs(directories, sample_names, branches, debug=False, sys_name=None, matanames=None, **kwargs):
     step_of_loop = 999999999
     if debug:
         step_of_loop = 1000
-
     data = dict()
     weight = []
+    mata = {}
     for directory in directories:
         for each_sample_name in sample_names:
             sample_exist = False
@@ -52,6 +57,17 @@ def load_CxAODs(directories, sample_names, branches, debug=False, sys_name=None,
                                     continue
                                 data[each_branch] = np.append(data[each_branch], arrays[each_branch])
                             break
+                                            # load reader level event selection result
+                        if matanames is not None:
+                            for each_mataname in matanames:
+                                matabranch = uproot.open(file_address)[each_cycle.decode("utf-8")][each_mataname]
+                                mata_tem = [zlib.adler32(x) for x in matabranch.array()[0:step_of_loop]]
+                                #mata_tem = [x for x in matabranch.array()]
+                                mata_tem = np.array(mata_tem)
+                                if each_mataname not in mata:
+                                    mata[each_mataname] = mata_tem
+                                else:
+                                    mata[each_mataname] = np.append(mata[each_mataname], mata_tem)
                         break #!!!
                 elif i == -1:
                     continue
@@ -68,6 +84,8 @@ def load_CxAODs(directories, sample_names, branches, debug=False, sys_name=None,
                 print("Warning: cannot find sample " + file_address + each_sample_name + ".")
     if not data.keys():
         return False
+    if mata:
+        return Events(data, weight, mata=mata,**kwargs)
     return Events(data, weight, **kwargs)
 
 
@@ -180,12 +198,14 @@ def significant_error(backgrounds, signal, variable, bins, scale=1, logsig=True)
     return math.sqrt(total)
 
 class Events:
-    def __init__(self, data, weight=None, **kwargs):# color = 0,):
+    def __init__(self, data, weight=None, mata = None,**kwargs):# color = 0,):
         self.fake_data = False
         self.fake_stat2_per_event = []
         self.fake_sys2_per_event = []
         self.data = data
+        self.mata = mata
         del data
+        del mata
         self.weight = None
 
         self.colour = 0
@@ -241,6 +261,9 @@ class Events:
             if self.sigma2:
                 for i in range(len(self.sigma2)):
                     self.sigma2[i] += each_events.sigma2[i]
+            if self.mata:
+                for each_key in self.mata.keys():
+                    self.mata[each_key] = np.append(self.mata[each_key], each_events.mata[each_key])
         if kwargs is not None:
             if 'colour' in kwargs.keys():
                 self.colour = kwargs['colour']
@@ -248,6 +271,7 @@ class Events:
                 self.alias = kwargs['alias']
         if new_alias is not None:
             self.alias = new_alias
+        
 
     def __len__(self):
         for each in self.data:
@@ -278,6 +302,7 @@ class Events:
         if self.fake_stat2_per_event is not None:
             fake_stat2_per_event = np.append(self.fake_stat2_per_event, events.fake_stat2_per_event)
         return_class = Events(data, weight)
+        return_class.mata = self.mata
         return_class.colour = self.colour
         return_class.alias = self.alias
         return_class.fake_data = self.fake_data
@@ -306,6 +331,7 @@ class Events:
         if self.fake_stat2_per_event is not None:
             fake_stat2_per_event = np.append(self.fake_stat2_per_event, events.fake_stat2_per_event)
         return_class = Events(data, weight)
+        return_class.mata = self.mata
         return_class.colour = self.colour
         return_class.alias = self.alias
         return_class.fake_data = self.fake_data
@@ -400,16 +426,37 @@ class Events:
     def cut(self,cuts):
         mask = cuts(self.data)
         #print(self.data.items())
-        for key,content in self.data.items():
+        for key, content in self.data.items():
             self.data[key] = self.data[key][mask]
         if self.weight is not None:
             self.weight = self.weight[mask]
-    
+        if self.mata:
+            for each_key in self.mata:
+                self.mata[each_key] = self.mata[each_key][mask]
+
+    def matacut(self,cuts):
+        mask = cuts(self.mata)
+        #print(self.data.items())
+        for key, content in self.data.items():
+            self.data[key] = self.data[key][mask]
+        if self.weight is not None:
+            self.weight = self.weight[mask]
+        if self.mata:
+            for each_key in self.mata:
+                self.mata[each_key] = self.mata[each_key][mask]
+
     def cut_parameter(self,cuts,p1):
         mask = cuts(self.data,p1)
         #print(self.data.items())
-        for key,content in self.data.items():
+        for key, content in self.data.items():
             self.data[key] = self.data[key][mask]
         if self.weight is not None:
             self.weight = self.weight[mask]
-
+        if self.mata:
+            for each_key in self.mata:
+                self.mata[each_key] = self.mata[each_key][mask]
+    def rescale(self, factor, mask=None):
+        if mask is not None:
+            self.weight[mask] *= factor
+        else:
+            self.weight *= factor
