@@ -39,7 +39,7 @@ def cut_basic(data):
 
     mask = np.logical_and(data[b'ptL1']/1000. > 27, mask) # essential
 
-    mask = np.logical_and(data[b'ptL2']/1000. > 7, mask) # essential
+    mask = np.logical_and(data[b'ptL2']/1000. > 20, mask) # essential
 
     #mask = np.logical_and(data[b"MET"]/1000./((data[b"HT"]/1000.)**0.5) < 1.15 + 8 * (10**(-3))*data[b"mVH"]/1000., mask)
 
@@ -103,7 +103,7 @@ def srcut(data):
     mask = np.logical_and(data[b'mBBres']/1000. < 145, mask)
     mask = np.logical_and(100 < data[b'mBBres']/1000., mask)
     mask = np.logical_and(data[b'ptL1']/1000. > 27, mask) # essential
-    mask = np.logical_and(data[b'ptL2']/1000. > 7, mask) # essential
+    mask = np.logical_and(data[b'ptL2']/1000. > 20, mask) # essential
     #mask = np.logical_and(data[b'ptL2']/1000. > 20, mask)
     return mask
 
@@ -124,7 +124,7 @@ def crmbbcut(data):
     mask = np.logical_and(data[b'pTV']/1000. > ptll_cut(data[b'mVH']/1000.), mask)
     mask = np.logical_and(data[b'pTB1']/1000. > 45, mask) # essential
     mask = np.logical_and(data[b'ptL1']/1000. > 27, mask) # essential
-    mask = np.logical_and(data[b'ptL2']/1000. > 7, mask) # essential
+    mask = np.logical_and(data[b'ptL2']/1000. > 20, mask) # essential
     mask = np.logical_and(np.logical_or(data[b'mBBres']/1000. >= 145, 100 >= data[b'mBBres']/1000.), mask)
     mask = np.logical_and(data[b'mBBres']/1000. < 200, mask)
     mask = np.logical_and(50 < data[b'mBBres']/1000., mask)
@@ -192,7 +192,7 @@ def crtopcut(data):
     mask = np.logical_and(data[b'mBBres']/1000. < 145, mask)
     mask = np.logical_and(100 < data[b'mBBres']/1000., mask)
     mask = np.logical_and(data[b'ptL1']/1000. > 27, mask) # essential
-    #mask = np.logical_and(data[b'ptL2']/1000. > 7, mask) # essential
+    mask = np.logical_and(data[b'ptL2']/1000. > 20, mask) # essential
     return mask
 
 def cut_full(data):

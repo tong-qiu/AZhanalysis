@@ -8,6 +8,10 @@ from events import *
 import matplotlib.font_manager as font_manager
 import matplotlib.patches as mpatches
 
+def nevent(asample):
+    thesum = sum(asample.weight)
+    return thesum#len(asample.data[varible_to_plot])
+
 def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     #rc('text', usetex=True)
     #rc('font',family='Times New Roman')
@@ -38,6 +42,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         "log_y":False,
         "sys":False,
         "blind":False,
+        "printzpjets":False,
         }
     for each_key in kwargs.items():
         settings[each_key[0]] = kwargs[each_key[0]]
@@ -65,10 +70,30 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         if not ifpass:
             new_data_list.append(each)
     data_list = new_data_list
+    Zpjet = []
+    if settings["printzpjets"]:
+        for each in data_list:
+            print(each.alias)
+            if "Zlljet" in each.alias:
+                Zpjet.append(each)
+        sigma2_z = []
+        weight_in_bin_z = []
+        sys2_z = []
+        for each in Zpjet:
+            if nevent(each) < 0:
+                continue
+            sigma2_z.append(each.variation(varible_to_plot, bins, scales))
+            weight_in_bin_z.append(each.binned_weight(varible_to_plot, bins, scales))
+            if settings["sys"] and len(each.systematics(varible_to_plot, bins, scales))>0:
+                sys2_z.append(each.systematics(varible_to_plot, bins, scales))
+        # calculate uncertainty
+        sigma2_z = np.transpose(sigma2_z)
+        if settings["sys"]:
+            sys2_z = np.transpose(sys2_z)
+            error_mc_z = np.sqrt(np.sum(sigma2_z, (1))+np.sum(sys2_z, (1)))
+        else:
+            error_mc_z = np.sqrt(np.sum(sigma2_z, (1)))
 
-    def nevent(asample):
-        thesum = sum(asample.weight)
-        return thesum#len(asample.data[varible_to_plot])
     data_list.sort(key=nevent)
     for each in data_list:
         print(nevent(each))
@@ -76,17 +101,17 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
             print(each.alias + " is empty.")
             continue
         if "data" not in each.alias:#np.mean(each.weight) != 1:# is not None:
-            if each.alias in alias and False:
-                i = alias.index(each.alias)
-                print("Info: Merge ", alias[i])
-                weight[i] = np.append(weight[i], each.weight)
-                varibles_content[i] = np.append(varibles_content[i], each.data[varible_to_plot]/scales)
-                sigma2[i] = [sum(x) for x in zip(sigma2[i], each.variation(varible_to_plot, bins, scales))]#sigma2[i] + each.variation(varible_to_plot, bins, scales)
-                weight_in_bin[i] = [sum(x) for x in zip(weight_in_bin[i], each.binned_weight(varible_to_plot, bins, scales))]#each.binned_weight(varible_to_plot, bins, scales)
-                if settings["sys"] and len(each.systematics(varible_to_plot, bins, scales))>0:
-                    sys2[i] = [sum(x) for x in zip(sys2[i], each.systematics(varible_to_plot, bins, scales) )]#np.append(sys2[i], each.systematics(varible_to_plot, bins, scales))
-                    #raise ValueError("Unfinished work")
-                continue
+            # if each.alias in alias and False:
+            #     i = alias.index(each.alias)
+            #     print("Info: Merge ", alias[i])
+            #     weight[i] = np.append(weight[i], each.weight)
+            #     varibles_content[i] = np.append(varibles_content[i], each.data[varible_to_plot]/scales)
+            #     sigma2[i] = [sum(x) for x in zip(sigma2[i], each.variation(varible_to_plot, bins, scales))]#sigma2[i] + each.variation(varible_to_plot, bins, scales)
+            #     weight_in_bin[i] = [sum(x) for x in zip(weight_in_bin[i], each.binned_weight(varible_to_plot, bins, scales))]#each.binned_weight(varible_to_plot, bins, scales)
+            #     if settings["sys"] and len(each.systematics(varible_to_plot, bins, scales))>0:
+            #         sys2[i] = [sum(x) for x in zip(sys2[i], each.systematics(varible_to_plot, bins, scales) )]#np.append(sys2[i], each.systematics(varible_to_plot, bins, scales))
+            #         #raise ValueError("Unfinished work")
+            #     continue
             weight.append(each.weight)
             varibles_content.append(each.data[varible_to_plot]/scales)
             alias.append(each.alias)
@@ -193,10 +218,25 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
                 ))
 
     if settings["print_height"]:
-        with open(settings["filename"]+".csv", "w") as f:
-            f.write("data" + "," + "MC" + ",\n")
-            for each_data, each_mc in zip(bin_heights, y_mc):
-                f.write(str(each_data) + "," + str(each_mc) + ",\n")
+        if not settings["printzpjets"]:
+            with open(settings["filename"]+".csv", "w") as f:
+                #f.write("data" + "," + "MC" + ",\n")
+                for each_data, each_mc, each_edges, each_errormc in zip(bin_heights, y_mc, bin_edges[0:-1], error_mc):
+                    f.write(str(each_edges) + "," + str(each_data) + "," + str(each_mc) + "," + str(each_errormc) + ",\n")
+                f.write(str(bin_edges[-1]) + ",")
+        else:
+            weight_z = None
+            for each in weight_in_bin_z:
+                if weight_z is None:
+                    weight_z = np.array(each)
+                else:
+                    weight_z += np.array(each)
+            with open(settings["filename"]+".csv", "w") as f:
+                #f.write("data" + "," + "MC" + ",\n")
+                for each_data, each_mc, each_edges, each_errormc, eachmc_z, eacherrormc_z in zip(bin_heights, y_mc, bin_edges[0:-1], error_mc, weight_z, error_mc_z):
+                    f.write(str(each_edges) + "," + str(each_data) + "," + str(each_mc) + "," + str(each_errormc) + "," + str(eachmc_z) + "," + str(eacherrormc_z) + ",\n")
+                f.write(str(bin_edges[-1]) + ",")
+
 
     # add legend
     sys_patch = mpatches.Patch(color='black', hatch='/////', fill=False, linewidth=0)
@@ -220,9 +260,9 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     error_bar_center = []
     error_bar_size = []
     error_bar_bincentre = []
-    for each_y, each_y_mc, each_menstd, each_error_bar_bincentre in zip(bin_heights, y_mc, mean_std, bincenters):
-        error_bar_center.append(each_y / each_y_mc)
-        error_bar_size.append(each_menstd / each_y_mc)
+    for each_y, each_y_mc, each_menstd, each_error_bar_bincentre, each_error_mc in zip(bin_heights, y_mc, mean_std, bincenters, error_mc):
+        error_bar_center.append(each_y / each_y_mc) 
+        error_bar_size.append(np.sqrt(each_menstd**2 / each_y_mc**2 + each_menstd**4 / each_y_mc**4 * each_error_mc**2)) #np.sqrt(data_point/ mc_point**2  + data_point**2/  mc_point**4 * mc_error**2)
         error_bar_bincentre.append(each_error_bar_bincentre)
 
     ax2.errorbar(error_bar_bincentre, error_bar_center, color='k', linestyle="",

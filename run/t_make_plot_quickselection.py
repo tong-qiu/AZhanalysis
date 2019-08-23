@@ -21,6 +21,12 @@ from cutstring import *
 import multiprocessing
 from package.loadnormfactor import *
 
+def poly(x, argv):
+    s = 0
+    for i, each in enumerate(argv):
+        s += x**i * each
+    return s
+
 def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, m_allsamples, matas=None):
     sample = load_CxAODs(sample_directory,each_names,branches_list_data, debug, 
                         colour=each_color,alias=each_alias,matanames=matas)
@@ -28,11 +34,11 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
         print("Warning: No "+each_alias+" samples found!")
     if cut and sample:
         sample.matacut(s_mbbcr)
-        sample.matacut(s_resolved)
+        #sample.matacut(s_resolved)
         sample.cut_parameter(cut_btag_is, 1)
         #sample.cut(srcut)
         #sample.cut(cut_btag)
-        sample.cut(cut_muon)
+        #sample.cut(cut_electron)
         #sample.more()
         #sample.cut(crtopcut)
         #sample.cut(crmbbcut)
@@ -50,6 +56,7 @@ if __name__ == '__main__':
     sample_directory = ["../CxAOD31_01a/"]
     tag = "run2"
     rescale = True
+    slopecorrection = True
 
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
     if tag == "a":
@@ -92,8 +99,8 @@ if __name__ == '__main__':
     colors = [None,   'g',       'yellow',     'tab:orange',   'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm',    'teal']#, 'k', 'dimgrey']
 
 
-    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mBB', b'mVH', b'nbJets', b'flavL1', b'flavL1']
-    matas = ["Regime", "Sample", "Description"]
+    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mBB', b'mVH', b'nbJets', b'flavL1', b'flavL2']
+    matas = ["Sample", "Description" ] #"Regime",
     branches_list_MC = branches_list_data
     bins = range(100,1400,50)
     bins = range(100,145,5)
@@ -103,6 +110,27 @@ if __name__ == '__main__':
     if rescale:
         rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
         "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
+    if slopecorrection:
+        p1s = []
+        p2s = []
+        bottom = 0
+        middle = 0
+        top = 0
+        with open("output/slopefit/" + "pTV-mbbcut-1tagpolyfitresult.csv") as f:
+            for each in f:
+                each_array = each.split(',')
+                if top == 0:
+                    bottom = float(each_array[0])
+                    middle = float(each_array[1])
+                    top = float(each_array[2])
+                elif not p1s:
+                    p1s = each_array[0:-1]
+                else:
+                    p2s = each_array[0:-1]
+        for i in range(len(p1s)):
+            p1s[i] = float(p1s[i])
+            p2s[i] = float(p2s[i])
+        print(p1s,p2s)
     processes = []
     manager = multiprocessing.Manager()
     all_sample = manager.list()
@@ -121,8 +149,9 @@ if __name__ == '__main__':
         each_process.join()
         print(i, each_alias + " finished.")
     print("All done.")
-    print(rescaledic)
+    #print(rescaledic)
     all_sample_after = [each for each in all_sample]
+    print("Performing rescale...")
     if rescale:
         for i in range(len(all_sample_after)):
             for each_key in rescaledic.keys():
@@ -131,39 +160,34 @@ if __name__ == '__main__':
                     mask = all_sample_after[i].mata["Sample"] == zlib.adler32(each_key.encode())
                     if True in mask:
                         all_sample_after[i].rescale(factor, mask)
+    print("Performing slope correction...")
+    if slopecorrection:
+        for i in range(len(all_sample_after)):
+            mask1 = all_sample_after[i].data[b'pTV']/1000. < middle
+            mask2 = all_sample_after[i].data[b'pTV']/1000. >= middle
+            mask2 = np.logical_and(all_sample_after[i].data[b'pTV']/1000. < top, mask2)
+            print("before", all_sample_after[i].weight.sum())
+            if True in mask1:
+                all_sample_after[i].weight[mask1] = all_sample_after[i].weight[mask1] * (poly(all_sample_after[i].data[b'pTV'][mask1]/1000., p1s))
+            if True in mask2:
+                all_sample_after[i].weight[mask2] = all_sample_after[i].weight[mask2] * (poly(all_sample_after[i].data[b'pTV'][mask2]/1000., p2s))
+            print("after", all_sample_after[i].weight.sum())
 
-
-    '''
-    stackplot(all_sample,b'mBB',bins,1000.,
-            xlabel=r"$m_{BB}[GeV]$", title3="2 lep., 2 b-tag", filename="32emBBtest", print_height=False,
-            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.6)
-    '''
-    '''
-    bins =np.linspace(0,1000,num=32)
-    stackplot(all_sample,b'HT',bins,1000.,
-            xlabel=r"$HT_{ }[GeV]$", title3="2 lep., > 2 b-tag", filename="31aHT", print_height=True,
-            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.6)
-    bins = np.linspace(100,140,num=17)
-    stackplot(all_sample,b'mBB',bins,1000.,
-            xlabel=r"$M_{BB}[GeV]$", title3="2 lep., > 2 b-tag", filename="31ambb", print_height=True,
-            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.6)
-    bins = np.linspace(41,200,num=50)
-    stackplot(all_sample,b'mLL',bins,1000.,
-            xlabel=r"$M_{Z}[GeV]$", title3="2 lep., > 2 b-tag", filename="31amZ", print_height=True,
-            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.6)
-'''
-    #bins = np.linspace(100,1200,50)
-    #bins = range(0,40000,20000)
-    #bins = range(0,100,1)
     bins = range(0,1000,40)
     bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
-    # stackplot(all_sample_after,b'ptL1',bins,1000.,
-    #         xlabel=r"$pt_{l1}[GeV]$", title3="loose selection, 2 btags", filename="ptL1", print_height=True,
-    #         title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
-    #bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+
+    title3="mBBcr 1 btags"
+    direct = "output/t_make_plot_rescale/"
+    name = "-mbbcut-1tag"
+    if slopecorrection:
+        direct = "output/t_make_plot_rescale_slopecorrection/"
+    stackplot(all_sample_after,b'pTV',bins,1000.,
+            xlabel=r"$p_{TV}[GeV]$", title3=title3, filename=direct + "pTV" + name, print_height=True,
+            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True)
     stackplot(all_sample_after,b'mVH',bins,1000.,
-            xlabel=r"$m_{VH}[GeV]$", title3="mBBcr muon 1 btags", filename="output/t_make_plot_rescale/" + "mVH-mbbcut-muon_rescale", print_height=True,
-            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
+            xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
+            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True)
+    
     # bins = range(0,1000,50)
     # stackplot(all_sample_after,b'pTB1',bins,1000.,
     #         xlabel=r"$pt_{b1}[GeV]$", title3="loose selection, 2 btags", filename="pTB1", print_height=True,

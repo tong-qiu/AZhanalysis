@@ -1,3 +1,6 @@
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# This is unfinished
+
 import os
 import sys
 import json
@@ -11,6 +14,12 @@ from package.events import *
 from package.stackplot import *
 from termcolor import colored
 from package.loadnormfactor import *
+
+def poly(x, argv):
+    s = 0
+    for i, each in enumerate(argv):
+        s += x**i * each
+    return s
 
 def fake_data(bins, hist, variable, stat2, sys2, alias, color):
     is_fake_data = True
@@ -97,9 +106,11 @@ def bincheck(orginal, userbin):
 
 if __name__ == '__main__':
     rescale = True
+    slopecorrection = True
     rebin_factor = 0
     ul = 3000
-    filename = "run2_pTV_mBBcr_1tag2pjet-_.json"
+    filename = "run2_mVH_mBBcr_1tag2pjet-_"
+    filename += ".json"
     #filename = "e_mVH_mBBcr_2tag2pjet-_.json"
     sub_filename = filename.split('_')
     period = sub_filename[0]
@@ -131,6 +142,23 @@ if __name__ == '__main__':
     if rescale:
         rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
         "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
+    if slopecorrection:
+        p1s = []
+        p2s = []
+        bottom = 0
+        middle = 0
+        top = 0
+        with open("output/slopefit/" + "run2_pTV_mBBcr_1tag2pjet-_polyfitresult.csv") as f:
+            for each in f:
+                each_array = each.split(',')
+                if top == 0:
+                    bottom = each_array[0]
+                    middle = each_array[1]
+                    top = each_array[2]
+                elif not p1s:
+                    p1s = each_array[0:-1]
+                else:
+                    p2s = each_array[0:-1]
 
     all_sample = []
     binning = []
@@ -195,40 +223,9 @@ if __name__ == '__main__':
         postfix = ""
         if rescale:
             postfix = "_rescale"
+        if slopecorrection:
+            postfix += "_slopecorrection"
         stackplot(all_sample1,variable_name,bins,1.,
-                xlabel=r"$m_{VH}[GeV]$", title3="2 lep.," + btag +" b-tag " + region, filename="output/cpp_make_plot" + postfix + "/" + filename[0:-5], print_height=True,
+                xlabel=r"$m_{VH}[GeV]$", title3="2 lep.," + btag +" b-tag " + region, filename="output/cpp_make_plot" + postfix + "/" + filename[0:-5], print_height=False,
                 title2=t2,auto_colour=False, limit_y = 0.6, upper_y=2.6, sys=True, log_y=True)
-    '''
-    sample_list = {"Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc", "WZ", "WW",              "Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb", "ZZ", "stopWt", "stops", "stopt", "ttbar", "ggZllH125", "qqZllH125", "stopWt_dilep"}
-    colors =      ['g', 'g',    'g',    'g',  'g',   'g',  'tab:orange','tab:orange', 'royalblue','royalblue','royalblue','royalblue','royalblue','royalblue','royalblue','yellow','yellow','yellow','yellow', 'yellow','yellow','yellow']
-    with open("mVHsr.txt","r") as f:
-        for each_line in f:
-            sample = json.loads(each_line)
-    nominals = []
-    for each, color in zip(sample_list,colors):
-        if each not in sample:
-            print("Warning: cannot find ", each)
-            continue
-        binning = sample[each]["binning"]
-        content = sample[each]["content"]
-        stat = np.array(sample[each]["stat"])
-        sys = [0 for each in content]
-        data = fake_data(binning,content,"mVH",stat**2,sys,each,color)
-        nominals.append(data)
-    nominals[0].fake_sys2 = np.array(sample["nominal"]["syst"])**2
 
-    with open("mVHsrdata.txt","r") as f:
-        for each_line in f:
-            sample = json.loads(each_line)
-    binning = sample["nominal"]["binning"]
-    content = sample["nominal"]["content"]
-    stat = np.array(sample["nominal"]["stat"])
-    sys = [0 for each in content]
-    data = fake_data(binning,content,"mVH",stat**2,sys,"data",color)
-    nominals.append(data)
-
-    bins = range(0,2000,120)
-    stackplot(nominals,'mVH',bins,1.,
-            xlabel=r"$m_{VH}[GeV]$", title3="2 lep., 2 b-tag", filename="test", print_height=True,
-            title2="t2",auto_colour=True, limit_y = 0.4, upper_y=2.6, sys=True, log_y=True)
-    '''

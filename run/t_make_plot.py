@@ -40,7 +40,7 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
     return 0
 
 if __name__ == '__main__':
-    debug = False
+    debug = True
     cut = True
     sample_directory = ["../CxAOD31_01a/"]
     tag = "run2"
@@ -141,8 +141,8 @@ if __name__ == '__main__':
     #         xlabel=r"$pt_{l1}[GeV]$", title3="loose selection, 2 btags", filename="ptL1", print_height=True,
     #         title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
     #bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
-    stackplot(all_sample_after,b'mVH',bins,1000.,
-            xlabel=r"$p_{TV}[GeV]$", title3="mBB 1 btags", filename="output/t_make_plot/" + "mVH-mbbcr", print_height=True,
+    stackplot(all_sample_after,b'pTV',bins,1000.,
+            xlabel=r"$p_{TV}[GeV]$", title3="mBB 1 btags", filename="output/t_make_plot/" + "pTV-mbbcr", print_height=True,
             title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
     # bins = range(0,1000,50)
     # stackplot(all_sample_after,b'pTB1',bins,1000.,
