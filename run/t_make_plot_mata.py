@@ -17,15 +17,16 @@ from package.cut import *
 from package.stackplot import *
 from curveplot import *
 import multiprocessing
+from cutstring import *
 
-
-def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, m_allsamples):
+def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, m_allsamples, matas=None):
     sample = load_CxAODs(sample_directory,each_names,branches_list_data, debug, 
-                        colour=each_color,alias=each_alias)
+                        colour=each_color,alias=each_alias,matanames=matas)
     if not sample:
         print("Warning: No "+each_alias+" samples found!")
     if cut and sample:
         sample.cut_parameter(cut_btag_is, 1)
+        sample.matacut(s_resolved)
         #sample.cut(srcut)
         #sample.cut(cut_btag)
         #sample.cut(wpjcut)
@@ -87,6 +88,7 @@ if __name__ == '__main__':
 
 
     branches_list_data = [b"mBBres", b"nSigJets", b"pTB1", b"pTB2", b"ptL1", b"ptL2", b"METHT",b'mVH', b'mLL', b'nbJets', b"EventWeight", b"pTV", b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b'passedTrigger', b'etaL1', b'nJets',b'mBB', b'MET',]# b'PhiL1',b'PhiL2', b'PhiMET']
+    matas = ["Regime"]
     #branches_list_MC = [b"mBBres", b"nSigJets", b"pTB1", b"pTB2", b"ptL1", b"ptL2", b"METHT", b'mVH', b'mLL', b'nbJets', b"EventWeight", b"pTV", b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b'passedTrigger', b'etaL1', b'nJets']
     branches_list_MC = branches_list_data
     bins = range(100,1400,50)
@@ -99,9 +101,9 @@ if __name__ == '__main__':
     all_sample = manager.list()
     for each_names, each_alias, each_color in zip(file_name_array,alias,colors):
         if "data" in each_alias:
-            t = multiprocessing.Process(target=stack_cxaod, args=(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, all_sample))
+            t = multiprocessing.Process(target=stack_cxaod, args=(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, all_sample, matas))
         else:
-            t = multiprocessing.Process(target=stack_cxaod, args=(sample_directory, each_names, each_alias, each_color, branches_list_MC, debug, cut, all_sample))
+            t = multiprocessing.Process(target=stack_cxaod, args=(sample_directory, each_names, each_alias, each_color, branches_list_MC, debug, cut, all_sample, matas))
         processes.append(t)
         t.start()
 

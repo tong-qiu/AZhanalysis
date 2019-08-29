@@ -71,6 +71,7 @@ if __name__ == '__main__':
     if tag == "run2":
         t2 = r"$\mathit{\sqrt{s}=13\:TeV,138.2\:fb^{-1}}$"
         sample_directory = ["../sample/CxAOD32_06a/", "../sample/CxAOD32_06d/", "../sample/CxAOD32_06e/"]
+        #sample_directory = ["../sample/CxAOD32_06a/", "../sample/CxAOD32_06d/", "../sample/CxAOD32_06e/"]
         #sample_directory = ["../phi/a/", "../phi/d/", "../phi/e/"]
         #sample_directory = ["../phi/a/"]
     mc_Wlvjet = ["Wenu_Sh221", "WenuB_Sh221", "WenuC_Sh221", "WenuL_Sh221", "Wmunu_Sh221", "WmunuB_Sh221", "WmunuC_Sh221", "WmunuL_Sh221", "Wtaunu_Sh221", "WtaunuB_Sh221", "WtaunuC_Sh221", "WtaunuL_Sh221"]
@@ -108,15 +109,15 @@ if __name__ == '__main__':
     #all_sample = []
     rescaledic = None
     if rescale:
-        rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
-        "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
+        rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/confignormonly.cfg",
+        "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
     if slopecorrection:
         p1s = []
         p2s = []
         bottom = 0
         middle = 0
         top = 0
-        with open("output/slopefit/" + "pTV-mbbcut-1tagpolyfitresult.csv") as f:
+        with open("output/slopefit/" + "pTV-mbbcut-2tagpolyfitresult.csv") as f:
             for each in f:
                 each_array = each.split(',')
                 if top == 0:
@@ -151,8 +152,9 @@ if __name__ == '__main__':
     print("All done.")
     #print(rescaledic)
     all_sample_after = [each for each in all_sample]
-    print("Performing rescale...")
+
     if rescale:
+        print("Performing rescale...")
         for i in range(len(all_sample_after)):
             for each_key in rescaledic.keys():
                 if 'ALL' in rescaledic[each_key]:
@@ -160,8 +162,9 @@ if __name__ == '__main__':
                     mask = all_sample_after[i].mata["Sample"] == zlib.adler32(each_key.encode())
                     if True in mask:
                         all_sample_after[i].rescale(factor, mask)
-    print("Performing slope correction...")
+    
     if slopecorrection:
+        print("Performing slope correction...")
         for i in range(len(all_sample_after)):
             mask1 = all_sample_after[i].data[b'pTV']/1000. < middle
             mask2 = all_sample_after[i].data[b'pTV']/1000. >= middle
@@ -173,17 +176,19 @@ if __name__ == '__main__':
                 all_sample_after[i].weight[mask2] = all_sample_after[i].weight[mask2] * (poly(all_sample_after[i].data[b'pTV'][mask2]/1000., p2s))
             print("after", all_sample_after[i].weight.sum())
 
-    bins = range(0,1000,40)
     bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+    
 
     title3="mBBcr 1 btags"
     direct = "output/t_make_plot_rescale/"
     name = "-mbbcut-1tag"
     if slopecorrection:
         direct = "output/t_make_plot_rescale_slopecorrection/"
+    bins = [50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950]
     stackplot(all_sample_after,b'pTV',bins,1000.,
             xlabel=r"$p_{TV}[GeV]$", title3=title3, filename=direct + "pTV" + name, print_height=True,
             title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True)
+    bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
     stackplot(all_sample_after,b'mVH',bins,1000.,
             xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
             title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True)

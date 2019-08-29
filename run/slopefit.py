@@ -9,9 +9,21 @@ def poly(x, *argv):
         s += x**i * each
     return s
 
-def fitfunction(x, p0, p1, p2):# p5, p6):
-    return poly(x, p0, p1, p2)# p5, p6)
+nbtag = 1
+if nbtag == 1:
+    middle = 12
+    def fitfunction1(x, p0, p1, p2):# p5, p6):
+        return poly(x, p0, p1, p2)# p5, p6)
 
+    def fitfunction2(x, p0, p1):#, p2):# p5, p6):
+        return poly(x, p0, p1)#, p2)# p5, p6)
+if nbtag == 2:
+    middle = 10
+    def fitfunction1(x, p0, p1, p2):# p5, p6):
+        return poly(x, p0, p1, p2)# p5, p6)
+
+    def fitfunction2(x, p0, p1):#, p2):# p5, p6):
+        return poly(x, p0, p1)#, p2)# p5, p6)
 data_point = []
 mc_point = []
 mc_error = []
@@ -19,7 +31,7 @@ bin_edge = []
 mc_point_z = []
 mc_error_z = []
 
-filename = "pTV-mbbcut-1tag"
+filename = "pTV-mbbcut-" + str(nbtag) + "tag"
 # load data
 with open("output/t_make_plot_rescale/" + filename + ".csv") as f:
     for each_line in f:
@@ -63,10 +75,15 @@ diff = (data_point - mc_o) /mc_point_z
 diff_error = np.sqrt(data_point/ mc_point_z**2 + mc_error_other**2/ mc_point_z**2  + (data_point - mc_o)**2/  mc_point_z**4 * mc_error_z**2)
 
 #fit
-middle = 5
 if middle > 0:
-    popt1, pcov1 = curve_fit(fitfunction, bin_centre[0:middle+1], diff[0:middle+1], sigma=diff_error[0:middle+1])
-popt2, pcov2 = curve_fit(fitfunction, bin_centre[middle:], diff[middle:], sigma=diff_error[middle:])
+    popt1, pcov1 = curve_fit(fitfunction1, bin_centre[0:middle+1], diff[0:middle+1], sigma=diff_error[0:middle+1])
+    r = diff[0:middle+1] - fitfunction1(bin_centre[0:middle+1], *popt1)
+    chisq = sum((r / diff_error[0:middle+1]) ** 2)
+    print(chisq/(-len(popt1) + len(bin_centre[0:middle+1])))
+popt2, pcov2 = curve_fit(fitfunction2, bin_centre[middle:], diff[middle:], sigma=diff_error[middle:])
+r = diff[middle:] - fitfunction2(bin_centre[middle:], *popt2)
+chisq = sum((r / diff_error[middle:]) ** 2)
+print(chisq/(-len(popt2) + len(bin_centre[middle:])))
 # print(bin_centre)
 # print(diff)
 
@@ -74,13 +91,20 @@ popt2, pcov2 = curve_fit(fitfunction, bin_centre[middle:], diff[middle:], sigma=
 plt.errorbar(bin_centre, diff, yerr=diff_error, fmt='o')
 if middle > 0:
     xs = np.linspace(bin_centre[0], bin_centre[middle],100)
-    plt.plot(xs, fitfunction(xs, *popt1), 'r-')#, label='fit: p0=%5.3f, p1=%5.3f, p2=%5.3f, p3=%5.3f' % tuple(popt))
+    plt.plot(xs, fitfunction1(xs, *popt1), 'r-')#, label='fit: p0=%5.3f, p1=%5.3f, p2=%5.3f, p3=%5.3f' % tuple(popt))
 xs = np.linspace(bin_centre[middle], bin_centre[-1],100)
-plt.plot(xs, fitfunction(xs, *popt2), 'g-')
+plt.plot(xs, fitfunction2(xs, *popt2), 'g-')
 #plt.ylim([diff.min(),10])
 plt.yscale("log")
 plt.show()
 
+popt1 = popt1.tolist()
+popt2 = popt2.tolist()
+
+while len(popt1) < 5:
+    popt1.append(0)
+while len(popt2) < 5:
+    popt2.append(0)
 # print data
 with open("output/slopefit/" + filename + "polyfitresult.csv", "w") as f:
     f.write(str(bin_centre[0]) + "," + str(bin_centre[middle]) + "," + str(bin_centre[-1]) + "\n")
