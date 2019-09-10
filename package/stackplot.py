@@ -43,6 +43,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         "sys":False,
         "blind":False,
         "printzpjets":False,
+        "chi2":False,
         }
     for each_key in kwargs.items():
         settings[each_key[0]] = kwargs[each_key[0]]
@@ -195,7 +196,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     ax1.text(0.227, 1.55/ 1.7, settings['title1_1'], fontsize=21, transform=ax1.transAxes)
     ax1.text(0.05, 1.40 / 1.7, settings['title2'], fontsize=23, transform=ax1.transAxes)
     ax1.text(0.05, 1.26 / 1.7, settings['title3'], fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
-    ax1.text(0.05, 1.12 / 1.7, settings["title4"], fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
+    #ax1.text(0.05, 1.12 / 1.7, settings["title4"], fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
 
     # plot the error bars of MC
     y_mc = y_mcs[0][int(np.size(y_mcs[0])/np.size(y_mcs[0][0]))-1]
@@ -261,12 +262,28 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     error_bar_size = []
     error_bar_bincentre = []
     for each_y, each_y_mc, each_menstd, each_error_bar_bincentre, each_error_mc in zip(bin_heights, y_mc, mean_std, bincenters, error_mc):
-        error_bar_center.append(each_y / each_y_mc) 
+        error_bar_center.append(each_y / each_y_mc)
         error_bar_size.append(np.sqrt(each_menstd**2 / each_y_mc**2 + each_menstd**4 / each_y_mc**4 * each_error_mc**2)) #np.sqrt(data_point/ mc_point**2  + data_point**2/  mc_point**4 * mc_error**2)
         error_bar_bincentre.append(each_error_bar_bincentre)
 
     ax2.errorbar(error_bar_bincentre, error_bar_center, color='k', linestyle="",
                  yerr=error_bar_size, fmt='o', markersize='8')
+    
+    # calculate chi2
+    error_bar_center = np.array(error_bar_center)
+    error_bar_size = np.array(error_bar_size)
+
+    chi2 = 0
+    nod = 0
+    for each_y, each_sigma in zip(error_bar_center, error_bar_size):
+        if math.isnan(each_y) or math.isnan(each_sigma) or each_sigma == 0:
+            continue
+        chi2 += ((each_y - 1)/each_sigma)**2
+        nod += 1
+    if settings["chi2"]:
+        ax1.text(0.05, 1.12 / 1.7, "chi2/nod: " + str(round(chi2/nod,3)), fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
+    #chi2 = sum((error_bar_center/error_bar_size)**2)p
+    #nod = len(error_bar_center)
 
     # plot line at the centre
     ax2.plot([bins[0], bins[np.size(bins)-1]], [1, 1], linestyle='--', color='k')
@@ -312,3 +329,4 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         with open(settings['filename'] + '.pkl', 'wb') as file:
             pickle.dump(fig, file)
     plt.show()
+    return (chi2, nod)

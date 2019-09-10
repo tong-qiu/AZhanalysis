@@ -34,11 +34,13 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
         print("Warning: No "+each_alias+" samples found!")
     if cut and sample:
         sample.matacut(s_mbbcr)
+        #sample.cut(cut_lowmbb)
+        sample.cut(cut_highmbb)
         #sample.matacut(s_resolved)
-        sample.cut_parameter(cut_btag_is, 1)
+        sample.cut_parameter(cut_btag_is, 2)
         #sample.cut(srcut)
         #sample.cut(cut_btag)
-        #sample.cut(cut_electron)
+        #sample.cut(cut_muon)
         #sample.more()
         #sample.cut(crtopcut)
         #sample.cut(crmbbcut)
@@ -56,7 +58,7 @@ if __name__ == '__main__':
     sample_directory = ["../CxAOD31_01a/"]
     tag = "run2"
     rescale = True
-    slopecorrection = True
+    slopecorrection = False
 
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
     if tag == "a":
@@ -176,23 +178,30 @@ if __name__ == '__main__':
                 all_sample_after[i].weight[mask2] = all_sample_after[i].weight[mask2] * (poly(all_sample_after[i].data[b'pTV'][mask2]/1000., p2s))
             print("after", all_sample_after[i].weight.sum())
 
-    bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+    bins = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300]
     
 
-    title3="mBBcr 1 btags"
-    direct = "output/t_make_plot_rescale/"
-    name = "-mbbcut-1tag"
+    title3="highmBBcr 2 btags"
+    direct = "output/t_make_plot/"
+    name = "-highmbbcut-2tag"
+    if rescale:
+        direct = "output/t_make_plot_rescale/"
     if slopecorrection:
         direct = "output/t_make_plot_rescale_slopecorrection/"
-    bins = [50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950]
-    stackplot(all_sample_after,b'pTV',bins,1000.,
+    #bins = [0, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950]
+    chi2, nod = stackplot(all_sample_after,b'pTV',bins,1000.,
             xlabel=r"$p_{TV}[GeV]$", title3=title3, filename=direct + "pTV" + name, print_height=True,
-            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True)
+            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+    print("pTV", chi2, nod)
     bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
-    stackplot(all_sample_after,b'mVH',bins,1000.,
+    chi2, nod = stackplot(all_sample_after,b'mVH',bins,1000.,
             xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
-            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True)
-    
+            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+    print("mVH", chi2, nod)
+    bins = range(30, 310, 10)
+    stackplot(all_sample_after,b'mBBres',bins,1000.,
+            xlabel=r"$m_{BB}[GeV]$", title3=title3, filename=direct + "mBBres" + name, print_height=True,
+            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
     # bins = range(0,1000,50)
     # stackplot(all_sample_after,b'pTB1',bins,1000.,
     #         xlabel=r"$pt_{b1}[GeV]$", title3="loose selection, 2 btags", filename="pTB1", print_height=True,

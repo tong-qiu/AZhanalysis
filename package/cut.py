@@ -14,6 +14,14 @@ def cut_btag(data):
     mask = data[b'nbJets'] == 0
     return mask
 
+def cut_lowmbb(data):
+    mask = data[b'mBBres'] < 125000
+    return mask
+
+def cut_highmbb(data):
+    mask = data[b'mBBres'] > 125000
+    return mask
+
 def cut_electron(data):
     mask = data[b'flavL1'] == 1
     mask = np.logical_and(data[b'flavL1'] == data[b'flavL2'], mask)

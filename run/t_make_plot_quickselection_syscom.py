@@ -51,7 +51,7 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
     return 0
 
 if __name__ == '__main__':
-    debug = False
+    debug = True
     cut = True
     sample_directory = ["../CxAOD31_01a/"]
     tag = "run2"
