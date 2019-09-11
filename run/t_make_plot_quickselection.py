@@ -27,6 +27,8 @@ def poly(x, argv):
         s += x**i * each
     return s
 
+ntag = 1
+
 def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, m_allsamples, matas=None):
     sample = load_CxAODs(sample_directory,each_names,branches_list_data, debug, 
                         colour=each_color,alias=each_alias,matanames=matas)
@@ -37,7 +39,7 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
         #sample.cut(cut_lowmbb)
         sample.cut(cut_highmbb)
         #sample.matacut(s_resolved)
-        sample.cut_parameter(cut_btag_is, 2)
+        sample.cut_parameter(cut_btag_is, ntag)
         #sample.cut(srcut)
         #sample.cut(cut_btag)
         #sample.cut(cut_muon)
@@ -58,7 +60,7 @@ if __name__ == '__main__':
     sample_directory = ["../CxAOD31_01a/"]
     tag = "run2"
     rescale = True
-    slopecorrection = False
+    slopecorrection = True
 
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
     if tag == "a":
@@ -119,7 +121,7 @@ if __name__ == '__main__':
         bottom = 0
         middle = 0
         top = 0
-        with open("output/slopefit/" + "pTV-mbbcut-2tagpolyfitresult.csv") as f:
+        with open("output/slopefit/" + "pTV-mbbcut-"+str(ntag)+"tagpolyfitresult.csv") as f:
             for each in f:
                 each_array = each.split(',')
                 if top == 0:
@@ -181,13 +183,15 @@ if __name__ == '__main__':
     bins = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300]
     
 
-    title3="highmBBcr 2 btags"
+    title3="highmBBcr " + str(ntag) +" btags"
     direct = "output/t_make_plot/"
-    name = "-highmbbcut-2tag"
+    name = "-highmbbcut-" + str(ntag) +"tag"
     if rescale:
         direct = "output/t_make_plot_rescale/"
-    if slopecorrection:
+    if slopecorrection and rescale:
         direct = "output/t_make_plot_rescale_slopecorrection/"
+    if slopecorrection and not rescale:
+        direct = "output/t_make_plot_slopecorrection/"
     #bins = [0, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950]
     chi2, nod = stackplot(all_sample_after,b'pTV',bins,1000.,
             xlabel=r"$p_{TV}[GeV]$", title3=title3, filename=direct + "pTV" + name, print_height=True,
