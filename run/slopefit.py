@@ -11,7 +11,7 @@ def poly(x, *argv):
     return s
 
 labelshift = 0
-nbtag = 2
+nbtag = 1
 if nbtag == 1:
     #middle = 12
     middle = 6
@@ -36,7 +36,7 @@ bin_edge = []
 mc_point_z = []
 mc_error_z = []
 
-filename = "pTV-mbbcut-" + str(nbtag) + "tag"
+filename = "pTV-highmbbcut-" + str(nbtag) + "tag"
 # load data
 with open("output/t_make_plot_rescale/" + filename + ".csv") as f:
     for each_line in f:

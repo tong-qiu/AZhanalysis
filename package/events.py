@@ -81,7 +81,7 @@ def load_CxAODs(directories, sample_names, branches, debug=False, sys_name=None,
                     if not file_is_missing:
                         break
             if not sample_exist:
-                print("Warning: cannot find sample " + file_address + each_sample_name + ".")
+                print("Warning: cannot find sample " + file_address + ".")# + each_sample_name + ".")
     if not data.keys():
         return False
     if mata:
