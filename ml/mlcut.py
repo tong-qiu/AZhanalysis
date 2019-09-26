@@ -1,17 +1,17 @@
 import numpy as np
 
 def cut_btag_more(data, b):
-    mask = data[b'nbJets'] > b
+    mask = data[b'nTags'] > b
     return mask
 
 def cut_btag_is(data, b):
     #mask = data[b"nSigJets"] >= 2
-    mask = data[b'nbJets'] == b
+    mask = data[b'nTags'] == b
     return mask
 
 def cut_btag(data):
     #mask = data[b"nSigJets"] >= 2
-    mask = data[b'nbJets'] == 0
+    mask = data[b'nTags'] == 0
     return mask
 
 def cut_basic(data):
@@ -29,8 +29,8 @@ def ptll_cut(mvh):
 
 def srcut(data):
     mask = data[b"nSigJets"] >= 2 # essential
-    #mask = np.logical_and(data[b'nbJets'] < 3, mask)
-    #mask = np.logical_and(data[b'nbJets'] == 2, mask)
+    #mask = np.logical_and(data[b'nTags'] < 3, mask)
+    #mask = np.logical_and(data[b'nTags'] == 2, mask)
     mask = np.logical_and(data[b"passedTrigger"] == 1, mask)
     mask = np.logical_and(data[b'flavL1'] == data[b'flavL2'], mask)
     mask = np.logical_and(np.logical_or(data[b'flavL1'] == 1, data[b'chargeL1'] != data[b'chargeL2']), mask)
@@ -53,7 +53,7 @@ def srcut(data):
 
 def crmbbcut(data):
     mask = data[b"nSigJets"] >= 2 # essential
-    #mask = np.logical_and(data[b'nbJets'] >= 1, mask)
+    #mask = np.logical_and(data[b'nTags'] >= 1, mask)
     mask = np.logical_and(data[b"passedTrigger"] == 1, mask)
     mask = np.logical_and(data[b'flavL1'] == data[b'flavL2'], mask)
     mask = np.logical_and(np.logical_or(data[b'flavL1'] == 1, data[b'chargeL1'] != data[b'chargeL2']), mask)
@@ -77,7 +77,7 @@ def crmbbcut(data):
 
 def crtopcut(data):
     mask = data[b"nSigJets"] >= 2 # essential
-    mask = np.logical_and(data[b'nbJets'] < 2, mask)
+    mask = np.logical_and(data[b'nTags'] < 2, mask)
     mask = np.logical_and(data[b"passedTrigger"] == 1, mask)
     mask = np.logical_and(data[b'flavL1'] != data[b'flavL2'], mask)
     mask = np.logical_and(data[b'chargeL1'] != data[b'chargeL2'], mask)

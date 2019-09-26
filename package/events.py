@@ -145,6 +145,27 @@ def load_CxAOD(directory, sample_names, branches, debug=False, sys_name=None, **
         return False
     return Events(data, weight, **kwargs)
 
+def saveevents(eventslist, filename, treename="Nominal"):
+    alldata = None
+    for each in eventslist:
+        if alldata is None:
+            alldata = each
+        else:
+            alldata = alldata + each
+    branchdict = {"weight": np.float32}
+    extend_branchdict = {"weight": alldata.weight}
+    for eachkey in alldata.data.keys():
+        branchdict[eachkey.decode("utf-8")] = np.float32
+        extend_branchdict[eachkey.decode("utf-8")] = alldata.data[eachkey]
+    tree = uproot.newtree(branchdict, compression=None)
+    with uproot.recreate(filename + ".root", compression=None) as f:
+        f[treename] = tree
+        for eachkey, eachcontent in extend_branchdict.items():
+            #print(eachkey, eachcontent.shape, np.mean(eachcontent))
+            f[treename][eachkey].newbasket(eachcontent.tolist())
+        #f[treename].extend(extend_branchdict)
+
+
 def significant(backgrounds, signal, variable, bins, scale=1, logsig=True):
     backgrounds_content = backgrounds.binned_weight(variable, bins, scale)
     signal_content = signal.binned_weight(variable, bins, scale)

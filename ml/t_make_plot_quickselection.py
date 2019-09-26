@@ -12,6 +12,7 @@ import zlib
 
 lib_path = os.path.abspath(os.path.join(__file__, '..', '..'))
 sys.path.append(lib_path)
+#sys.path.append('../package')
 
 from package.events import *
 from mlcut import *
@@ -20,10 +21,7 @@ from curveplot import *
 from cutstring import *
 import multiprocessing
 
-# define number of b-tagged jets
-ntag = 1
-
-# function to load easytrees
+# function to load easytrees and perform event selections
 def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, m_allsamples, matas=None):
     sample = load_CxAODs(sample_directory,each_names,branches_list_data, debug, 
                         colour=each_color,alias=each_alias,matanames=matas)
@@ -42,6 +40,7 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
         # This is a value-based event selection. The easytree branch which contains the values 
         # should be defined in the "branches_list_data" list.
         # The event selection criterion is defined in ml/mlcut.py
+        ntag = 1
         sample.cut_parameter(cut_btag_is, ntag)
 
         # other user defined event selection
@@ -57,9 +56,11 @@ if __name__ == '__main__':
     debug = False
     # Do event selection?
     cut = True
+    # save event after selection as root file?
+    saveevent = True
     tag = "a"
     # directory of the easytrees
-    sample_directory = ["../sample/CxAOD32_06" + tag + "/"]
+    sample_directory = ["../sample/student3" + tag + "/"]
     data = ["data16", "data15"]
     # Text on the plot. Delete if not needed.
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
@@ -81,18 +82,25 @@ if __name__ == '__main__':
     #     sample_directory = ["../sample/CxAOD32_06a/", "../sample/CxAOD32_06d/", "../sample/CxAOD32_06e/"]
     #     data = ["data16", "data15", "data17", "data18"]
 
-    # define samples here
+    # define root files of each backgorund here. 
+    # background files. Do not change!
+    # --------------------------------------------------------------------
     mc_Wlvjet = ["Wenu_Sh221", "WenuB_Sh221", "WenuC_Sh221", "WenuL_Sh221", "Wmunu_Sh221", "WmunuB_Sh221", "WmunuC_Sh221", "WmunuL_Sh221", "Wtaunu_Sh221", "WtaunuB_Sh221", "WtaunuC_Sh221", "WtaunuL_Sh221"]
     mc_Zlljet1 = ["Zee_Sh221", "ZeeB_Sh221"]
     mc_Zlljet2 = ["ZeeC_Sh221", "ZeeL_Sh221"]
     mc_Zlljet3 = ["Zmumu_Sh221", "ZmumuB_Sh221"]
     mc_Zlljet4 = ["ZmumuC_Sh221", "ZmumuL_Sh221"]
     mc_Zlljet5 = ["Ztautau_Sh221", "ZtautauB_Sh221", "ZtautauC_Sh221", "ZtautauL_Sh221", "Znunu_Sh221", "ZnunuB_Sh221", "ZnunuC_Sh221", "ZnunuL_Sh221"]
-    mc_tt_bar = [ "ttbar_nonallhad_PwPy8", "ttbar_allhad_PwPy8"]#, "ttbar_dilep_PwPy8"]
+    mc_tt_bar = [ "ttbar_nonallhad_PwPy8", "ttbar_allhad_PwPy8", "ttbar_dilep_PwPy8"]
     mc_singletop = ["stops_PwPy8", "stopt_PwPy8", "stopWt_PwPy8"]
     mc_Diboson = ["WqqWlv_Sh221", "WqqZll_Sh221", "WqqZvv_Sh221", "ZqqZll_Sh221", "ZqqZvv_Sh221", "WlvZqq_Sh221", "ggZqqZll_Sh222", "ggWqqWlv_Sh222"]
-    bbA300 = ["bbA300"]
-    ggA300 = ["ggA300"]
+    # --------------------------------------------------------------------
+
+    # signal files
+    bbA300 = ["bbAZhllbb300"]
+    ggA300 = ["AZhllbb300"]
+
+    # signal/background to be loaded
     file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet]
     # choose a name for your backgrounds
     alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet"]
@@ -100,14 +108,14 @@ if __name__ == '__main__':
     colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm']
 
     # Variables to load.
-    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mBB', b'mVH', b'nbJets', b'flavL1', b'flavL2']
+    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mBB', b'mVH', b'nTags', b'flavL1', b'flavL2']
     # Strings to load.
     matas = ["Regime", "Description" ]
     branches_list_MC = branches_list_data
 
 
-    # Load samples
-    # Do not change
+    # Load samples and event selection
+    # Do not change!
     # --------------------------------------------------------------------
     processes = []
     manager = multiprocessing.Manager()
@@ -127,7 +135,6 @@ if __name__ == '__main__':
         print(i, each_alias + " finished.")
     print("All done.")
     all_sample_after = [each for each in all_sample]
-
     new_data_list = []
     for each in all_sample_after:
         ifpass = False
@@ -140,11 +147,10 @@ if __name__ == '__main__':
         if not ifpass:
             new_data_list.append(each)
     all_sample_after = new_data_list
-    print(all_sample_after[1].data)
     # --------------------------------------------------------------------
     # end of sample loading
 
-    # all_sample_after is a list of event.Events object. event.Events is a class which stores 
+    # all_sample_after is a list of event.Events objects. event.Events is a class which stores 
     # all the events of a background.
     # variables and methods of event.Events class you may need to use:
 
@@ -154,11 +160,33 @@ if __name__ == '__main__':
     # Event.alias: a string which stores the type of the background
     # Event.__add__: merged two event.Events object. Example: merged = Eventsobject1 + Eventsobject2
 
+    # save as root files for MVA. delete if not needed.
+    if saveevent:
+        print("Saving events for MVA training...")
+        backgroundlist = None
+        datalist = []
+        signallist = []
+        backgroundlist = []
+        for content in all_sample_after:
+            if "data" in content.alias:
+                datalist.append(content)
+            elif "A" in content.alias:
+                signallist.append(content)
+            else:
+                backgroundlist.append(content)
+        if datalist:
+            saveevents(datalist,"data")
+        if signallist:
+            saveevents(signallist,"signal")
+        if backgroundlist:
+            saveevents(backgroundlist,"backgrounds")
+    
 
     # make stack plot. delete if not needed.
-    title3="mBBcr " + str(ntag) +" btags"
+    print("Making plots...")
+    title3="mBBcr"
     direct = ""
-    name = "mbbcut-" + str(ntag) +"tag"
+    name = "mbbcut-"
     bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
     stackplot(all_sample_after,b'mVH',bins,1000.,
         xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
