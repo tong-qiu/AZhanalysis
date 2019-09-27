@@ -36,8 +36,8 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
         print("Warning: No "+each_alias+" samples found!")
     if cut and sample:
         sample.matacut(s_mbbcr)
-        #sample.cut(cut_lowmbb)
-        sample.cut(cut_highmbb)
+        sample.cut(cut_lowmbb)
+        #sample.cut(cut_highmbb)
         #sample.matacut(s_resolved)
         sample.cut_parameter(cut_btag_is, ntag)
         #sample.cut(srcut)
@@ -121,7 +121,8 @@ if __name__ == '__main__':
         bottom = 0
         middle = 0
         top = 0
-        with open("output/slopefit/" + "pTV-mbbcut-"+str(ntag)+"tagpolyfitresult.csv") as f:
+        #with open("output/slopefit/" + "pTV-mbbcut-"+str(ntag)+"tagpolyfitresult.csv") as f:
+        with open("output/slopefit/" + "pTV-highmbbcut-1tagpolyfitresult.csv") as f:
             for each in f:
                 each_array = each.split(',')
                 if top == 0:
@@ -183,9 +184,9 @@ if __name__ == '__main__':
     bins = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300]
     
 
-    title3="highmBBcr " + str(ntag) +" btags"
+    title3="lowmBBcr " + str(ntag) +" btags"
     direct = "output/t_make_plot/"
-    name = "-highmbbcut-" + str(ntag) +"tag"
+    name = "-lowmbbcuthighcorrection-" + str(ntag) +"tag"
     if rescale:
         direct = "output/t_make_plot_rescale/"
     if slopecorrection and rescale:

@@ -60,7 +60,7 @@ if __name__ == '__main__':
     saveevent = True
     tag = "a"
     # directory of the easytrees
-    sample_directory = ["../sample/student3" + tag + "/"]
+    sample_directory = ["/data/atlas/projects/AZh/" + tag + "/"]
     data = ["data16", "data15"]
     # Text on the plot. Delete if not needed.
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
@@ -91,7 +91,7 @@ if __name__ == '__main__':
     mc_Zlljet3 = ["Zmumu_Sh221", "ZmumuB_Sh221"]
     mc_Zlljet4 = ["ZmumuC_Sh221", "ZmumuL_Sh221"]
     mc_Zlljet5 = ["Ztautau_Sh221", "ZtautauB_Sh221", "ZtautauC_Sh221", "ZtautauL_Sh221", "Znunu_Sh221", "ZnunuB_Sh221", "ZnunuC_Sh221", "ZnunuL_Sh221"]
-    mc_tt_bar = [ "ttbar_nonallhad_PwPy8", "ttbar_allhad_PwPy8", "ttbar_dilep_PwPy8"]
+    mc_tt_bar = [ "ttbar_nonallhad_PwPy8", "ttbar_allhad_PwPy8", "ttbar_dilep_PwPy8"] # must include all three
     mc_singletop = ["stops_PwPy8", "stopt_PwPy8", "stopWt_PwPy8"]
     mc_Diboson = ["WqqWlv_Sh221", "WqqZll_Sh221", "WqqZvv_Sh221", "ZqqZll_Sh221", "ZqqZvv_Sh221", "WlvZqq_Sh221", "ggZqqZll_Sh222", "ggWqqWlv_Sh222"]
     # --------------------------------------------------------------------
