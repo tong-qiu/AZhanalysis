@@ -16,7 +16,7 @@ def cut_btag(data):
 
 def cut_basic(data):
     # two singal jets
-    mask = data[b"nSigJets"] >= 2 # essential
+    mask = data[b"nTags"] >= 1 # essential
     mask = np.logical_and(data[b'ptL1']/1000. > 27, mask) # essential
     mask = np.logical_and(data[b'ptL2']/1000. > 20, mask) # essential
     return mask

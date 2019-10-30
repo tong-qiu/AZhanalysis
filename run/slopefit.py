@@ -14,6 +14,7 @@ labelshift = 0
 nbtag = 1
 if nbtag == 1:
     #middle = 12
+    #labelshift = 0.55
     middle = 6
     def fitfunction1(x, p0, p1, p2):# p5, p6):
         return poly(x, p0, p1, p2)# p5, p6)
@@ -29,6 +30,26 @@ if nbtag == 2:
 
     def fitfunction2(x, p0, p1):#, p2):# p5, p6):
         return poly(x, p0, p1)#, p2)# p5, p6)
+# if nbtag == 1:
+#     labelshift = 0.55
+#     #middle = 12
+#     middle = 10
+#     def fitfunction1(x, p0, p1, p2):# p5, p6):
+#         #return poly(x, p0, p1, p2)# p5, p6)
+#         return poly(x, p0, p1)
+
+#     def fitfunction2(x, p0, p1):#, p2):# p5, p6):
+#         #return poly(x, p0, p1)#, p2)# p5, p6)
+#         return poly(x, p0)
+# if nbtag == 2:
+#     labelshift = 0.55
+#     #middle = 10
+#     middle = 6
+#     def fitfunction1(x, p0, p1, p2):# p5, p6):
+#         return poly(x, p0, p1)# p5, p6)
+
+#     def fitfunction2(x, p0, p1):#, p2):# p5, p6):
+#         return poly(x, p0, p1)#, p2)# p5, p6)
 data_point = []
 mc_point = []
 mc_error = []
@@ -36,7 +57,7 @@ bin_edge = []
 mc_point_z = []
 mc_error_z = []
 
-filename = "pTV-highmbbcut-" + str(nbtag) + "tag"
+filename = "pTV-mbbcut-" + str(nbtag) + "tag"
 # load data
 with open("output/t_make_plot_rescale/" + filename + ".csv") as f:
     for each_line in f:
@@ -83,6 +104,8 @@ diff_error = np.sqrt(data_point/ mc_point_z**2 + mc_error_other**2/ mc_point_z**
 chi2nod = []
 if middle > 0:
     popt1, pcov1 = curve_fit(fitfunction1, bin_centre[0:middle+1], diff[0:middle+1], sigma=diff_error[0:middle+1])
+    print(popt1)
+    print(np.sqrt(np.diag(pcov1)))
     r = diff[0:middle+1] - fitfunction1(bin_centre[0:middle+1], *popt1)
     chisq = sum((r / diff_error[0:middle+1]) ** 2)
     chi2nod.append(chisq/(-len(popt1) + len(bin_centre[0:middle+1])))
@@ -93,6 +116,8 @@ if middle > 0:
     diff_[middle] = fitfunction1(bin_centre[middle], *popt1)
     diff_error_[middle] = 0.00000001
 popt2, pcov2 = curve_fit(fitfunction2, bin_centre[middle:], diff_[middle:], sigma=diff_error_[middle:])
+print(popt2)
+print(np.sqrt(np.diag(pcov2)))
 r = diff[middle:] - fitfunction2(bin_centre[middle:], *popt2)
 chisq = sum((r / diff_error[middle:]) ** 2)
 chi2nod.append(chisq/(-len(popt2) + len(bin_centre[middle:])))
@@ -110,7 +135,7 @@ xs = np.linspace(bin_centre[middle], bin_centre[-1],100)
 plt.plot(xs, fitfunction2(xs, *popt2), 'g-')
 plt.xlabel("pTV(GeV)", fontsize=17)
 plt.ylabel("reweight factor", fontsize=17)
-#plt.ylim([diff.min(),10])
+#plt.ylim([0.5,1.5])
 plt.yscale("log")
 ax = plt.gca()
 plt.text(0.05, 0.1 + labelshift, "red chi2/nod: " + "{:.5f}".format(chi2nod[0]), fontsize=15, transform=ax.transAxes)

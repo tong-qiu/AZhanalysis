@@ -40,11 +40,11 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
         # This is a value-based event selection. The easytree branch which contains the values 
         # should be defined in the "branches_list_data" list.
         # The event selection criterion is defined in ml/mlcut.py
-        ntag = 1
-        sample.cut_parameter(cut_btag_is, ntag)
+        # ntag = 1
+        # sample.cut_parameter(cut_btag_is, ntag)
 
         # other user defined event selection
-        # sample.cut(crmbbcut)
+        sample.cut(cut_basic)
 
         m_allsamples.append(sample)
     if not cut:
@@ -110,7 +110,7 @@ if __name__ == '__main__':
     # Variables to load.
     branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mBB', b'mVH', b'nTags', b'flavL1', b'flavL2']
     # Strings to load.
-    matas = ["Regime", "Description" ]
+    matas = ["Regime"]#, "Description" ]
     branches_list_MC = branches_list_data
 
 
