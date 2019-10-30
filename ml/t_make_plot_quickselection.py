@@ -108,7 +108,7 @@ if __name__ == '__main__':
     colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm']
 
     # Variables to load.
-    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mBB', b'mVH', b'nTags', b'flavL1', b'flavL2']
+    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mBB', b'mVH', b'nTags', b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b'passedTrigger']
     # Strings to load.
     matas = ["Regime"]#, "Description" ]
     branches_list_MC = branches_list_data
