@@ -115,6 +115,8 @@ if __name__ == '__main__':
     if rescale:
         rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/confignormonly.cfg",
         "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
+    print(rescaledic)
+    exit(1)
     if slopecorrection:
         p1s = []
         p2s = []

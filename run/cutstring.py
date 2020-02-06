@@ -10,3 +10,6 @@ def s_merged(mata):
 def s_mbbcr(mata):
     mask = mata["Description"] == zlib.adler32(b'mBBcr')
     return mask
+def s_sr(mata):
+    mask = mata["Description"] == zlib.adler32(b'SR')
+    return mask

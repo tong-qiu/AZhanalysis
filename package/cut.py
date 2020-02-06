@@ -1,5 +1,21 @@
 import numpy as np
 
+def cut_btagin_is(data, b):
+    mask = data[b'nbTagsInFJ'] == b
+    return mask
+
+def cut_btagout_is(data, b):
+    mask = data[b'nbTagsOutsideFJ'] == b
+    return mask
+
+def cut_btagin_more(data, b):
+    mask = data[b'nbTagsInFJ'] >= b
+    return mask
+
+def cut_btagout_more(data, b):
+    mask = data[b'nbTagsOutsideFJ'] >= b
+    return mask
+
 def cut_btag_more(data, b):
     mask = data[b'nbJets'] > b
     return mask

@@ -33,9 +33,10 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
     if not sample:
         print("Warning: No "+each_alias+" samples found!")
     if cut and sample:
-        sample.matacut(s_mbbcr)
-        #sample.matacut(s_resolved)
-        sample.cut_parameter(cut_btag_is, 2)
+        sample.matacut(s_sr)
+        sample.matacut(s_merged)
+        sample.cut_parameter(cut_btagin_is, 2)
+        sample.cut_parameter(cut_btagout_more, 1)
         #sample.cut(srcut)
         #sample.cut(cut_btag)
         #sample.cut(cut_electron)
@@ -51,12 +52,10 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
     return 0
 
 if __name__ == '__main__':
-    debug = True
+    debug = False
     cut = True
-    sample_directory = ["../CxAOD31_01a/"]
+    sample_directory = ["../reduced_easytree/"]
     tag = "run2"
-    rescale = True
-    slopecorrection = True
 
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
     if tag == "a":
@@ -70,7 +69,7 @@ if __name__ == '__main__':
         sample_directory = ["../sample/CxAOD32_06" + tag + "/"]
     if tag == "run2":
         t2 = r"$\mathit{\sqrt{s}=13\:TeV,138.2\:fb^{-1}}$"
-        sample_directory = ["../sample/CxAOD32_06a/", "../sample/CxAOD32_06d/", "../sample/CxAOD32_06e/"]
+        sample_directory = ["../sample/reduced_easytree/CxAOD32_14a/", "../sample/reduced_easytree/CxAOD32_14d/", "../sample/reduced_easytree/CxAOD32_14e/"]
         #sample_directory = ["../phi/a/", "../phi/d/", "../phi/e/"]
         #sample_directory = ["../phi/a/"]
     mc_Wlvjet = ["WenuB_Sh221", "WenuC_Sh221", "WenuL_Sh221", "WmunuB_Sh221", "WmunuC_Sh221", "WmunuL_Sh221", "WtaunuB_Sh221", "WtaunuC_Sh221", "WtaunuL_Sh221"]
@@ -79,9 +78,10 @@ if __name__ == '__main__':
     mc_Zlljet3 = ["Zmumu_Sh221", "ZmumuB_Sh221"]
     mc_Zlljet4 = ["ZmumuC_Sh221", "ZmumuL_Sh221"]
     mc_Zlljet5 = ["Ztautau_Sh221", "ZtautauB_Sh221", "ZtautauC_Sh221", "ZtautauL_Sh221","Znunu_Sh221", "ZnunuB_Sh221", "ZnunuC_Sh221", "ZnunuL_Sh221"]
-    file_name_array = [mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet]
-    alias = ["Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet"]
-    colors = ['royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm']
+    mc_tt_bar = [ "ttbar_nonallhad_PwPy8", "ttbar_allhad_PwPy8", "ttbar_dilep_PwPy8"]#"ttbar_nonallhad_PwPy8", , "ttbar_allhad_PwPy8"]#"ttbar_nonallhad_PwPy8"]#, "ttbar_allhad_PwPy8"]
+    file_name_array = [mc_tt_bar]
+    alias = ["mc_tt_bar"]
+    colors = ['royalblue']
 
     mc_Wlvjet_mg = ["WenuB_MGPy8", "WenuC_MGPy8", "WenuL_MGPy8", "WmunuB_MGPy8", "WmunuC_MGPy8", "WmunuL_MGPy8", "WtaunuB_MGPy8", "WtaunuC_MGPy8", "WtaunuL_MGPy8"]
     mc_Zlljet1_mg = ["ZeeB_MGPy8"]
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     mc_Zlljet4_mg = ["ZmumuC_MGPy8", "ZmumuL_MGPy8"]
 
 
-    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mBB', b'mVH', b'nbJets', b'flavL1', b'flavL2']
+    branches_list_data = [b"EventWeight", b'nbTagsInFJ', b'nBTrkJets', b'nbTagsOutsideFJ', b'MCEventWeight_nominal', b'MCEventWeight_FSRUp', b'MCEventWeight_FSRDown']
     matas = ["Sample", "Description", "Regime"] #"Regime",
     branches_list_MC = branches_list_data
     bins = range(100,1400,50)
@@ -115,9 +115,14 @@ if __name__ == '__main__':
         each_process.join()
         print(i, each_alias + " finished.")
     print("All done.")
-    #print(rescaledic)
+
     all_sample_after = [each for each in all_sample]
+    print(all_sample_after)
 
-
-    bins = range(0,1000,40)
-    bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+    total = all_sample_after[0].weight.sum()
+    upu = (all_sample_after[0].weight*all_sample_after[0].data[b'MCEventWeight_FSRUp']/all_sample_after[0].data[b'MCEventWeight_nominal']).sum()
+    downu = (all_sample_after[0].weight*all_sample_after[0].data[b'MCEventWeight_FSRDown']/all_sample_after[0].data[b'MCEventWeight_nominal']).sum()
+    print(total)
+    print(upu)
+    print(downu)
+    print(upu/total, downu/total)

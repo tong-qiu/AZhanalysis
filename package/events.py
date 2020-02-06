@@ -218,6 +218,24 @@ def significant_error(backgrounds, signal, variable, bins, scale=1, logsig=True)
                      (each_b**2)/each_error * math.log(1 + each_error*each_s/(each_b * (each_b + each_error))))
     return math.sqrt(total)
 
+@np.vectorize
+def slope_correction_onetag(pt):
+    if pt/1000 < 375:
+        factor = 1.1021576938075288 - 0.0014741939880462277 * pt / 1000.0 + 0.0000031035281801611414 * pow(pt / 1000.0, 2)
+    else:
+        factor = 1.1269445466198418 - 0.0005418145689163624 * pt / 1000.0
+    return factor
+
+@np.vectorize
+def slope_correction_twotag(pt):
+    if pt/1000 < 325:
+        factor = 1.0584024856076684 - 0.0010002940351442906 * pt / 1000.0 + 9.882186194529778e-7 * pow(pt / 1000.0, 2)
+    else:
+        factor = 0.8052716207048838 + 0.00019194195757904213 * pt / 1000.
+    return factor
+
+
+
 class Events:
     def __init__(self, data, weight=None, mata = None,**kwargs):# color = 0,):
         self.fake_data = False
@@ -323,6 +341,9 @@ class Events:
         if self.fake_stat2_per_event is not None:
             fake_stat2_per_event = np.append(self.fake_stat2_per_event, events.fake_stat2_per_event)
         return_class = Events(data, weight)
+        if self.mata:
+            for each_key in self.mata.keys():
+                self.mata[each_key] = np.append(self.mata[each_key], events.mata[each_key])
         return_class.mata = self.mata
         return_class.colour = self.colour
         return_class.alias = self.alias
@@ -481,3 +502,11 @@ class Events:
             self.weight[mask] *= factor
         else:
             self.weight *= factor
+
+    def reverse_slope_correction(self):
+        mask_resolved = self.mata[b'Regime'] == zlib.adler32(b'resolved')
+        mask_onetag = np.logical_and(self.data[b"nTags"] == 1, mask_resolved)
+        mask_twotag = np.logical_and(self.data[b"nTags"] == 2, mask_resolved)
+        self.weight[mask_onetag] = self.weight[mask_onetag] / slope_correction_onetag(self.data[b'pTV'])
+        self.weight[mask_twotag] = self.weight[mask_twotag] / slope_correction_twotag(self.data[b'pTV'])
+

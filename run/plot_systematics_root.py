@@ -1,3 +1,9 @@
+import os
+import sys
+lib_path = os.path.abspath(os.path.join(__file__, '..', '..'))
+sys.path.append(lib_path)
+import matplotlib as mpl
+mpl.use('Agg')
 import uproot
 import numpy as np
 import package
@@ -6,6 +12,25 @@ from package.stackplot import *
 import pandas as pd
 from package.curveplot import histplot, curveplot, histplot_withsub
 from package.loadnormfactor import *
+import ROOT
+
+def loadhistbypath(path, tree, branch):
+    file = ROOT.TFile(path,"read")
+    roothist= file.Get("{}/{}".format(tree,branch))
+    nbins = roothist.GetNbinsX()
+    edge = []
+    count = []
+    errors = []
+    
+    for i in range(nbins):
+        content = roothist.GetBinContent(i)
+        error  = roothist.GetBinError(i)
+        lowedge= roothist.GetBinLowEdge(i)
+        edge.append(lowedge)
+        count.append(content)
+        errors.append(error)
+    edge.append(roothist.GetBinLowEdge(nbins))
+    return edge, count, errors
 
 def fake_data(bins, hist, variable, stat2, sys2, alias, color, rescaledic=None, rescaledicalias=None):
     is_fake_data = True
@@ -37,7 +62,8 @@ def fake_data(bins, hist, variable, stat2, sys2, alias, color, rescaledic=None, 
 
 bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
 bins = range(0,900,30)
-file = uproot.open("../sample/histo/run2dbl.root")
+path = "../sample/histo/run2dbl.root"
+file = uproot.open(path)
 region = "_mBBcr_"
 variable = "mVH"
 btag = "2tag2pjet"
@@ -47,7 +73,7 @@ dodown = True
 
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph"]
 systematics = ["SysZHFMEPSMod"]
-systematics = ["SysFT_EFF_Eigen_B_2_AntiKt4EMTopoJets"]
+#systematics = ["SysJET_CR_JET_EffectiveNP_Detector1"]
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph"]
 mc_Wlvjet = ["Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc"]
 mc_Zlljet = ["Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb"]
@@ -102,7 +128,7 @@ for each_mc_name in file_name_array + ["data"]:
     if each_mc_name == "data":
         data = fake_data(edge, count, variable, error, None, "data", 'k', rescaledic, each_mc_name)
         continue
-    data_tem = fake_data(edge, count, variable, error, None, "sys", 'b', rescaledic, each_mc_name)
+    data_tem = fake_data(edge, count, variable, error, None, "sys", 'r', rescaledic, each_mc_name)
     nominal_dic[each_mc_name] = data_tem
     if nominal is None:
         nominal = fake_data(edge, count, variable, error, None, "Nominal", 'r', rescaledic, each_mc_name)
@@ -165,23 +191,23 @@ for each_mc_name in file_name_array:
                 datasysdown = datasysdown + nominal_dic[each_mc_name]
             continue
         #alreadyfound.append(each_mc_name)
-        print("loking for: ", thenamedown)
-        histpd = file["Systematics"][thenamedown].pandas()
-        edge = []
-        count = []
-        error = []
-        for row in histpd.head(10000).itertuples():
-            edge.append(row.Index[0].left)
-            print(edge)
-            count.append(row.count)
-            error.append(row.variance)
-        edge.append(row.Index[0].right)
+        print("looking for: ", thenamedown.decode("utf-8"))
+        edge, count, error = loadhistbypath(path, "Systematics", thenamedown.decode("utf-8"))
+        # histpd = file["Systematics"][thenamedown].pandas()
+        # edge = []
+        # count = []
+        # error = []
+        # for row in histpd.head(10000).itertuples():
+        #     edge.append(row.Index[0].left)
+        #     count.append(row.count)
+        #     error.append(row.variance)
+        # edge.append(row.Index[0].right)
         if each_mc_name == "data":
             continue
-        if datasysup is None:
-            datasysup = fake_data(edge, count, variable, error, None, "sys", 'b', rescaledic, each_mc_name)
+        if datasysdown is None:
+            datasysdown = fake_data(edge, count, variable, error, None, "sys", 'y', rescaledic, each_mc_name)
         else:
-            datasysup = datasysup + fake_data(edge, count, variable, error, None, "sys", 'b', rescaledic, each_mc_name)
+            datasysdown = datasysdown + fake_data(edge, count, variable, error, None, "sys", 'y', rescaledic, each_mc_name)
     
 
     if thenameup is None:
@@ -195,23 +221,28 @@ for each_mc_name in file_name_array:
             datasysup = datasysup + nominal_dic[each_mc_name]
         continue
     #alreadyfound.append(each_mc_name)
-    print("loking for: ", thenameup)
-    histpd = file["Systematics"][thenameup].pandas()
-    edge = []
-    count = []
-    error = []
-    for row in histpd.head(10000).itertuples():
-        edge.append(row.Index[0].left)
-        count.append(row.count)
-        error.append(row.variance)
-    edge.append(row.Index[0].right)
+    print("looking for: ", thenameup.decode("utf-8"))
+    edge, count, error = loadhistbypath(path, "Systematics", thenamedown.decode("utf-8"))
+    #histpd = file["Systematics"][thenameup].pandas()
+    # edge = []
+    # count = []
+    # error = []
+    # for row in histpd.head(10000).itertuples():
+    #     edge.append(row.Index[0].left)
+    #     count.append(row.count)
+    #     error.append(row.variance)
+    # edge.append(row.Index[0].right)
     if each_mc_name == "data":
         continue
     if datasysup is None:
         datasysup = fake_data(edge, count, variable, error, None, "sys", 'b', rescaledic, each_mc_name)
     else:
         datasysup = datasysup + fake_data(edge, count, variable, error, None, "sys", 'b', rescaledic, each_mc_name)
+nominal.colour = "b"
+data.colour = "k"
+datasysup.colour = "y"
 if dodown:
+    datasysdown.colour = 'c'
     histplot_withsub([[nominal],[data], [datasysup], [datasysdown]], variable, bins,labels =["nominal","data", "sys"], xlabel=r"$p_{TV}[GeV]$", filename="1" )
     histplot_withsub([[nominal],[datasysup], [datasysdown]], variable, bins,labels =["nominal","sysup", "sysdown"], xlabel=r"$p_{TV}[GeV]$", central="nominal", filename="2" )
 else:

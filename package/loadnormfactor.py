@@ -1,4 +1,5 @@
 import re
+import yaml
 
 def loadnorm(configpath, normpath):
     sysdic = {}
@@ -56,8 +57,26 @@ def loadnorm(configpath, normpath):
                 # print(float(match.group(4)))
                 #break
 
+def generatejson(inputs):
+    resolved = {}
+    merged = {}
+    for eachbkg in inputs.keys():
+        for eachreg in inputs[eachbkg].keys():
+            if eachreg == "ALL":
+                resolved[eachbkg] = inputs[eachbkg][eachreg] + 1
+            if eachbkg not in merged:
+                merged[eachbkg] = inputs[eachbkg][eachreg] + 1
+            else:
+                merged[eachbkg] += inputs[eachbkg][eachreg]
+    dp = {"resolved": resolved, "merged": merged}
+    print(yaml.dump(dp))
 
 
 if __name__ == "__main__":
-    loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
-     "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
+    # loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
+    #  "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
+    # rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/confignormonly.cfg",
+    # "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
+    rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/pullandcorrelation/2hdm_norm/config.cfg",
+    "C:/Users/qiutt/Desktop/postreader/pullandcorrelation/2hdm_norm/GlobalFit_fitres_unconditionnal_mu0.txt")
+    generatejson(rescaledic)

@@ -1,4 +1,5 @@
-import matplotlib
+import matplotlib as mpl
+mpl.use('Agg')
 import math
 import matplotlib.pyplot as plt
 import numpy as np
@@ -141,6 +142,7 @@ def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1.
         "filename": "deltatest2",
         "log_y":False,
         "norm":False,
+        "central":"data",
         }
     for each_key in kwargs.items():
         settings[each_key[0]] = kwargs[each_key[0]]
@@ -182,11 +184,13 @@ def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1.
     # lower plot
     data_height = None
     for each_height, each_sigma2, each_label, each_width in zip(all_height, all_sigma2, all_label, bin_width):
-        if "data" in each_label:
+        #if "data" in each_label:
+        if settings["central"] in each_label:
             data_height = np.array(each_height)
             break
     for each_height, each_sigma2, each_label, each_width, each_color in zip(all_height, all_sigma2, all_label, bin_width, all_color):
-        if "data" in each_label:
+        #if "data" in each_label:
+        if settings["central"] in each_label:
             continue
 
         new_each_height = np.array(each_height)/data_height
@@ -203,9 +207,9 @@ def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1.
     ax1.tick_params(labelsize=16)
     ax1.tick_params(labelsize=16)
     ax1.set_ylabel(settings['ylabel'], fontsize=20)
-    ax2.set_ylabel('mc/data', fontsize=20)
+    ax2.set_ylabel('mc/' + settings["central"], fontsize=20)
     ax2.set_xlabel(settings['xlabel'], fontsize=20)
     font = font_manager.FontProperties(weight='bold',
                                        style='normal', size=18)
     plt.savefig(settings['filename'] + '.pdf')
-    plt.show()
+    plt.close(fig)
