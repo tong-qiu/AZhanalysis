@@ -100,7 +100,7 @@ if __name__ == '__main__':
     rebin_factor = 0
     ul = 3000
     filename = "run2_pTV_mBBcr_1tag2pjet-_.json"
-    #filename = "e_mVH_mBBcr_2tag2pjet-_.json"
+    #filename = "run2_mVH_mBBcr_1tag2pjet-_.json"
     sub_filename = filename.split('_')
     period = sub_filename[0]
     variable_name = sub_filename[1]
@@ -131,7 +131,9 @@ if __name__ == '__main__':
     if rescale:
         rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
         "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
-
+        rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/confignormonly.cfg",
+        "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
+    #print(rescaledic)
     all_sample = []
     binning = []
     with open("../../postreader/PlotTool_Root/jsonoutput/"+filename, 'r') as f:
@@ -196,7 +198,7 @@ if __name__ == '__main__':
         if rescale:
             postfix = "_rescale"
         stackplot(all_sample1,variable_name,bins,1.,
-                xlabel=r"$m_{VH}[GeV]$", title3="2 lep.," + btag +" b-tag " + region, filename="output/cpp_make_plot" + postfix + "/" + filename[0:-5], print_height=True,
+                xlabel=r"$m_{VH}[GeV]$", title3="2 lep.," + btag +" b-tag " + region, filename="output/cpp_make_plot_test" + postfix + "/" + filename[0:-5], print_height=True,
                 title2=t2,auto_colour=False, limit_y = 0.6, upper_y=2.6, sys=True, log_y=True)
     '''
     sample_list = {"Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc", "WZ", "WW",              "Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb", "ZZ", "stopWt", "stops", "stopt", "ttbar", "ggZllH125", "qqZllH125", "stopWt_dilep"}

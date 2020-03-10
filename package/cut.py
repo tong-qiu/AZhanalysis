@@ -17,17 +17,17 @@ def cut_btagout_more(data, b):
     return mask
 
 def cut_btag_more(data, b):
-    mask = data[b'nbJets'] > b
+    mask = data[b'nTags'] > b
     return mask
 
 def cut_btag_is(data, b):
     #mask = data[b"nSigJets"] >= 2
-    mask = data[b'nbJets'] == b
+    mask = data[b'nTags'] == b
     return mask
 
 def cut_btag(data):
     #mask = data[b"nSigJets"] >= 2
-    mask = data[b'nbJets'] == 0
+    mask = data[b'nTags'] == 0
     return mask
 
 def cut_lowmbb(data):
@@ -53,7 +53,7 @@ def cut_basic(data):
     mask = data[b"nSigJets"] >= 2 # essential
 
     # two b jets
-    mask = np.logical_and(data[b'nbJets'] == 2, mask) # essential
+    mask = np.logical_and(data[b'nTags'] == 2, mask) # essential
 
     #mask = np.logical_and(data[b'pTB1']/1000. > 45, mask) # essential
 
@@ -84,7 +84,7 @@ def ptll_cut(mvh):
 
 def wpjcut(data):
     mask = data[b"nSigJets"] >= 2 # essential
-    #mask = np.logical_and(data[b'nbJets'] < 3, mask)
+    #mask = np.logical_and(data[b'nTags'] < 3, mask)
     mask = np.logical_and(data[b"passedTrigger"] == 1, mask)
     mask = np.logical_and(data[b'flavL1'] == data[b'flavL2'], mask)
     mask = np.logical_and(np.logical_and(data[b'flavL1'] == 0, data[b'chargeL1'] == data[b'chargeL2']), mask)
@@ -109,8 +109,8 @@ def wpjcut(data):
     return mask
 def srcut(data):
     mask = data[b"nSigJets"] >= 2 # essential
-    #mask = np.logical_and(data[b'nbJets'] < 3, mask)
-    #mask = np.logical_and(data[b'nbJets'] == 2, mask)
+    #mask = np.logical_and(data[b'nTags'] < 3, mask)
+    #mask = np.logical_and(data[b'nTags'] == 2, mask)
     mask = np.logical_and(data[b"passedTrigger"] == 1, mask)
     mask = np.logical_and(data[b'flavL1'] == data[b'flavL2'], mask)
     mask = np.logical_and(np.logical_or(data[b'flavL1'] == 1, data[b'chargeL1'] != data[b'chargeL2']), mask)
@@ -133,7 +133,7 @@ def srcut(data):
 
 def crmbbcut(data):
     mask = data[b"nSigJets"] >= 2 # essential
-    #mask = np.logical_and(data[b'nbJets'] >= 1, mask)
+    #mask = np.logical_and(data[b'nTags'] >= 1, mask)
     mask = np.logical_and(data[b"passedTrigger"] == 1, mask)
     mask = np.logical_and(data[b'flavL1'] == data[b'flavL2'], mask)
     mask = np.logical_and(np.logical_or(data[b'flavL1'] == 1, data[b'chargeL1'] != data[b'chargeL2']), mask)
@@ -156,7 +156,7 @@ def crmbbcut(data):
 
 def crlowmbbcut(data):
     mask = data[b"nSigJets"] >= 2 # essential
-    mask = np.logical_and(data[b'nbJets'] == 2, mask)
+    mask = np.logical_and(data[b'nTags'] == 2, mask)
     mask = np.logical_and(data[b"passedTrigger"] == 1, mask)
     mask = np.logical_and(data[b'flavL1'] == data[b'flavL2'], mask)
     mask = np.logical_and(np.logical_or(data[b'flavL1'] == 1, data[b'chargeL1'] != data[b'chargeL2']), mask)
@@ -179,7 +179,7 @@ def crlowmbbcut(data):
 
 def crhighmbbcut(data):
     mask = data[b"nSigJets"] >= 2 # essential
-    mask = np.logical_and(data[b'nbJets'] >= 0, mask)
+    mask = np.logical_and(data[b'nTags'] >= 0, mask)
     mask = np.logical_and(data[b"passedTrigger"] == 1, mask)
     mask = np.logical_and(data[b'flavL1'] == data[b'flavL2'], mask)
     mask = np.logical_and(np.logical_or(data[b'flavL1'] == 1, data[b'chargeL1'] != data[b'chargeL2']), mask)
@@ -201,7 +201,7 @@ def crhighmbbcut(data):
 
 def crtopcut(data):
     mask = data[b"nSigJets"] >= 2 # essential
-    mask = np.logical_and(data[b'nbJets'] < 2, mask)
+    mask = np.logical_and(data[b'nTags'] < 2, mask)
     mask = np.logical_and(data[b"passedTrigger"] == 1, mask)
     mask = np.logical_and(data[b'flavL1'] != data[b'flavL2'], mask)
     mask = np.logical_and(data[b'chargeL1'] != data[b'chargeL2'], mask)
@@ -232,7 +232,7 @@ def cut_full(data):
     mask = np.logical_and(data[b"passedTrigger"] == 1, mask)
 
     # two b jets
-    mask = np.logical_and(data[b'nbJets'] == 2, mask) # essential
+    mask = np.logical_and(data[b'nTags'] == 2, mask) # essential
 
     mask = np.logical_and(data[b'pTB1']/1000. > 45, mask) # essential
 
@@ -271,7 +271,7 @@ def function_cut_full_ptl2(ptl2):
 def cut_full_test2(data):
     # two singal jets
     mask = data[b"nSigJets"] == 2
-    mask = np.logical_and(data[b'nbJets'] == 2, mask)
+    mask = np.logical_and(data[b'nTags'] == 2, mask)
     mask = np.logical_and(np.logical_and(80 < data[b"mLL"]/1000., 100 > data[b"mLL"]/1000.), mask) # essential
     #mask = np.logical_and(96 < data[b"mLL"]/1000., mask) # essential
     #mask = np.logical_and(data[b"MET"]>60,mask)
@@ -285,7 +285,7 @@ def cut_full_test2(data):
 def cut_full_test1(data):
     # two singal jets
     mask = data[b"nSigJets"] == 2
-    #mask = np.logical_and(data[b'nbJets'] == 2, mask)
+    #mask = np.logical_and(data[b'nTags'] == 2, mask)
     mask = np.logical_and(np.logical_and(80 < data[b"mLL"]/1000., 100 > data[b"mLL"]/1000.), mask) # essential
     #mask = np.logical_and(96 < data[b"mLL"]/1000., mask) # essential
     #mask = np.logical_and(data[b"MET"]>60,mask)
@@ -299,7 +299,7 @@ def cut_full_test1(data):
 def cut_full_test3(data):
     # two singal jets
     mask = data[b"nSigJets"] == 2
-    mask = np.logical_and(data[b'nbJets'] == 2, mask)
+    mask = np.logical_and(data[b'nTags'] == 2, mask)
     mask = np.logical_and(np.logical_or(80 > data[b"mLL"]/1000., 100 < data[b"mLL"]/1000.), mask) # essential
     #mask = np.logical_and(96 < data[b"mLL"]/1000., mask) # essential
     mask = np.logical_and(data[b"MET"]>60,mask)

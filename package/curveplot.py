@@ -200,7 +200,7 @@ def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1.
         #     new_each_height = new_each_height + 0.1
         ax2.hist(bin_centre, bins, weights=new_each_height, label=each_label, histtype=u'step', color=each_color)
     ax2.plot([bins[0], bins[np.size(bins)-1]], [1, 1], linestyle='--', color='k')
-    ax2.set_ylim([0.5, 1.5])
+    #ax2.set_ylim([0.99, 1.01])
     if len(all_height) > 1:
         ax1.legend(loc='upper right',prop={'size': 25})
     ax1.get_xaxis().set_ticks([])

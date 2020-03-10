@@ -27,16 +27,19 @@ def poly(x, argv):
         s += x**i * each
     return s
 
+def fitfunction(x, p0, p1, p2, p4):
+    y = np.zeros(len(x))
+    y += (p0 + p1 * 40 + p2 * 40**2) * (x <= 40)
+    y += (p0 + p1 * x + p2 * x**2) * (x <= p4) * (x > 40)
+    y += (p0 + p1 * p4 + p2 * p4**2) * (x > p4)
+    return y
+
 def fitfunction_real(x, p0, p1, p2, p4):
+    if x < 40:
+        return p0 + p1 * 40 + p2 * 40**2
     if x < p4:
         return p0 + p1 * x + p2 * x**2
     return p0 + p1 * p4 + p2 * p4**2
-
-def fitfunction(x, p0, p1, p2, p4):
-    y = np.zeros(len(x))
-    y += (p0 + p1 * x + p2 * x**2) * (x <= p4)
-    y += (p0 + p1 * p4 + p2 * p4**2) * (x > p4)
-    return y
 
 def autobin(data_list, bins, alias=None, variable=b"pTV"):
     new_data = None
@@ -138,7 +141,7 @@ if __name__ == '__main__':
     sample_directory = ["../CxAOD31_01a/"]
     tag = "run2"
     rescale = True
-    slopecorrection = False
+    slopecorrection = True
 
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
     if tag == "a":
@@ -196,34 +199,13 @@ if __name__ == '__main__':
 
     if slopecorrection:
         p1s = []
-        p2s = []
-        bottom = 0
-        middle = 0
-        top = 0
         with open("output/slopefit/" + "pTV-mbbcut-"+str(ntag)+"tagpolyfitresult.csv") as f:
-        #with open("output/slopefit/" + "pTV-mbbcut-1tagpolyfitresult.csv") as f:
-            for each in f:
-                each_array = each.split(',')
-                if top == 0:
-                    bottom = float(each_array[0])
-                    middle = float(each_array[1])
-                    top = float(each_array[2])
-                elif not p1s:
-                    p1s = each_array[0:-1]
-                else:
-                    p2s = each_array[0:-1]
-        for i in range(len(p1s)):
-            p1s[i] = float(p1s[i])
-            p2s[i] = float(p2s[i])
-        print(p1s,p2s)
-        # p1s = []
-        # with open("output/slopefit/" + "pTV-mbbcut-"+str(ntag)+"tagpolyfitresult.csv") as f:
-        #     for each_line in f:
-        #         p1s = each_line.split(',')
-        #         for i in range(len(p1s)-1):
-        #             p1s[i] = float(p1s[i])
-        #         print(p1s)
-        #         break
+            for each_line in f:
+                p1s = each_line.split(',')
+                for i in range(len(p1s)-1):
+                    p1s[i] = float(p1s[i])
+                print(p1s)
+                break
     processes = []
     manager = multiprocessing.Manager()
     all_sample = manager.list()
@@ -256,20 +238,11 @@ if __name__ == '__main__':
                         all_sample_after[i].rescale(factor, mask)
 
     if slopecorrection:
+        all_sample_after_backup = copy.deepcopy(all_sample_after)
         print("Performing slope correction...")
         for i in range(len(all_sample_after)):
-            mask1 = all_sample_after[i].data[b'pTV']/1000. < middle
-            mask2 = all_sample_after[i].data[b'pTV']/1000. >= middle
-            mask2 = np.logical_and(all_sample_after[i].data[b'pTV']/1000. < top, mask2)
-            print("before", all_sample_after[i].weight.sum())
-            if True in mask1:
-                all_sample_after[i].weight[mask1] = all_sample_after[i].weight[mask1] * (poly(all_sample_after[i].data[b'pTV'][mask1]/1000., p1s))
-            if True in mask2:
-                all_sample_after[i].weight[mask2] = all_sample_after[i].weight[mask2] * (poly(all_sample_after[i].data[b'pTV'][mask2]/1000., p2s))
+            all_sample_after[i].weight = all_sample_after[i].weight * (fitfunction(all_sample_after[i].data[b'pTV']/1000., p1s[0], p1s[1], p1s[2], p1s[3]))
             print("after", all_sample_after[i].weight.sum())
-        # for i in range(len(all_sample_after)):
-        #     all_sample_after[i].weight = all_sample_after[i].weight * (fitfunction(all_sample_after[i].data[b'pTV']/1000., p1s[0], p1s[1], p1s[2], p1s[3]))
-        #     print("after", all_sample_after[i].weight.sum())
     bins = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300]
     
 
@@ -279,7 +252,7 @@ if __name__ == '__main__':
     if rescale:
         direct = "output/t_make_plot_rescale/"
     if slopecorrection and rescale:
-        direct = "output/t_make_plot_rescale_slopecorrection/"
+        direct = "output/t_make_plot_rescale_slopecorrection_new/"
     if slopecorrection and not rescale:
         direct = "output/t_make_plot_slopecorrection/"
 
@@ -334,6 +307,80 @@ if __name__ == '__main__':
 
         title3="highmBBcr " + str(ntag) +" btags"
         name = "-highmbbcut-" + str(ntag) +"tag"
+        bins = range(0,1400,20)
+        bins = autobin_withdata(all_sample_after2, bins, alias="Zlljet", variable=b"pTV")
+        print(bins)
+        chi2, nod = stackplot(all_sample_after2,b'pTV',bins,1000.,
+                xlabel=r"$p_{TV}[GeV]$", title3=title3, filename=direct + "pTV" + name, print_height=True,
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+        print("pTV", chi2, nod)
+        bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+        chi2, nod = stackplot(all_sample_after2,b'mVH',bins,1000.,
+                xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+        print("mVH", chi2, nod)
+        bins = range(20, 200, 1)
+        stackplot(all_sample_after2,b'mBBres',bins,1000.,
+                xlabel=r"$m_{BB}[GeV]$", title3=title3, filename=direct + "mBB" + name, print_height=True,
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=False, printzpjets=True, chi2=True)
+
+
+    if slopecorrection:
+        all_sample_after1 = copy.deepcopy(all_sample_after_backup)
+        all_sample_after2 = copy.deepcopy(all_sample_after_backup)
+
+        for i in range(len(all_sample_after)):
+            all_sample_after1[i].cut(cut_lowmbb)
+            all_sample_after2[i].cut(cut_highmbb)
+
+        print("Performing slope correction for low...")
+        p1s = []
+        with open("output/slopefit/" + "pTV-highmbbcut-"+str(ntag)+"tagpolyfitresult.csv") as f:
+            for each_line in f:
+                p1s = each_line.split(',')
+                for i in range(len(p1s)-1):
+                    p1s[i] = float(p1s[i])
+                print(p1s)
+                break
+        for i in range(len(all_sample_after1)):
+            all_sample_after1[i].weight = all_sample_after1[i].weight * (fitfunction(all_sample_after1[i].data[b'pTV']/1000., p1s[0], p1s[1], p1s[2], p1s[3]))
+            print("after", all_sample_after1[i].weight.sum())
+
+        print("Performing slope correction for high...")
+        p1s = []
+        with open("output/slopefit/" + "pTV-lowmbbcut-"+str(ntag)+"tagpolyfitresult.csv") as f:
+            for each_line in f:
+                p1s = each_line.split(',')
+                for i in range(len(p1s)-1):
+                    p1s[i] = float(p1s[i])
+                print(p1s)
+                break
+        for i in range(len(all_sample_after2)):
+            all_sample_after2[i].weight = all_sample_after2[i].weight * (fitfunction(all_sample_after2[i].data[b'pTV']/1000., p1s[0], p1s[1], p1s[2], p1s[3]))
+            print("after", all_sample_after2[i].weight.sum())
+
+        title3="lowmBBcr " + str(ntag) +" btags"
+        name = "-lowmbbcuthighcorrection-" + str(ntag) +"tag"
+        bins = range(0,1400,20)
+        bins = autobin_withdata(all_sample_after1, bins, alias="Zlljet", variable=b"pTV")
+        print(bins)
+        chi2, nod = stackplot(all_sample_after1,b'pTV',bins,1000.,
+                xlabel=r"$p_{TV}[GeV]$", title3=title3, filename=direct + "pTV" + name, print_height=True,
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+        print("pTV", chi2, nod)
+        bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+        chi2, nod = stackplot(all_sample_after1,b'mVH',bins,1000.,
+                xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+        print("mVH", chi2, nod)
+        bins = range(20, 200, 1)
+        stackplot(all_sample_after1,b'mBBres',bins,1000.,
+                xlabel=r"$m_{BB}[GeV]$", title3=title3, filename=direct + "mBB" + name, print_height=True,
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=False, printzpjets=True, chi2=True)
+
+
+        title3="highmBBcr " + str(ntag) +" btags"
+        name = "-highmbbcutlowcorrection-" + str(ntag) +"tag"
         bins = range(0,1400,20)
         bins = autobin_withdata(all_sample_after2, bins, alias="Zlljet", variable=b"pTV")
         print(bins)

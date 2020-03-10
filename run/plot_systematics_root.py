@@ -62,9 +62,9 @@ def fake_data(bins, hist, variable, stat2, sys2, alias, color, rescaledic=None, 
 
 bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
 bins = range(0,900,30)
-path = "../sample/histo/run2dbl.root"
+path = "../sample/histo/run2nodbl.root"
 file = uproot.open(path)
-region = "_mBBcr_"
+region = "SR"
 variable = "mVH"
 btag = "2tag2pjet"
 rescale = False
@@ -72,10 +72,10 @@ dodown = True
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_VlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph", "SysMODEL_ZlJets_MadGraph"]
 
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph"]
-systematics = ["SysZHFMEPSMod"]
-systematics = ["SysZHFNNPDFalpha"]
+#systematics = ["SysFT_EFF_Eigen_Light_0_AntiKtVR30Rmax4Rmin02TrackJets"]
+#systematics = ["SysZHFNNPDFalpha"]
 #systematics = ["SysJET_CR_JET_EffectiveNP_Detector1"]
-systematics = ["SysMODEL_VHFJets_MadGraph"]
+systematics = ["ttbarMatchMod"]
 mc_Wlvjet = ["Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc"]
 mc_Zlljet = ["Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb"]
 mc_tt_bar = ["ttbar"]
@@ -250,11 +250,11 @@ datasysup.colour = "y"
 if dodown:
     datasysdown.colour = 'c'
     print(np.sum(datasysup.weight), np.sum(datasysdown.weight))
-    histplot_withsub([[nominal],[data], [datasysup], [datasysdown]], variable, bins,labels =["nominal","data", "sysup", "sysdown"], xlabel=r"$p_{TV}[GeV]$", filename="data_" + systematics[0] )
-    histplot_withsub([[nominal],[datasysup], [datasysdown]], variable, bins,labels =["nominal","sysup", "sysdown"], xlabel=r"$p_{TV}[GeV]$", central="nominal", filename="nominal_" + systematics[0] )
+    histplot_withsub([[nominal],[data], [datasysup], [datasysdown]], variable, bins,labels =["nominal","data", "sysup", "sysdown"], xlabel=r"$m_{VH}[GeV]$", filename="data_" + systematics[0] )
+    histplot_withsub([[nominal],[datasysup], [datasysdown]], variable, bins,labels =["nominal","sysup", "sysdown"], xlabel=r"$m_{VH}[GeV]$", central="nominal", filename="nominal_" + systematics[0] )
 else:
-    histplot_withsub([[nominal],[data], [datasysup]], variable, bins,labels =["nominal","data", "sys"], xlabel=r"$p_{TV}[GeV]$", filename="data_" + systematics[0] )
-    histplot_withsub([[nominal],[datasysup]], variable, bins,labels =["nominal","data", "sys"], xlabel=r"$p_{TV}[GeV]$", central="nominal", filename="nominal_" + systematics[0])
+    histplot_withsub([[nominal],[data], [datasysup]], variable, bins,labels =["nominal","data", "sys"], xlabel=r"$m_{VH}[GeV]$", filename="data_" + systematics[0] )
+    histplot_withsub([[nominal],[datasysup]], variable, bins,labels =["nominal","data", "sys"], xlabel=r"$m_{VH}[GeV]$", central="nominal", filename="nominal_" + systematics[0])
 # height_nominal, sigma2_mominal = nominal.binned_weight_variation(variable,bins,1)
 # height_data, sigma2_data = data.binned_weight_variation(variable,bins,1)
 # height_datasys, sigma2_datasys = datasys.binned_weight_variation(variable,bins,1)

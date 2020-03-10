@@ -7,12 +7,13 @@ from matplotlib import rc, rcParams
 from events import *
 import matplotlib.font_manager as font_manager
 import matplotlib.patches as mpatches
-
+import copy
 def nevent(asample):
     thesum = sum(asample.weight)
     return thesum#len(asample.data[varible_to_plot])
 
 def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
+    data_list = copy.deepcopy(data_list)
     #rc('text', usetex=True)
     #rc('font',family='Times New Roman')
     rcParams['mathtext.fontset'] = 'custom'

@@ -96,8 +96,8 @@ def bincheck(orginal, userbin):
 
 if __name__ == '__main__':
     rebin_factor = 1
-    filename = "a_mVH_SR_2tag2pjet-_.json"
-    #filename = "e_mVH_mBBcr_2tag2pjet-_.json"
+    #filename = "a_mVH_SR_2tag2pjet-_.json"
+    filename = "run2_pTV_mBBcr_1tag2pjet-_.json"
     sub_filename = filename.split('_')
     period = sub_filename[0]
     variable_name = sub_filename[1]
@@ -113,7 +113,7 @@ if __name__ == '__main__':
     if period == "e":
         t2 = r"$\mathit{\sqrt{s}=13\:TeV,58.5\:fb^{-1}}$"
     if period == "run2":
-        t2 = r"$\mathit{\sqrt{s}=13\:TeV,138.2\:fb^{-1}}$"
+        t2 = r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$"
     
     mc_Wlvjet = ["Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc"]
     mc_Zlljet = ["Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb"]
@@ -147,9 +147,9 @@ if __name__ == '__main__':
                             sys = np.array(jsondic["nominal"]["syst"])**2
                             sys_done = True
                         if data == "nodata":
-                            data = fake_data(binning,content,"mVH",stat**2,sys,each_alias,each_color)
+                            data = fake_data(binning,content,variable_name,stat**2,sys,each_alias,each_color)
                         else: 
-                            data = data + fake_data(binning,content,"mVH",stat**2,sys,each_alias,each_color)
+                            data = data + fake_data(binning,content,variable_name,stat**2,sys,each_alias,each_color)
                     all_sample.append(data)
                 #all_sample[0].fake_sys2_per_event = np.array(jsondic["nominal"]["syst"])**2
             if i == 1:
@@ -157,7 +157,7 @@ if __name__ == '__main__':
                 content = jsondic["nominal"]["content"]
                 stat = np.array(jsondic["nominal"]["stat"])
                 sys = [0 for each in content]
-                data = fake_data(binning,content,"mVH",stat**2,sys,"data",'k')
+                data = fake_data(binning,content,variable_name,stat**2,sys,"data",'k')
                 all_sample.append(data)
         bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
         bincheck(binning, bins)
@@ -168,7 +168,7 @@ if __name__ == '__main__':
                 continue
             all_sample1.append(each)
         stackplot(all_sample1,variable_name,bins,1.,
-                xlabel=r"$m_{VH}[GeV]$", title3="2 lep.," + btag +" b-tag " + region, filename="output/cpp_make_plot/" + filename[0:-5], print_height=False,
+                xlabel=r"$m_{VH}[GeV]$", title3="2 lep.," + btag +" b-tag " + region, filename="output/cpp_make_plot_test/" + filename[0:-5], print_height=False,
                 title2=t2,auto_colour=False, limit_y = 0.6, upper_y=2.6, sys=True, log_y=True)
     '''
     sample_list = {"Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc", "WZ", "WW",              "Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb", "ZZ", "stopWt", "stops", "stopt", "ttbar", "ggZllH125", "qqZllH125", "stopWt_dilep"}

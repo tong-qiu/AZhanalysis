@@ -21,7 +21,7 @@ def defaulthash(s):
 def load_CxAODs(directories, sample_names, branches, debug=False, sys_name=None, matanames=None, **kwargs):
     step_of_loop = 999999999
     if debug:
-        step_of_loop = 1000
+        step_of_loop = 30000
     data = dict()
     weight = []
     mata = {}

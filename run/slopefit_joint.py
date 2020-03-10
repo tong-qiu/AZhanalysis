@@ -3,6 +3,8 @@ from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from decimal import Decimal
 from copy import deepcopy
+from scipy import interpolate
+import scipy.optimize as sio
 
 def poly(x, *argv):
     s = 0
@@ -10,43 +12,53 @@ def poly(x, *argv):
         s += x**i * each
     return s
 
+# def fitfunction(x, p0, p1, p2, p4):
+#     y = np.zeros(len(x))
+#     y += (p0 + p1 * x + p2 * x**2) * (x <= p4)
+#     y += (p0 + p1 * p4 + p2 * p4**2) * (x > p4)
+#     return y
+def fitfunction(x, p0, p1, p2, p4):
+    y = np.zeros(len(x))
+    y += (p0 + p1 * 40 + p2 * 40**2) * (x <= 40)
+    y += (p0 + p1 * x + p2 * x**2) * (x <= p4) * (x > 40)
+    y += (p0 + p1 * p4 + p2 * p4**2) * (x > p4)
+    return y
+
+
+# def fitfunction2(x, p0, p1, p2, p4):
+#     y = np.zeros(len(x))
+#     y += (p0 + p1 * x + p2 * x**2) * (x <= p4)
+#     y += (p0 + p1 * p4 + p2 * p4**2) * (x > p4)
+#     return y
+
+# def fitfunction_real(x, p0, p1, p2, p4):
+#     if x < p4:
+#         return p0 + p1 * x + p2 * x**2
+#     return p0 + p1 * p4 + p2 * p4**2
+def fitfunction_real(x, p0, p1, p2, p4):
+    if x < 40:
+        return p0 + p1 * 40 + p2 * 40**2
+    if x < p4:
+        return p0 + p1 * x + p2 * x**2
+    return p0 + p1 * p4 + p2 * p4**2
 labelshift = 0
-nbtag = 2
-if nbtag == 1:
-    #middle = 12
-    labelshift = 0.55
-    middle = 6
-    def fitfunction1(x, p0, p1, p2):# p5, p6):
-        return poly(x, p0, p1, p2)# p5, p6)
-
-    def fitfunction2(x, p0, p1):#, p2):# p5, p6):
-        return poly(x, p0, p1)#, p2)# p5, p6)
-if nbtag == 2:
-    labelshift = 0.55
-    #middle = 10
-    middle = 5
-    def fitfunction1(x, p0, p1, p2):# p5, p6):
-        return poly(x, p0, p1, p2)# p5, p6)
-
-    def fitfunction2(x, p0, p1):#, p2):# p5, p6):
-        return poly(x, p0, p1)#, p2)# p5, p6)
+nbtag = 1
+labelshift = 0.55
 # if nbtag == 1:
-#     labelshift = 0.55
 #     #middle = 12
-#     middle = 10
+#     labelshift = 0.55
+#     middle = 6
 #     def fitfunction1(x, p0, p1, p2):# p5, p6):
-#         #return poly(x, p0, p1, p2)# p5, p6)
-#         return poly(x, p0, p1)
+#         return poly(x, p0, p1, p2)# p5, p6)
 
 #     def fitfunction2(x, p0, p1):#, p2):# p5, p6):
-#         #return poly(x, p0, p1)#, p2)# p5, p6)
-#         return poly(x, p0)
+#         return poly(x, p0, p1)#, p2)# p5, p6)
 # if nbtag == 2:
 #     labelshift = 0.55
 #     #middle = 10
-#     middle = 6
+#     middle = 5
 #     def fitfunction1(x, p0, p1, p2):# p5, p6):
-#         return poly(x, p0, p1)# p5, p6)
+#         return poly(x, p0, p1, p2)# p5, p6)
 
 #     def fitfunction2(x, p0, p1):#, p2):# p5, p6):
 #         return poly(x, p0, p1)#, p2)# p5, p6)
@@ -58,7 +70,6 @@ mc_point_z = []
 mc_error_z = []
 
 filename = "pTV-mbbcut-" + str(nbtag) + "tag"
-print(filename)
 # load data
 with open("output/t_make_plot_rescale/" + filename + ".csv") as f:
     for each_line in f:
@@ -101,46 +112,55 @@ mc_o = mc_point - mc_point_z
 diff = (data_point - mc_o) /mc_point_z
 diff_error = np.sqrt(data_point/ mc_point_z**2 + mc_error_other**2/ mc_point_z**2  + (data_point - mc_o)**2/  mc_point_z**4 * mc_error_z**2)
 
+# xnew = np.arange(0, 1300, 1)
+# tck = interpolate.splrep(bin_centre, diff, k=5, w =1/diff_error, s = 40)
+# ynew = interpolate.splev(xnew, tck, der=0)
+
+# cs = interpolate.CubicSpline(bin_centre, diff, bc_type =((1, 0.0), (1, 0.0)))
+
+# plt.figure()
+# # plt.plot(xnew, ynew, 'k')
+# plt.plot(xnew, cs(xnew), 'k')
+# plt.errorbar(bin_centre, diff, yerr=diff_error, fmt='o')
+# #plt.yscale("log")
+# plt.title('Cubic-spline interpolation')
+# plt.show()
+
 #fit
 chi2nod = []
-if middle > 0:
-    popt1, pcov1 = curve_fit(fitfunction1, bin_centre[0:middle+1], diff[0:middle+1], sigma=diff_error[0:middle+1])
-    print(popt1)
-    print(np.sqrt(np.diag(pcov1)))
-    r = diff[0:middle+1] - fitfunction1(bin_centre[0:middle+1], *popt1)
-    chisq = sum((r / diff_error[0:middle+1]) ** 2)
-    chi2nod.append(chisq/(-len(popt1) + len(bin_centre[0:middle+1])))
-    print(chisq/(-len(popt1) + len(bin_centre[0:middle+1])))
-diff_ = deepcopy(diff)
-diff_error_ = deepcopy(diff_error)
-if middle > 0:
-    diff_[middle] = fitfunction1(bin_centre[middle], *popt1)
-    diff_error_[middle] = 0.00000001
-popt2, pcov2 = curve_fit(fitfunction2, bin_centre[middle:], diff_[middle:], sigma=diff_error_[middle:])
-print(popt2)
-print(np.sqrt(np.diag(pcov2)))
-r = diff[middle:] - fitfunction2(bin_centre[middle:], *popt2)
-chisq = sum((r / diff_error[middle:]) ** 2)
-chi2nod.append(chisq/(-len(popt2) + len(bin_centre[middle:])))
-print(chisq/(-len(popt2) + len(bin_centre[middle:])))
-# print(bin_centre)
-# print(diff)
+upper = len(diff_error)
+for i, each in enumerate(diff_error):
+    if i == 0:
+        continue
+    if each > 0.08:
+        upper = i
+        break
+print(bin_centre[upper])
+popt1, pcov1 = curve_fit(fitfunction, bin_centre, diff, sigma=diff_error, p0=[1,0,0,bin_centre[upper]-50], bounds=((-np.inf, -np.inf, -np.inf, 0), (np.inf, np.inf, np.inf, bin_centre[upper])) )
+print(popt1)
+print(pcov1)
+print(np.sqrt(np.diag(pcov1)))
+r = diff - fitfunction(bin_centre, *popt1)
+chisq = sum((r / diff_error) ** 2)
+chi2nod.append(chisq/(-len(popt1) + len(bin_centre)))
+print(chisq/(-len(popt1) + len(bin_centre)))
 
-#makeplot
+
+# makeplot
 plt.errorbar(bin_centre, diff, yerr=diff_error, fmt='o')
-if middle > 0:
-    xs = np.linspace(bin_centre[0], bin_centre[middle],100)
-    xs = np.linspace(0, bin_centre[middle],100)
-    plt.plot(xs, fitfunction1(xs, *popt1), 'r-')#, label='fit: p0=%5.3f, p1=%5.3f, p2=%5.3f, p3=%5.3f' % tuple(popt))
-xs = np.linspace(bin_centre[middle], bin_centre[-1],100)
-plt.plot(xs, fitfunction2(xs, *popt2), 'g-')
+
+xs = np.linspace(0, bin_centre[-1],100)
+ys = []
+for each in xs:
+    ys.append(fitfunction_real(each, popt1[0], popt1[1], popt1[2], popt1[3]))
+plt.plot(xs, ys, 'g-')
 plt.xlabel("pTV(GeV)", fontsize=17)
 plt.ylabel("reweight factor", fontsize=17)
 #plt.ylim([0.5,1.5])
-plt.yscale("log")
+#plt.yscale("log")
 ax = plt.gca()
-plt.text(0.05, 0.1 + labelshift, "red chi2/nod: " + "{:.5f}".format(chi2nod[0]), fontsize=15, transform=ax.transAxes)
-plt.text(0.05, 0.03 + labelshift, "green chi2/nod: " + "{:.5f}".format(chi2nod[1]), fontsize=15, transform=ax.transAxes)
+plt.text(0.05, 0.1 + labelshift, "chi2/nod: " + "{:.5f}".format(chi2nod[0]), fontsize=15, transform=ax.transAxes)
+# plt.text(0.05, 0.03 + labelshift, "green chi2/nod: " + "{:.5f}".format(chi2nod[1]), fontsize=15, transform=ax.transAxes)
 title1 = r"$\mathbf{ATLAS}$"
 title1_1 = r"$\mathit{Internal}$"
 title3 = "2 lep., " + str(nbtag) + " b-tag"
@@ -151,21 +171,12 @@ plt.savefig("output/slopefit/" + filename + "polyfitresult.pdf" ,bbox_inches='ti
 plt.show()
 
 popt1 = popt1.tolist()
-popt2 = popt2.tolist()
+pcov1 = np.sqrt(np.diag(pcov1)).tolist()
 
-while len(popt1) < 5:
-    popt1.append(0)
-while len(popt2) < 5:
-    popt2.append(0)
 # print data
 with open("output/slopefit/" + filename + "polyfitresult.csv", "w") as f:
-    f.write(str(bin_centre[0]) + "," + str(bin_centre[middle]) + "," + str(bin_centre[-1]) + "\n")
-    if middle > 0:
-        for each in popt1:
-            f.write(str(Decimal(repr(each))) + ',')
-    else: 
-        for each in popt2:
-            f.write(str(0) + ',')
+    for each in popt1:
+        f.write(str(Decimal(repr(each))) + ',')
     f.write('\n')
-    for each in popt2:
+    for each in pcov1:
         f.write(str(Decimal(repr(each))) + ',')
