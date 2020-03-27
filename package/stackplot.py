@@ -33,7 +33,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         #"title3": r"$\mathbf{2\;lep.,2\;b-tag}$",
         "title3": "2 lep., 2 b-tag",
         "title4": "",
-        "filename": "deltatest2",
+        "filename": "Notsave",
         "auto_colour": True,
         "print_height": False,
         "limit_y": 0,
@@ -219,7 +219,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
                 hatch='/////', fill=False, linewidth=0,
                 ))
 
-    if settings["print_height"]:
+    if settings["print_height"] and settings['filename'] != "Notsave":
         if not settings["printzpjets"]:
             with open(settings["filename"]+".csv", "w") as f:
                 #f.write("data" + "," + "MC" + ",\n")
@@ -325,8 +325,9 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     ax1.set_ylabel(settings['ylabelup'], fontsize=20)
     ax2.set_ylabel(settings['ylabeldown'], fontsize=20,labelpad=20)
     ax2.set_xlabel(settings['xlabel'], fontsize=20)
-    plt.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0, )#transparent = True)
-    if settings["pickle"]:
+    if settings['filename'] != "Notsave":
+        plt.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0, )#transparent = True)
+    if settings["pickle"] and settings['filename'] != "Notsave":
         with open(settings['filename'] + '.pkl', 'wb') as file:
             pickle.dump(fig, file)
     plt.show()

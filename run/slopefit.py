@@ -137,7 +137,7 @@ plt.plot(xs, fitfunction2(xs, *popt2), 'g-')
 plt.xlabel("pTV(GeV)", fontsize=17)
 plt.ylabel("reweight factor", fontsize=17)
 #plt.ylim([0.5,1.5])
-plt.yscale("log")
+#plt.yscale("log")
 ax = plt.gca()
 plt.text(0.05, 0.1 + labelshift, "red chi2/nod: " + "{:.5f}".format(chi2nod[0]), fontsize=15, transform=ax.transAxes)
 plt.text(0.05, 0.03 + labelshift, "green chi2/nod: " + "{:.5f}".format(chi2nod[1]), fontsize=15, transform=ax.transAxes)
@@ -158,7 +158,7 @@ while len(popt1) < 5:
 while len(popt2) < 5:
     popt2.append(0)
 # print data
-with open("output/slopefit/" + filename + "polyfitresult.csv", "w") as f:
+with open("output/testslopefit/" + filename + "polyfitresult.csv", "w") as f:
     f.write(str(bin_centre[0]) + "," + str(bin_centre[middle]) + "," + str(bin_centre[-1]) + "\n")
     if middle > 0:
         for each in popt1:

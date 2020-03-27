@@ -61,21 +61,21 @@ def fake_data(bins, hist, variable, stat2, sys2, alias, color, rescaledic=None, 
     return sample
 
 bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
-bins = range(0,900,30)
-path = "../sample/histo/run2nodbl.root"
+bins = range(0,900,20)
+path = "../sample/histo/run2dbl.root"
 file = uproot.open(path)
-region = "SR"
+region = "mBBcr_noaddbjetsr"
 variable = "mVH"
-btag = "2tag2pjet"
+btag = "1tag1pfat0pjet"
 rescale = False
 dodown = True
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_VlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph", "SysMODEL_ZlJets_MadGraph"]
 
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph"]
 #systematics = ["SysFT_EFF_Eigen_Light_0_AntiKtVR30Rmax4Rmin02TrackJets"]
-#systematics = ["SysZHFNNPDFalpha"]
+systematics = ["SysZHLFScale"]
 #systematics = ["SysJET_CR_JET_EffectiveNP_Detector1"]
-systematics = ["ttbarMatchMod"]
+#systematics = ["ttbarMatchMod"]
 mc_Wlvjet = ["Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc"]
 mc_Zlljet = ["Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb"]
 mc_tt_bar = ["ttbar"]

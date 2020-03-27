@@ -81,7 +81,14 @@ def load_CxAODs(directories, sample_names, branches, debug=False, sys_name=None,
                     if not file_is_missing:
                         break
             if not sample_exist:
-                print("Warning: cannot find sample " + file_address + ".")# + each_sample_name + ".")
+                if "/a/" in directory and ("data17" in each_sample_name or "data18" in each_sample_name):
+                    pass
+                elif "/d/" in directory and ("data15" in each_sample_name or "data16" in each_sample_name or "data18" in each_sample_name):
+                    pass
+                elif "/e/" in directory and ("data15" in each_sample_name or "data16" in each_sample_name or "data17" in each_sample_name):
+                    pass
+                else:
+                    print("Warning: cannot find sample " + directory + each_sample_name + ".")
     if not data.keys():
         return False
     if mata:
@@ -140,7 +147,14 @@ def load_CxAOD(directory, sample_names, branches, debug=False, sys_name=None, **
                 if not file_is_missing:
                     break
         if not sample_exist:
-            print("Warning: cannot find sample " + directory + each_sample_name + ".")
+            if "/a/" in directory and ("data17" in each_sample_name or "data18" in each_sample_name):
+                pass
+            elif "/d/" in directory and ("data15" in each_sample_name or "data16" in each_sample_name or "data18" in each_sample_name):
+                pass
+            elif "/e/" in directory and ("data15" in each_sample_name or "data16" in each_sample_name or "data17" in each_sample_name):
+                pass
+            else:
+                print("Warning: cannot find sample " + directory + each_sample_name + ".")
     if not data.keys():
         return False
     return Events(data, weight, **kwargs)
