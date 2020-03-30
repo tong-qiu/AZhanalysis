@@ -99,7 +99,11 @@ if __name__ == "__main__":
     theone_main = slopecorrection(theone_main, csv="../run/output/slopefit/" + "pTV-mbbcut-"+str(tag)+"tagpolyfitresult.csv")
     theone_high = slopecorrection(theone_high, csv="../run/output/slopefit/" + "pTV-highmbbcut-"+str(tag)+"tagpolyfitresult.csv")
     theone_low = slopecorrection(theone_low, csv="../run/output/slopefit/" + "pTV-lowmbbcut-"+str(tag)+"tagpolyfitresult.csv")
-
+    bins = range(0,3000,20)
+    chi2, nod = stackplot(theone_main, b'pTV', bins, 1000.,
+            xlabel=r"$p_{TV}[GeV]$", print_height=True, filename="test1",
+            title2=t2mbbcr1tag, auto_colour=False, limit_y=0.5, upper_y=2.0, log_y=False, printzpjets=True, chi2=True)
+    exit(1)
     theone_main = findzll(theone_main)
     theone_high = findzll(theone_high)
     theone_low = findzll(theone_low)
@@ -121,9 +125,7 @@ if __name__ == "__main__":
     plt.plot(bincentre, theone_high_weight, label='high')
     plt.plot(bincentre, theone_low_weight, label='low')
     plt.show()
-    # chi2, nod = stackplot(theone_low, b'pTV', bins, 1000.,
-    #         xlabel=r"$p_{TV}[GeV]$", print_height=True, filename="test1",
-    #         title2=t2mbbcr1tag, auto_colour=False, limit_y=0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+
 
     # mysample = rescale(mysample)
     # mysample = slopecorrection(mysample)

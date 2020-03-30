@@ -3,7 +3,6 @@ import math
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
-from matplotlib import rc, rcParams
 from events import *
 import matplotlib.font_manager as font_manager
 import matplotlib.patches as mpatches
@@ -14,22 +13,15 @@ def nevent(asample):
 
 def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     data_list = copy.deepcopy(data_list)
-    #rc('text', usetex=True)
-    #rc('font',family='Times New Roman')
-    rcParams['mathtext.fontset'] = 'custom'
-    #rcParams["font.family"] = "Times New Roman"
-    rcParams['mathtext.it'] = 'DejaVu Sans:italic'
-    rcParams['mathtext.bf'] = 'DejaVu Sans:italic:bold'
-    #rcParams['axes.unicode_minus'] = True
     # default label
     settings = {
         "xlabel" : r"$m_{Vh}[GeV]$",
         "ylabelup": 'Number of Events',
         "ylabeldown": "Data/Simulation",
-        "title1": r"$\mathbf{ATLAS}$",# \newline Ptl next-leading, full cuts, 2 b-tags $",
-        "title1_1": r"$\mathit{Internal}$",
+        "title1": r"ATLAS",# \newline Ptl next-leading, full cuts, 2 b-tags $",
+        "title1_1": r"Internal",
         #"title1_1": r"$\mathit{Working\:in\:progress}$",
-        "title2": r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$",# Ptl next-leading, full cuts, 2 b-tags $",
+        "title2": r"$\sqrt{s}=13\:TeV,36.1\:fb^{-1}$",# Ptl next-leading, full cuts, 2 b-tags $",
         #"title3": r"$\mathbf{2\;lep.,2\;b-tag}$",
         "title3": "2 lep., 2 b-tag",
         "title4": "",
@@ -103,17 +95,6 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
             print(each.alias + " is empty.")
             continue
         if "data" not in each.alias:#np.mean(each.weight) != 1:# is not None:
-            # if each.alias in alias and False:
-            #     i = alias.index(each.alias)
-            #     print("Info: Merge ", alias[i])
-            #     weight[i] = np.append(weight[i], each.weight)
-            #     varibles_content[i] = np.append(varibles_content[i], each.data[varible_to_plot]/scales)
-            #     sigma2[i] = [sum(x) for x in zip(sigma2[i], each.variation(varible_to_plot, bins, scales))]#sigma2[i] + each.variation(varible_to_plot, bins, scales)
-            #     weight_in_bin[i] = [sum(x) for x in zip(weight_in_bin[i], each.binned_weight(varible_to_plot, bins, scales))]#each.binned_weight(varible_to_plot, bins, scales)
-            #     if settings["sys"] and len(each.systematics(varible_to_plot, bins, scales))>0:
-            #         sys2[i] = [sum(x) for x in zip(sys2[i], each.systematics(varible_to_plot, bins, scales) )]#np.append(sys2[i], each.systematics(varible_to_plot, bins, scales))
-            #         #raise ValueError("Unfinished work")
-            #     continue
             weight.append(each.weight)
             varibles_content.append(each.data[varible_to_plot]/scales)
             alias.append(each.alias)
@@ -147,27 +128,6 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     bin_heights, bin_edges = np.histogram(data_content, bins=bins, weights=data_weight)
     bincenters = 0.5*(bin_edges[1:]+bin_edges[:-1])
     mean_std = np.sqrt(bin_heights)
-
-    # #add text to upper plot
-    # ax1.set_ylim([0, max(bin_heights)* settings["upper_y"]])
-    # ax1.text(0.05, 1.55 / 1.7, settings['title1'], fontsize=25, transform=ax1.transAxes)
-    # ax1.text(0.227, 1.55/ 1.7, settings['title1_1'], fontsize=21, transform=ax1.transAxes)
-    # ax1.text(0.05, 1.40 / 1.7, settings['title2'], fontsize=23, transform=ax1.transAxes)
-    # ax1.text(0.05, 1.26 / 1.7, settings['title3'], fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
-    # ax1.text(0.05, 1.12 / 1.7, "PTl2 < 23 GeV", fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
-    # !!! change plot title
-    #ax1.text(min(bincenters) + (max(bincenters)-min(bincenters)) * 0.05, max(bin_heights)*1.55 / 1.7  * settings["upper_y"],
-    #         settings['title1'], fontsize=25)
-    #ax1.text(bins[0] + (bins[len(bins)-1] - bins[0]) * 0.05, max(bin_heights)*1.55 / 1.7  * settings["upper_y"],
-    #         settings['title1'], fontsize=25)
-    #ax1.text(min(bincenters) + (max(bincenters)-min(bincenters)) * 0.235, max(bin_heights)*1.55/ 1.7  * settings["upper_y"],
-    #         settings['title1_1'], fontsize=21)
-    #ax1.text(bins[0] + (bins[len(bins)-1] - bins[0]) * 0.227, max(bin_heights)*1.55/ 1.7  * settings["upper_y"],
-    #         settings['title1_1'], fontsize=21)
-    #ax1.text(bins[0] + (bins[len(bins)-1] - bins[0]) * 0.05, max(bin_heights)*1.40 / 1.7  * settings["upper_y"],
-    #         settings['title2'], fontsize=23)
-    #ax1.text(bins[0] + (bins[len(bins)-1] - bins[0]) * 0.05, max(bin_heights)*1.26 / 1.7  * settings["upper_y"],
-    #         settings['title3'], fontsize=18, weight='bold', style='italic')
     
     # plot data
     error_patch = ax1.errorbar(bincenters, bin_heights, color='k',
@@ -193,9 +153,9 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         y_mc_max = np.max(y_mcs[0])
 
     ax1.set_ylim([0,max([y_mc_max, max(bin_heights)])* settings["upper_y"]])
-    ax1.text(0.05, 1.55 / 1.7, settings['title1'], fontsize=25, transform=ax1.transAxes)
-    ax1.text(0.227, 1.55/ 1.7, settings['title1_1'], fontsize=21, transform=ax1.transAxes)
-    ax1.text(0.05, 1.40 / 1.7, settings['title2'], fontsize=23, transform=ax1.transAxes)
+    ax1.text(0.05, 1.55 / 1.7, settings['title1'], fontsize=25, transform=ax1.transAxes, style='italic', fontweight='bold')
+    ax1.text(0.227, 1.55/ 1.7, settings['title1_1'], fontsize=25, transform=ax1.transAxes)
+    ax1.text(0.05, 1.40 / 1.7, settings['title2'], fontsize=23, transform=ax1.transAxes, style='italic', fontweight='bold')
     ax1.text(0.05, 1.26 / 1.7, settings['title3'], fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
     #ax1.text(0.05, 1.12 / 1.7, settings["title4"], fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
 
@@ -245,6 +205,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     ax1.legend([error_patch, sys_patch] + y_mcs[2], ["data", "uncertainty"] + alias, prop=font, frameon=False, ncol=settings["ncol"])
     if settings["log_y"]:
         ax1.set_yscale('log')
+        #math.log10(max(bin_heights))
         ax1.set_ylim([0.1, 10**(math.log10(max(bin_heights)) * settings["upper_y"])])
         #locmaj = matplotlib.ticker.LogLocator(base=10, subs=np.arange(2, 10))
         #ax1.yaxis.set_major_locator(locmaj)
