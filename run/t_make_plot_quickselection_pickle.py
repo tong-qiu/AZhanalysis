@@ -13,6 +13,7 @@ import copy
 lib_path = os.path.abspath(os.path.join(__file__, '..', '..'))
 sys.path.append(lib_path)
 
+from package.easyload import *
 from package.events import *
 from package.cut import *
 from package.stackplot import *
@@ -38,16 +39,29 @@ def poly(x, argv):
         s += x**i * each
     return s
 
-def fitfunction_real(x, p0, p1, p2, p4):
-    if x < p4:
-        return p0 + p1 * x + p2 * x**2
-    return p0 + p1 * p4 + p2 * p4**2
+# def fitfunction_real(x, p0, p1, p2, p4):
+#     if x < p4:
+#         return p0 + p1 * x + p2 * x**2
+#     return p0 + p1 * p4 + p2 * p4**2
 
-def fitfunction(x, p0, p1, p2, p4):
+# def fitfunction(x, p0, p1, p2, p4):
+#     y = np.zeros(len(x))
+#     y += (p0 + p1 * x + p2 * x**2) * (x <= p4)
+#     y += (p0 + p1 * p4 + p2 * p4**2) * (x > p4)
+#     return y
+def fitfunction(x, p0, p1, p2, p3):
     y = np.zeros(len(x))
-    y += (p0 + p1 * x + p2 * x**2) * (x <= p4)
-    y += (p0 + p1 * p4 + p2 * p4**2) * (x > p4)
+    y += p0 * (x <= p1)
+    y += (p2 * (x - p1) + p0 ) * (x <= p3) * (x > p1)
+    y +=  (p2 * (p3 - p1) + p0 ) * (x > p3)
     return y
+def fitfunction_real(x, p0, p1, p2, p3):
+    if x <= p1:
+        return p0
+    if x <=p3:
+        return p2 * (x - p1) + p0
+    else:
+        return p2 * (p3 - p1) + p0
 
 def autobin(data_list, bins, alias=None, variable=b"pTV"):
     new_data = None
@@ -69,7 +83,7 @@ def autobin(data_list, bins, alias=None, variable=b"pTV"):
         sum_weight += height[i]
         sum_error += error[i]
 
-        if (sum_error**0.5)/sum_weight < 0.35 and sum_weight > 3:
+        if (sum_error**0.5)/sum_weight < 0.35 and sum_weight > 7:
             newbin.append(bins[i+1])
             sum_weight = 0
             sum_error = 0
@@ -115,146 +129,73 @@ def autobin_withdata(data_list, bins, alias=None, variable=b"pTV"):
             sum_error = 0
     return newbin
 
-
-ntag = 2
-
-def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, m_allsamples, matas=None):
-    sample = load_CxAODs(sample_directory,each_names,branches_list_data, debug, 
-                        colour=each_color,alias=each_alias,matanames=matas)
-    if not sample:
-        print("Warning: No "+each_alias+" samples found!")
-    if cut and sample:
-        sample.matacut(s_resolved)
-        # sample.cut(cut_lowmbb)
-        #sample.cut(cut_highmbb)
-        sample.matacut(s_mbbcr)
-        sample.cut_parameter(cut_btag_is, ntag)
-        #sample.cut(srcut)
-        #sample.cut(cut_btag)
-        #sample.cut(cut_muon)
-        #sample.more()
-        #sample.cut(crtopcut)
-        #sample.cut(crmbbcut)
-
-        m_allsamples.append(sample)
-    if not cut:
-        m_allsamples.append(sample)
-
-    #print(each_alias)
-    return 0
+def get_slope_correction(path):
+    p1s = []
+    with open(path) as f:
+        for each_line in f:
+            p1s = each_line.split(',')
+            for i in range(len(p1s)-1):
+                p1s[i] = float(p1s[i])
+            print(p1s)
+            break
+    return p1s
 
 if __name__ == '__main__':
+    ntag = 1
     debug = False
     cut = True
     sample_directory = ["../CxAOD31_01a/"]
     tag = "run2"
     rescale = True
-    slopecorrection = False
+    slopecorrection = True
+    loadeasytree = False
+    region = "mbbcr"
 
+    if loadeasytree:
+        mysamplembbcr1tag, t2 = get_sample(["mbbcr", "resolved", "1tag"])
+        pickleit((mysamplembbcr1tag, t2), "pickle/mbbcr1tag")
+        mysamplembbcr2tag, t2 = get_sample(["mbbcr", "resolved", "2tag"])
+        pickleit((mysamplembbcr2tag, t2), "pickle/mbbcr2tag")
+        mysamplesr1tag, t2 = get_sample(["sr", "resolved", "1tag"])
+        pickleit((mysamplesr1tag, t2), "pickle/sr1tag")
+        mysamplesr2tag, t2 = get_sample(["sr", "resolved", "2tag"])
+        pickleit((mysamplesr2tag, t2), "pickle/sr2tag")
+        exit(1)
+    else:
+        if ntag == 1 and region == "mbbcr":
+            mysamplembbcr1tag, t2mbbcr1tag = unpickleit("pickle/mbbcr1tag")
+            all_sample = mysamplembbcr1tag
+        if ntag == 2 and region == "mbbcr":
+            mysamplembbcr2tag, t2mbbcr2tag = unpickleit("pickle/mbbcr2tag")
+            all_sample = mysamplembbcr2tag
+        if ntag == 1 and region == "sr":
+            mysamplesr1tag, t2sr1tag = unpickleit("pickle/sr1tag")
+            all_sample = mysamplesr1tag
+        if ntag == 2 and region == "sr":
+            mysamplesr2tag, t2sr2tag = unpickleit("pickle/sr2tag")
+            all_sample = mysamplesr2tag
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
     if tag == "a":
         t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
-        sample_directory = ["../sample/" + tag + "/"]
     if tag == "d":
         t2 = r"$\mathit{\sqrt{s}=13\:TeV,43.6\:fb^{-1}}$"
-        sample_directory = ["../sample/" + tag + "/"]
     if tag == "e":
         t2 = r"$\mathit{\sqrt{s}=13\:TeV,58.5\:fb^{-1}}$"
-        sample_directory = ["../sample/" + tag + "/"]
     if tag == "run2":
         t2 = r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$"
-        sample_directory = ["../sample/a/", "../sample/d/", "../sample/e/"]
-        #sample_directory = ["../sample/CxAOD32_06a/", "../sample/CxAOD32_06d/", "../sample/CxAOD32_06e/"]
-        #sample_directory = ["../phi/a/", "../phi/d/", "../phi/e/"]
-        #sample_directory = ["../phi/a/"]
-    mc_Wlvjet = ["Wenu_Sh221", "WenuB_Sh221", "WenuC_Sh221", "WenuL_Sh221", "Wmunu_Sh221", "WmunuB_Sh221", "WmunuC_Sh221", "WmunuL_Sh221", "Wtaunu_Sh221", "WtaunuB_Sh221", "WtaunuC_Sh221", "WtaunuL_Sh221"]
-    #mc_Zlljet = ["Zee_Sh221", "ZeeB_Sh221", "ZeeC_Sh221", "ZeeL_Sh221", "Zmumu_Sh221", "ZmumuB_Sh221", "ZmumuC_Sh221", "ZmumuL_Sh221", "Ztautau_Sh221", "ZtautauB_Sh221", "ZtautauC_Sh221", "ZtautauL_Sh221","Znunu_Sh221", "ZnunuB_Sh221", "ZnunuC_Sh221", "ZnunuL_Sh221"]
-    # mc_Zlljet1 = ["ZeeB_MGPy8", "ZeeC_MGPy8"]
-    # mc_Zlljet2 = ["ZeeL_MGPy8", "ZmumuB_MGPy8"]
-    # mc_Zlljet3 = ["Zmumu_Sh221", "ZmumuB_MGPy8"]
-    # mc_Zlljet4 = ["ZmumuC_MGPy8", "ZmumuL_MGPy8"]
-
-    mc_Zlljet1 = ["Zee_Sh221", "ZeeB_Sh221"]
-    mc_Zlljet2 = ["ZeeC_Sh221", "ZeeL_Sh221"]
-    mc_Zlljet3 = ["Zmumu_Sh221", "ZmumuB_Sh221"]
-    mc_Zlljet4 = ["ZmumuC_Sh221", "ZmumuL_Sh221"]
-    mc_Zlljet5 = ["Ztautau_Sh221", "ZtautauB_Sh221", "ZtautauC_Sh221", "ZtautauL_Sh221","Znunu_Sh221", "ZnunuB_Sh221", "ZnunuC_Sh221", "ZnunuL_Sh221"]
-    mc_tt_bar = [ "ttbar_nonallhad_PwPy8", "ttbar_allhad_PwPy8", "ttbar_dilep_PwPy8"]#"ttbar_nonallhad_PwPy8", , "ttbar_allhad_PwPy8"]#"ttbar_nonallhad_PwPy8"]#, "ttbar_allhad_PwPy8"]
-    mc_singletop = ["stops_PwPy8", "stopt_PwPy8", "stopWt_PwPy8", "stopWt_dilep_PwPy8"]
-    mc_Diboson = ["WqqWlv_Sh221", "WqqZll_Sh221", "WqqZvv_Sh221", "ZqqZll_Sh221", "ZqqZvv_Sh221", "WlvZqq_Sh221", "ggZqqZll_Sh222", "ggWqqWlv_Sh222"]
-    #sm_Higgs = ["qqWlvHbbJ_PwPy8MINLO", "qqZllHbbJ_PwPy8MINLO", "qqZvvHbbJ_PwPy8MINLO", "ggZllHbb_PwPy8", "ggZvvHbb_PwPy8", "ggHbb_PwPy8NNLOPS"] 
-    sm_Higgs = ["bbHinc_aMCatNLOPy8", "ggHinc_PwPy8", "ggZllHbb_PwPy8","ggZllHcc_PwPy8","ggZvvHbb_PwPy8","ggZvvHcc_PwPy8","qqWlvHbbJ_PwPy8MINLO","qqWlvHccJ_PwPy8MINLO","qqZllHbbJ_PwPy8MINLO","qqZllHccJ_PwPy8MINLO","qqZvvHbbJ_PwPy8MINLO","qqZvvHccJ_PwPy8MINLO"]
-    #other = ["ggZqqZll_Sh222", "ggWqqWlv_Sh222"]#,"ttV_aMCatNLOPy8","ggWqqWlv_Sh222","ggZqqZvv_Sh222","stoptZ_MGPy8"]#[ "ttV_aMCatNLOPy8"]#"VV_fulllep_Sh222",
-    data = ["data16", "data15", "data17", "data18"]
-    bbA300 = [ "bbA300"]
-    ggA300 = [ "ggA300"]
-    file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet, sm_Higgs]#, bbA300, ggA300]#, sm_ggHiggs, sm_qqHiggs]
-    alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet", "smHiggs"]#,'bbA300', 'ggA300']#, "sm_ggHiggs", "sm_qqHiggs"]
-    colors = [None,   'g',       'yellow',     'tab:orange',   'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm',    'teal']#, 'k', 'dimgrey']
-
-
-    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mVH', b'nTags']
-    matas = ["Sample", "Description", "Regime"]
-    branches_list_MC = branches_list_data
-    bins = range(100,1400,50)
-    bins = range(20,200,5)
-    #bins = np.linspace(100,140,16)
-    #all_sample = []
+    for i in range(len(all_sample)):
+        all_sample[i].pth()
+    
+    backup = [each for each in all_sample]
+    all_sample_after = [each for each in all_sample]
     rescaledic = None
     if rescale:
         rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/confignormonly.cfg",
         "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
 
     if slopecorrection:
-        p1s = []
-        p2s = []
-        bottom = 0
-        middle = 0
-        top = 0
-        with open("output/slopefit/" + "pTV-mbbcut-"+str(ntag)+"tagpolyfitresult.csv") as f:
-        #with open("output/slopefit/" + "pTV-mbbcut-1tagpolyfitresult.csv") as f:
-            for each in f:
-                each_array = each.split(',')
-                if top == 0:
-                    bottom = float(each_array[0])
-                    middle = float(each_array[1])
-                    top = float(each_array[2])
-                elif not p1s:
-                    p1s = each_array[0:-1]
-                else:
-                    p2s = each_array[0:-1]
-        for i in range(len(p1s)):
-            p1s[i] = float(p1s[i])
-            p2s[i] = float(p2s[i])
-        print(p1s,p2s)
-        # p1s = []
-        # with open("output/slopefit/" + "pTV-mbbcut-"+str(ntag)+"tagpolyfitresult.csv") as f:
-        #     for each_line in f:
-        #         p1s = each_line.split(',')
-        #         for i in range(len(p1s)-1):
-        #             p1s[i] = float(p1s[i])
-        #         print(p1s)
-        #         break
-    processes = []
-    manager = multiprocessing.Manager()
-    all_sample = manager.list()
-    for each_names, each_alias, each_color in zip(file_name_array,alias,colors):
-        if "data" in each_alias:
-            t = multiprocessing.Process(target=stack_cxaod, args=(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, all_sample, matas))
-        else:
-            t = multiprocessing.Process(target=stack_cxaod, args=(sample_directory, each_names, each_alias, each_color, branches_list_MC, debug, cut, all_sample, matas))
-        processes.append(t)
-        t.start()
+        p1s = get_slope_correction("output/slopefit/" + "pTH-mbbcut-"+str(ntag)+"tagpolyfitresult.csv")
 
-    i = 0
-    for each_process, each_alias in zip(processes, alias):
-        i += 1
-        print(i," Waiting for " + each_alias + "...")
-        each_process.join()
-        print(i, each_alias + " finished.")
-    print("All done.")
-    #print(rescaledic)
-    all_sample_after = [each for each in all_sample]
 
     if rescale:
         print("Performing rescale...")
@@ -269,18 +210,8 @@ if __name__ == '__main__':
     if slopecorrection:
         print("Performing slope correction...")
         for i in range(len(all_sample_after)):
-            mask1 = all_sample_after[i].data[b'pTV']/1000. < middle
-            mask2 = all_sample_after[i].data[b'pTV']/1000. >= middle
-            mask2 = np.logical_and(all_sample_after[i].data[b'pTV']/1000. < top, mask2)
-            print("before", all_sample_after[i].weight.sum())
-            if True in mask1:
-                all_sample_after[i].weight[mask1] = all_sample_after[i].weight[mask1] * (poly(all_sample_after[i].data[b'pTV'][mask1]/1000., p1s))
-            if True in mask2:
-                all_sample_after[i].weight[mask2] = all_sample_after[i].weight[mask2] * (poly(all_sample_after[i].data[b'pTV'][mask2]/1000., p2s))
-            print("after", all_sample_after[i].weight.sum())
-        # for i in range(len(all_sample_after)):
-        #     all_sample_after[i].weight = all_sample_after[i].weight * (fitfunction(all_sample_after[i].data[b'pTV']/1000., p1s[0], p1s[1], p1s[2], p1s[3]))
-        #     print("after", all_sample_after[i].weight.sum())
+            if all_sample_after[i].alias == "Zlljet":
+                all_sample_after[i].weight = all_sample_after[i].weight * (fitfunction(all_sample_after[i].data[b'pTH']/1000., p1s[0], p1s[1], p1s[2], p1s[3]))
     bins = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300]
     
 
@@ -312,17 +243,31 @@ if __name__ == '__main__':
     stackplot(all_sample_after,b'mBBres',bins,1000.,
             xlabel=r"$m_{BB}[GeV]$", title3=title3, filename=direct + "mBB" + name, print_height=True,
             title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=False, printzpjets=True, chi2=True)
+    bins = range(0,1400,20)
+    bins = autobin_withdata(all_sample_after, bins, alias="Zlljet", variable=b"pTH")
+    print(bins)
+    chi2, nod = stackplot(all_sample_after,b'pTH',bins,1000.,
+            xlabel=r"$p_{TH}[GeV]$", title3=title3, filename=direct + "pTH" + name, print_height=True,
+            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
 
 
-    if not slopecorrection:
-        all_sample_after1 = copy.deepcopy(all_sample_after)
-        all_sample_after2 = copy.deepcopy(all_sample_after)
+
+    if not slopecorrection or True:
+        all_sample_after1 = copy.deepcopy(backup)
+        all_sample_after2 = copy.deepcopy(backup)
 
         for i in range(len(all_sample_after)):
             all_sample_after1[i].cut(cut_lowmbb)
             all_sample_after2[i].cut(cut_highmbb)
-        
-
+        if slopecorrection:
+            p1s = get_slope_correction("output/slopefit/" + "pTH-highmbbcut-"+str(ntag)+"tagpolyfitresult.csv")
+            for i in range(len(all_sample_after1)):
+                if all_sample_after[i].alias == "Zlljet":
+                    all_sample_after[i].weight = all_sample_after[i].weight * (fitfunction(all_sample_after[i].data[b'pTH']/1000., p1s[0], p1s[1], p1s[2], p1s[3]))
+            p1s = get_slope_correction("output/slopefit/" + "pTH-lowmbbcut-"+str(ntag)+"tagpolyfitresult.csv")
+            for i in range(len(all_sample_after2)):
+                if all_sample_after[i].alias == "Zlljet":
+                    all_sample_after[i].weight = all_sample_after[i].weight * (fitfunction(all_sample_after[i].data[b'pTH']/1000., p1s[0], p1s[1], p1s[2], p1s[3]))
         title3="lowmBBcr " + str(ntag) +" btags"
         name = "-lowmbbcut-" + str(ntag) +"tag"
         bins = range(0,1400,20)
@@ -341,6 +286,13 @@ if __name__ == '__main__':
         stackplot(all_sample_after1,b'mBBres',bins,1000.,
                 xlabel=r"$m_{BB}[GeV]$", title3=title3, filename=direct + "mBB" + name, print_height=True,
                 title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=False, printzpjets=True, chi2=True)
+        bins = range(0,1400,20)
+        bins = autobin_withdata(all_sample_after1, bins, alias="Zlljet", variable=b"pTH")
+        print(bins)
+        chi2, nod = stackplot(all_sample_after1,b'pTH',bins,1000.,
+                xlabel=r"$p_{TH}[GeV]$", title3=title3, filename=direct + "pTH" + name, print_height=True,
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+
 
 
         title3="highmBBcr " + str(ntag) +" btags"
@@ -361,3 +313,9 @@ if __name__ == '__main__':
         stackplot(all_sample_after2,b'mBBres',bins,1000.,
                 xlabel=r"$m_{BB}[GeV]$", title3=title3, filename=direct + "mBB" + name, print_height=True,
                 title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=False, printzpjets=True, chi2=True)
+        bins = range(0,1400,20)
+        bins = autobin_withdata(all_sample_after2, bins, alias="Zlljet", variable=b"pTH")
+        print(bins)
+        chi2, nod = stackplot(all_sample_after2,b'pTH',bins,1000.,
+                xlabel=r"$p_{TH}[GeV]$", title3=title3, filename=direct + "pTH" + name, print_height=True,
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)

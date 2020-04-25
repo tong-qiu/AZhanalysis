@@ -107,9 +107,8 @@ def _stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_
         m_allsamples.append(sample)
     return 0
 
-def get_sample(selection, debug=False, sample_list=None):
+def get_sample(selection, debug=False, sample_list=None, tag="run2"):
     sample_directory = ["../CxAOD31_01a/"]
-    tag = "run2"
 
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
     if tag == "a":
@@ -157,7 +156,7 @@ def get_sample(selection, debug=False, sample_list=None):
             file_name_array += [data]
             alias += ["data"]
             colors += [None]
-    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mVH', b'nTags']
+    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mVH', b'nTags', b'j1px', b'j1py', b'j2px', b'j2py']
     matas = ["Sample", "Description", "Regime"]
     branches_list_MC = branches_list_data
 

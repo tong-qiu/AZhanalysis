@@ -295,6 +295,8 @@ class Events:
 
             self.data[b"MT"].append(w2.transverse_mass())
         self.data[b"MT"] = np.array(self.data[b"MT"])
+    def pth(self):
+        self.data[b"pTH"] = ( (np.array(self.data[b"j1px"]) + np.array(self.data[b"j2px"]))**2 + (np.array(self.data[b"j1py"]) + np.array(self.data[b"j2py"]))**2 )**0.5
     def more1(self):
         self.data[b"delphi1"] = []
         #self.data[b"delphi2"] = []

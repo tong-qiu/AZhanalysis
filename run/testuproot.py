@@ -11,7 +11,7 @@ import numpy as np
 
 
 loadeasytree = False
-
+makeplotsbeforecorrection = True
 def pickleit(obj, path):
     outfile = open(path, 'wb')
     pickle.dump(obj, outfile)
@@ -91,18 +91,32 @@ if __name__ == "__main__":
     tag = 2
     theone = mysamplembbcr2tag
     for i in range(len(theone)):
-        theone[i].cut(cut_lowmbb)
+        #theone[i].cut(cut_lowmbb)
+        theone[i].pth()
     
     theone_main = copy.deepcopy(theone)
     theone_high = copy.deepcopy(theone)
     theone_low = copy.deepcopy(theone)
-    theone_main = slopecorrection(theone_main, csv="../run/output/slopefit/" + "pTV-mbbcut-"+str(tag)+"tagpolyfitresult.csv")
-    theone_high = slopecorrection(theone_high, csv="../run/output/slopefit/" + "pTV-highmbbcut-"+str(tag)+"tagpolyfitresult.csv")
-    theone_low = slopecorrection(theone_low, csv="../run/output/slopefit/" + "pTV-lowmbbcut-"+str(tag)+"tagpolyfitresult.csv")
-    bins = range(0,3000,20)
+    for i in range(len(theone_high)):
+        theone_high[i].cut(cut_highmbb)
+    for i in range(len(theone_low)):
+        theone_low[i].cut(cut_lowmbb)
+
+    if makeplotsbeforecorrection:
+        bins = range(0,1000,50)
+        title3="mBBcr " + str(tag) +" btags"
+        chi2, nod = stackplot(theone_main, b'pTV', bins, 1000.,
+                xlabel=r"$p_{TV} GeV]$", print_height=True, filename="test1",
+                title2=t2mbbcr1tag, title3 = title3, auto_colour=False, limit_y=0.5, upper_y=2.0, log_y=False, printzpjets=True, chi2=True)
+        exit(1)
+    # theone_main = slopecorrection(theone_main, csv="../run/output/slopefit/" + "pTV-mbbcut-"+str(tag)+"tagpolyfitresult.csv")
+    # theone_high = slopecorrection(theone_high, csv="../run/output/slopefit/" + "pTV-highmbbcut-"+str(tag)+"tagpolyfitresult.csv")
+    # theone_low = slopecorrection(theone_low, csv="../run/output/slopefit/" + "pTV-lowmbbcut-"+str(tag)+"tagpolyfitresult.csv")
+    bins = range(0,1000,50)
+    title3="mBBcr " + str(tag) +" btags"
     chi2, nod = stackplot(theone_main, b'pTV', bins, 1000.,
-            xlabel=r"$p_{TV}[GeV]$", print_height=True, filename="test1",
-            title2=t2mbbcr1tag, auto_colour=False, limit_y=0.5, upper_y=2.0, log_y=False, printzpjets=True, chi2=True)
+            xlabel=r"$p_{TV} GeV]$", print_height=True, filename="test1",
+            title2=t2mbbcr1tag, title3 = title3, auto_colour=False, limit_y=0.5, upper_y=2.0, log_y=False, printzpjets=True, chi2=True)
     exit(1)
     theone_main = findzll(theone_main)
     theone_high = findzll(theone_high)

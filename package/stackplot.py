@@ -243,7 +243,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         chi2 += ((each_y - 1)/each_sigma)**2
         nod += 1
     if settings["chi2"]:
-        ax1.text(0.05, 1.12 / 1.7, "chi2/nod: " + str(round(chi2/nod,3)), fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
+        ax1.text(0.05, 1.12 / 1.7, "$\chi^2$/ndf: " + str(round(chi2/nod,3)), fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
     #chi2 = sum((error_bar_center/error_bar_size)**2)p
     #nod = len(error_bar_center)
 
