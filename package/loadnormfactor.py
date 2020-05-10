@@ -19,8 +19,10 @@ def loadnorm(configpath, normpath):
                 sysdic[ss2[2]].append([ss2[0], ss2[1], float(ss2[3]), float(ss2[4])])
             else:
                 sysdic[ss2[2]] = [[ss2[0], ss2[1], float(ss2[3]), float(ss2[4])]]
+    #print(sysdic)
     # key1: sysname, key2: region, key3: value
     norm_table = {}
+    norm_table_witherror = {}
     with open(normpath) as f:
         for eachline in f:
             if "CORRELATION_MATRIX" in eachline:
@@ -33,12 +35,15 @@ def loadnorm(configpath, normpath):
                 for each in sysdic[match.group(1)]:
                     if "norm" in match.group(1):
                         sys_tem = float(match.group(2)) - 1.
+                        sys_tem_error = float(match.group(3))
                     else:
-                        sys_tem = 0.
-                        if float(match.group(2)) > 0:
-                            sys_tem = float(match.group(2)) * float(each[2])
-                        if float(match.group(2)) < 0:
-                            sys_tem = float(match.group(2)) * float(each[2])
+                        sys_tem = float(match.group(2)) * float(each[2])
+                        sys_tem_error = float(match.group(3)) * float(each[2])
+                        # sys_tem = 0.
+                        # if float(match.group(2)) > 0:
+                        #     sys_tem = float(match.group(2)) * float(each[2])
+                        # if float(match.group(2)) < 0:
+                        #     sys_tem = float(match.group(2)) * float(each[2])
 
                     if each[1] not in norm_table:
                         norm_table[each[1]] = {}
@@ -48,6 +53,17 @@ def loadnorm(configpath, normpath):
                             norm_table[each[1]][each[0]] += sys_tem
                         else:
                             norm_table[each[1]][each[0]] = sys_tem
+
+                    if each[1] not in norm_table_witherror:
+                        norm_table_witherror[each[1]] = {}
+                        norm_table_witherror[each[1]][each[0]] = [sys_tem + 1, sys_tem_error]
+                    else:
+                        if each[0] in norm_table_witherror[each[1]]:
+                            norm_table_witherror[each[1]][each[0]][0] += sys_tem
+                            norm_table_witherror[each[1]][each[0]][1] = (norm_table_witherror[each[1]][each[0]][1]**2 + sys_tem_error**2)**0.5
+                        else:
+                            norm_table_witherror[each[1]][each[0]] = [sys_tem + 1, sys_tem_error]
+        #print(norm_table_witherror)
         #print(norm_table)
         return norm_table
 
@@ -77,6 +93,8 @@ if __name__ == "__main__":
     #  "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
     # rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/confignormonly.cfg",
     # "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
-    rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/pullandcorrelation/2hdm_norm/config.cfg",
-    "C:/Users/qiutt/Desktop/postreader/pullandcorrelation/2hdm_norm/GlobalFit_fitres_unconditionnal_mu0.txt")
+    # rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/pullandcorrelation/2hdm_norm/config.cfg",
+    # "C:/Users/qiutt/Desktop/postreader/pullandcorrelation/2hdm_norm/GlobalFit_fitres_unconditionnal_mu0.txt")
+    rescaledic = loadnorm("../fitconfig/config_m2000.cfg",
+    "../fitconfig/GlobalFit_fitres_conditionnal_mu1.txt")
     generatejson(rescaledic)

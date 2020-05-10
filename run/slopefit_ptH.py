@@ -30,8 +30,8 @@ def poly(x, *argv):
     return s
 
 labelshift = 0
-nbtag = 1
-highlow = "high"
+nbtag = 2
+highlow = ""
 if nbtag == 1:
     labelshift = 0.55
     g1 = 1
@@ -185,7 +185,7 @@ for each in xs:
 plt.plot(xs1, ys1, 'g-')
 plt.plot(xs2, ys2, 'r-')
 plt.plot(xs3, ys3, 'b-')
-plt.xlabel("pTH(GeV)", fontsize=17)
+plt.xlabel(r"$p_{TH}$ [GeV]", fontsize=17)
 plt.ylabel("reweight factor", fontsize=17)
 #plt.ylim([0.5,1.5])
 #plt.yscale("log")

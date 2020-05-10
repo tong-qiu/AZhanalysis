@@ -198,8 +198,8 @@ def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1.
         # if "sys" in each_label:
         #     print("here")
         #     new_each_height = new_each_height + 0.1
-        ax2.hist(bin_centre, bins, weights=new_each_height, label=each_label, histtype=u'step', color=each_color)
-    ax2.plot([bins[0], bins[np.size(bins)-1]], [1, 1], linestyle='--', color='k')
+        ax2.hist(bin_centre, bins, weights=new_each_height-1, label=each_label, histtype=u'step', color=each_color)
+    ax2.plot([bins[0], bins[np.size(bins)-1]], [0, 0], linestyle='--', color='k')
     #ax2.set_ylim([0.99, 1.01])
     if len(all_height) > 1:
         ax1.legend(loc='upper right',prop={'size': 25})
@@ -207,7 +207,7 @@ def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1.
     ax1.tick_params(labelsize=16)
     ax1.tick_params(labelsize=16)
     ax1.set_ylabel(settings['ylabel'], fontsize=20)
-    ax2.set_ylabel('mc/' + settings["central"], fontsize=20)
+    ax2.set_ylabel('mc/' + settings["central"] + "-1", fontsize=20)
     ax2.set_xlabel(settings['xlabel'], fontsize=20)
     font = font_manager.FontProperties(weight='bold',
                                        style='normal', size=18)
