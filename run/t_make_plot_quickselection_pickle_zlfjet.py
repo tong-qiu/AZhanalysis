@@ -130,46 +130,6 @@ def autobin_withdata(data_list, bins, alias=None, variable=b"pTV"):
             sum_error = 0
     return newbin
 
-def autobin_withdatazlljet(data_list, bins, alias, variable=b"pTV"):
-    data_list = copy.deepcopy(data_list)
-    new_data = None
-    for each in data_list:
-        if each.alias == "Z+lf" or each.alias == "Z+hf":
-            if new_data is None:
-                new_data = each
-            else:
-                new_data = new_data + each
-    height, error = new_data.binned_weight_variation(variable, bins, scale=1000.)
-
-    new_data = None
-    for each in data_list:
-        if True:
-            if new_data is None:
-                new_data = each
-            else:
-                new_data = new_data + each
-    height_data, error_data = new_data.binned_weight_variation(variable, bins, scale=1000.)
-
-    newbin = [bins[0]]
-    sum_weight = 0
-    sum_error = 0
-    sum_weight_data = 0
-    sum_error_data = 0
-    for i in range(len(height)):
-        if i == len(height) - 1:
-            newbin.append(bins[i+1])
-            break
-        sum_weight += height[i]
-        sum_error += error[i]
-        sum_weight_data += height_data[i]
-        sum_error_data += error_data[i]
-
-        if (sum_error**0.5)/sum_weight < 0.35 and sum_weight > 3 and (sum_error_data**0.5)/sum_weight_data < 0.35:
-            newbin.append(bins[i+1])
-            sum_weight = 0
-            sum_error = 0
-    return newbin
-
 def get_slope_correction(path):
     p1s = []
     with open(path) as f:
@@ -182,13 +142,13 @@ def get_slope_correction(path):
     return p1s
 
 if __name__ == '__main__':
-    ntag = 2
+    ntag = 1
     debug = False
     cut = True
     sample_directory = ["../CxAOD31_01a/"]
     tag = "run2"
     rescale = True
-    slopecorrection = False
+    slopecorrection = True
     loadeasytree = False
     region = "mbbcr"
 
@@ -234,19 +194,19 @@ if __name__ == '__main__':
         # "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
         rescaledic = loadnorm("../fitconfig/config_m2000.cfg", "../fitconfig/GlobalFit_fitres_conditionnal_mu1.txt")
     if slopecorrection:
-        p1s = get_slope_correction("output/slopefit/" + "pTH-mbbcut-"+str(ntag)+"tagpolyfitresult.csv")
+        p1s = get_slope_correction("output/slopefit_zlf/" + "pTH-mbbcut-"+str(1)+"tagpolyfitresult.csv")
 
 
     if rescale:
         print("Performing rescale...")
         for i in range(len(all_sample_after)):
             for each_key in rescaledic.keys():
-                print(each_key)
                 if 'ALL' in rescaledic[each_key]:
                     factor = rescaledic[each_key]['ALL'] + 1
                     mask = all_sample_after[i].mata["Sample"] == zlib.adler32(each_key.encode())
                     if True in mask:
                         all_sample_after[i].rescale(factor, mask)
+
     # to be made a function
     #-------------------------------------------------------
     poplist = []
@@ -269,7 +229,7 @@ if __name__ == '__main__':
     if slopecorrection:
         print("Performing slope correction...")
         for i in range(len(all_sample_after)):
-            if all_sample_after[i].alias == "Zlljet":
+            if all_sample_after[i].alias == "Z+lf":
                 all_sample_after[i].weight = all_sample_after[i].weight * (fitfunction(all_sample_after[i].data[b'ptH']/1000., p1s[0], p1s[1], p1s[2], p1s[3]))
     bins = [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000, 1050, 1100, 1150, 1200, 1250, 1300]
     
@@ -278,36 +238,36 @@ if __name__ == '__main__':
     direct = "output/t_make_plot/"
     name = "-mbbcut-" + str(ntag) +"tag"
     if rescale:
-        direct = "output/t_make_plot_rescale/"
+        direct = "output/t_make_plot_rescale_zlf/"
     if slopecorrection and rescale:
-        direct = "output/t_make_plot_rescale_slopecorrection/"
+        direct = "output/t_make_plot_rescale_slopecorrection_zlf/"
     if slopecorrection and not rescale:
-        direct = "output/t_make_plot_slopecorrection/"
+        direct = "output/t_make_plot_slopecorrection_zlf/"
 
 
     bins = [0, 25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000,  1050, 1100, 1150, 1200, 1250, 1300]
     bins = range(0,1400,20)
-    bins = autobin_withdatazlljet(all_sample_after_beforecorrection, bins, alias="Zlljet", variable=b"pTV")
+    bins = autobin_withdata(all_sample_after_beforecorrection, bins, alias="Z+lf", variable=b"pTV")
     print(bins)
     chi2, nod = stackplot(all_sample_after,b'pTV',bins,1000.,
             xlabel=r"$p_{TV}[GeV]$", title3=title3, filename=direct + "pTV" + name, print_height=True,
-            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpljets=True, chi2=True)
     print("pTV", chi2, nod)
     bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
     chi2, nod = stackplot(all_sample_after,b'mVH',bins,1000.,
             xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
-            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpljets=True, chi2=True)
     print("mVH", chi2, nod)
     bins = range(20, 200, 1)
     stackplot(all_sample_after,b'mBBres',bins,1000.,
             xlabel=r"$m_{BB}[GeV]$", title3=title3, filename=direct + "mBB" + name, print_height=True,
-            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=False, printzpjets=True, chi2=True)
+            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=False, printzpljets=True, chi2=True)
     bins = range(0,1400,20)
-    bins = autobin_withdatazlljet(all_sample_after_beforecorrection, bins, alias="Zlljet", variable=b'ptH')
+    bins = autobin_withdata(all_sample_after_beforecorrection, bins, alias="Z+lf", variable=b'ptH')
     print(bins)
     chi2, nod = stackplot(all_sample_after,b'ptH',bins,1000.,
             xlabel=r"$p_{TH}[GeV]$", title3=title3, filename=direct + "pTH" + name, print_height=True,
-            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+            title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpljets=True, chi2=True)
 
 
 
@@ -321,62 +281,62 @@ if __name__ == '__main__':
         all_sample_after1_beforecorrection = copy.deepcopy(all_sample_after1)
         all_sample_after2_beforecorrection = copy.deepcopy(all_sample_after2)
         if slopecorrection:
-            p1s = get_slope_correction("output/slopefit/" + "pTH-highmbbcut-"+str(ntag)+"tagpolyfitresult.csv")
+            p1s = get_slope_correction("output/slopefit_zlf/" + "pTH-highmbbcut-"+str(1)+"tagpolyfitresult.csv")
             for i in range(len(all_sample_after1)):
-                if all_sample_after[i].alias == "Zlljet":
+                if all_sample_after[i].alias == "Z+lf":
                     all_sample_after[i].weight = all_sample_after[i].weight * (fitfunction(all_sample_after[i].data[b'ptH']/1000., p1s[0], p1s[1], p1s[2], p1s[3]))
-            p1s = get_slope_correction("output/slopefit/" + "pTH-lowmbbcut-"+str(ntag)+"tagpolyfitresult.csv")
+            p1s = get_slope_correction("output/slopefit_zlf/" + "pTH-lowmbbcut-"+str(1)+"tagpolyfitresult.csv")
             for i in range(len(all_sample_after2)):
-                if all_sample_after[i].alias == "Zlljet":
+                if all_sample_after[i].alias == "Z+lf":
                     all_sample_after[i].weight = all_sample_after[i].weight * (fitfunction(all_sample_after[i].data[b'ptH']/1000., p1s[0], p1s[1], p1s[2], p1s[3]))
         title3="lowmBBcr " + str(ntag) +" btags"
         name = "-lowmbbcut-" + str(ntag) +"tag"
         bins = range(0,1400,20)
-        bins = autobin_withdatazlljet(all_sample_after1_beforecorrection, bins, alias="Zlljet", variable=b"pTV")
+        bins = autobin_withdata(all_sample_after1_beforecorrection, bins, alias="Z+lf", variable=b"pTV")
         print(bins)
         chi2, nod = stackplot(all_sample_after1,b'pTV',bins,1000.,
                 xlabel=r"$p_{TV}[GeV]$", title3=title3, filename=direct + "pTV" + name, print_height=True,
-                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpljets=True, chi2=True)
         print("pTV", chi2, nod)
         bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
         chi2, nod = stackplot(all_sample_after1,b'mVH',bins,1000.,
                 xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
-                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpljets=True, chi2=True)
         print("mVH", chi2, nod)
         bins = range(20, 200, 1)
         stackplot(all_sample_after1,b'mBBres',bins,1000.,
                 xlabel=r"$m_{BB}[GeV]$", title3=title3, filename=direct + "mBB" + name, print_height=True,
-                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=False, printzpjets=True, chi2=True)
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=False, printzpljets=True, chi2=True)
         bins = range(0,1400,20)
-        bins = autobin_withdatazlljet(all_sample_after1_beforecorrection, bins, alias="Zlljet", variable=b'ptH')
+        bins = autobin_withdata(all_sample_after1_beforecorrection, bins, alias="Z+lf", variable=b'ptH')
         print(bins)
         chi2, nod = stackplot(all_sample_after1,b'ptH',bins,1000.,
                 xlabel=r"$p_{TH}[GeV]$", title3=title3, filename=direct + "pTH" + name, print_height=True,
-                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpljets=True, chi2=True)
 
 
 
         title3="highmBBcr " + str(ntag) +" btags"
         name = "-highmbbcut-" + str(ntag) +"tag"
         bins = range(0,1400,20)
-        bins = autobin_withdatazlljet(all_sample_after2_beforecorrection, bins, alias="Zlljet", variable=b"pTV")
+        bins = autobin_withdata(all_sample_after2_beforecorrection, bins, alias="Z+lf", variable=b"pTV")
         print(bins)
         chi2, nod = stackplot(all_sample_after2,b'pTV',bins,1000.,
                 xlabel=r"$p_{TV}[GeV]$", title3=title3, filename=direct + "pTV" + name, print_height=True,
-                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpljets=True, chi2=True)
         print("pTV", chi2, nod)
         bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
         chi2, nod = stackplot(all_sample_after2,b'mVH',bins,1000.,
                 xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
-                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpljets=True, chi2=True)
         print("mVH", chi2, nod)
         bins = range(20, 200, 1)
         stackplot(all_sample_after2,b'mBBres',bins,1000.,
                 xlabel=r"$m_{BB}[GeV]$", title3=title3, filename=direct + "mBB" + name, print_height=True,
-                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=False, printzpjets=True, chi2=True)
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=False, printzpljets=True, chi2=True)
         bins = range(0,1400,20)
-        bins = autobin_withdatazlljet(all_sample_after2_beforecorrection, bins, alias="Zlljet", variable=b'ptH')
+        bins = autobin_withdata(all_sample_after2_beforecorrection, bins, alias="Z+lf", variable=b'ptH')
         print(bins)
         chi2, nod = stackplot(all_sample_after2,b'ptH',bins,1000.,
                 xlabel=r"$p_{TH}[GeV]$", title3=title3, filename=direct + "pTH" + name, print_height=True,
-                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
+                title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpljets=True, chi2=True)

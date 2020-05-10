@@ -7,6 +7,28 @@ import sys
 import zlib
 sys.path.append(os.path.abspath(os.path.join(__file__, '..')))
 from fourvector import *
+import cutstring
+
+def splitszjetsamples(inputs):
+    zhfsample = None
+    zlfsample = None
+    for each in inputs:
+        tem_each1 = copy.deepcopy(each)
+        tem_each2 = copy.deepcopy(each)
+        tem_each1.matacut(cutstring.s_zhf)
+        tem_each2.matacut(cutstring.s_zlf)
+        if zhfsample is None:
+            zhfsample = tem_each1
+        else:
+            zhfsample = zhfsample + tem_each1
+        if zlfsample is None:
+            zlfsample = tem_each2
+        else:
+            zlfsample = zlfsample + tem_each2
+    zhfsample.alias = "Z+hf"
+    zlfsample.alias = "Z+lf"
+    return (zhfsample, zlfsample)
+    
 
 def delphi(phi1, phi2):
     diff = abs(phi1-phi2)

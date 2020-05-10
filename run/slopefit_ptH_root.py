@@ -1,8 +1,8 @@
 import numpy as np
-from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 from decimal import Decimal
 from copy import deepcopy
+import ROOT
 
 def fitfunction(x, p0, p1, p2, p3):
     y = np.zeros(len(x))
@@ -17,6 +17,15 @@ def fitfunction_real(x, p0, p1, p2, p3):
         return p2 * (x - p1) + p0
     else:
         return p2 * (p3 - p1) + p0
+
+def fitfunction_root(x, par):
+    if x[0] <= par[1]:
+        return par[0]
+    if x[0] <= par[3]:
+        return par[2] * (x[0] - par[1]) + par[0]
+    else:
+        return par[2] * (par[3] - par[1]) + par[0]
+
 def fitfunction2(x, p0, p1, p2, p3, p4):
     y = np.zeros(len(x))
     y += p0 * (x <= p1)
@@ -35,9 +44,9 @@ highlow = ""
 if nbtag == 1:
     labelshift = 0.55
     g1 = 1
-    g2 = 100
+    g2 = 10
     g3 = 0
-    g4 = 800
+    g4 = 500
     # def fitfunction1(x, p0, p1, p2):# p5, p6):
     #     return poly(x, p0, p1, p2)# p5, p6)
 
@@ -108,34 +117,28 @@ mc_o = mc_point - mc_point_z
 diff = (data_point - mc_o) /mc_point_z
 diff_error = np.sqrt(data_point/ mc_point_z**2 + mc_error_other**2/ mc_point_z**2  + (data_point - mc_o)**2/  mc_point_z**4 * mc_error_z**2)
 
-# xnew = np.arange(0, 1300, 1)
-# tck = interpolate.splrep(bin_centre, diff, k=5, w =1/diff_error, s = 40)
-# ynew = interpolate.splev(xnew, tck, der=0)
+graph = ROOT.TGraphErrors()
+for i in range(len(diff_error)):
+    graph.SetPoint(i, bin_centre[i], diff[i])
+    graph.SetPointError(i, 0, diff_error[i])
 
-# cs = interpolate.CubicSpline(bin_centre, diff, bc_type =((1, 0.0), (1, 0.0)))
+fit1 = ROOT.TF1( 'fit1', fitfunction_root,  0,  1000, 4)
+fit1.SetParameters(g1,g2,g3,g4)
+#exit(1)
+#func = ROOT.TF1("Name", "gaus")
+graph.Fit(fit1)
+result = fit1.GetParameters()
+error = fit1.GetParErrors()
 
-# plt.figure()
-# # plt.plot(xnew, ynew, 'k')
-# plt.plot(xnew, cs(xnew), 'k')
-# plt.errorbar(bin_centre, diff, yerr=diff_error, fmt='o')
-# #plt.yscale("log")
-# plt.title('Cubic-spline interpolation')
-# plt.show()
 
 #fit
 chi2nod = []
-upper = len(diff_error)
-# for i, each in enumerate(diff_error):
-#     if i == 0:
-#         continue
-#     if each > 0.08:
-#         upper = i
-#         break
-
-popt1, pcov1 = curve_fit(fitfunction, bin_centre, diff, sigma=diff_error, p0=[g1,g2,g3,g4], bounds=((-np.inf, -np.inf, -np.inf, 0), (np.inf, np.inf, np.inf, 1000)) )
-print(popt1)
-print(pcov1)
-print(np.sqrt(np.diag(pcov1)))
+popt1 = [result[0], result[1], result[2], result[3]]
+pcov1 = [error[0], error[1], error[2], error[3]]
+#popt1, pcov1 = curve_fit(fitfunction, bin_centre, diff, sigma=diff_error, p0=[g1,g2,g3,g4], bounds=((-np.inf, -np.inf, -np.inf, 0), (np.inf, np.inf, np.inf, 1000)) )
+# print(popt1)
+# print(pcov1)
+# print(np.sqrt(np.diag(pcov1)))
 r = diff - fitfunction(bin_centre, *popt1)
 chisq = sum((r / diff_error) ** 2)
 chi2nod.append(chisq/(-len(popt1) + len(bin_centre)))
@@ -181,8 +184,8 @@ plt.text(0.05, 0.2 + labelshift, title3, fontsize=18, weight='bold', style='ital
 plt.savefig("output/slopefit/" + filename + "polyfitresult.pdf" ,bbox_inches='tight', pad_inches = 0)
 plt.show()
 
-popt1 = popt1.tolist()
-pcov1 = np.sqrt(np.diag(pcov1)).tolist()
+#popt1 = popt1.tolist()
+#pcov1 = np.sqrt(np.diag(pcov1)).tolist()
 
 # print data
 with open("output/slopefit/" + filename + "polyfitresult.csv", "w") as f:

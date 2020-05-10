@@ -36,6 +36,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         "sys":False,
         "blind":False,
         "printzpjets":False,
+        "printzpljets":False,
         "chi2":False,
         }
     for each_key in kwargs.items():
@@ -65,11 +66,17 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
             new_data_list.append(each)
     data_list = new_data_list
     Zpjet = []
-    if settings["printzpjets"]:
+    if settings["printzpjets"] or settings["printzpljets"]:
+        thealias = "Zlljet"
+        if settings["printzpljets"]:
+            thealias = "Z+lf"
         for each in data_list:
-            print(each.alias)
-            if "Zlljet" in each.alias:
-                Zpjet.append(each)
+            if thealias == "Zlljet":
+                if "Z+lf" in each.alias or "Z+hf" in each.alias:
+                    Zpjet.append(each)
+            else:
+                if thealias in each.alias:
+                    Zpjet.append(each)
         sigma2_z = []
         weight_in_bin_z = []
         sys2_z = []
@@ -88,6 +95,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         else:
             error_mc_z = np.sqrt(np.sum(sigma2_z, (1)))
 
+
     data_list.sort(key=nevent)
     for each in data_list:
         print(nevent(each))
@@ -97,7 +105,23 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         if "data" not in each.alias:#np.mean(each.weight) != 1:# is not None:
             weight.append(each.weight)
             varibles_content.append(each.data[varible_to_plot]/scales)
-            alias.append(each.alias)
+
+            if each.alias == "Z+hf":
+                alias.append("Z+(bb,bc,cc)")
+            elif each.alias == "Z+lf":
+                alias.append("Z+(bl,cl,l)")
+            elif each.alias == "Wlvjet":
+                alias.append("W+jets")
+            elif each.alias == "smHiggs":
+                alias.append("SM Higgs")
+            elif each.alias == "ttbar":
+                alias.append(r"$t\bar{t}$")
+            elif each.alias == "singletop":
+                alias.append("single top")
+            else:
+                alias.append(each.alias)
+
+
             sigma2.append(each.variation(varible_to_plot, bins, scales))
             weight_in_bin.append(each.binned_weight(varible_to_plot, bins, scales))
             colours.append(each.colour)
@@ -180,7 +204,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
                 ))
 
     if settings["print_height"] and settings['filename'] != "Notsave":
-        if not settings["printzpjets"]:
+        if not (settings["printzpjets"] or settings["printzpljets"]):
             with open(settings["filename"]+".csv", "w") as f:
                 #f.write("data" + "," + "MC" + ",\n")
                 for each_data, each_mc, each_edges, each_errormc in zip(bin_heights, y_mc, bin_edges[0:-1], error_mc):

@@ -31,13 +31,13 @@ def poly(x, *argv):
 
 labelshift = 0
 nbtag = 1
-highlow = ""
+highlow = "low"
 if nbtag == 1:
     labelshift = 0.55
     g1 = 1
-    g2 = 100
+    g2 = 0
     g3 = 0
-    g4 = 800
+    g4 = 450
     # def fitfunction1(x, p0, p1, p2):# p5, p6):
     #     return poly(x, p0, p1, p2)# p5, p6)
 
@@ -48,15 +48,35 @@ if nbtag == 2:
     if highlow == "low":
         plt.ylim(top=3)
         plt.ylim(bottom=-0.4)
-    g1 = 1
-    g2 = 100
+    g1 = 1.1
+    g2 = 180
     g3 = 0
-    g4 = 300
+    g4 = 600
     # def fitfunction1(x, p0, p1, p2):# p5, p6):
     #     return poly(x, p0, p1, p2)# p5, p6)
 
     # def fitfunction2(x, p0, p1):#, p2):# p5, p6):
     #     return poly(x, p0, p1)#, p2)# p5, p6)
+# if nbtag == 1:
+#     labelshift = 0.55
+#     #middle = 12
+#     middle = 10
+#     def fitfunction1(x, p0, p1, p2):# p5, p6):
+#         #return poly(x, p0, p1, p2)# p5, p6)
+#         return poly(x, p0, p1)
+
+#     def fitfunction2(x, p0, p1):#, p2):# p5, p6):
+#         #return poly(x, p0, p1)#, p2)# p5, p6)
+#         return poly(x, p0)
+# if nbtag == 2:
+#     labelshift = 0.55
+#     #middle = 10
+#     middle = 6
+#     def fitfunction1(x, p0, p1, p2):# p5, p6):
+#         return poly(x, p0, p1)# p5, p6)
+
+#     def fitfunction2(x, p0, p1):#, p2):# p5, p6):
+#         return poly(x, p0, p1)#, p2)# p5, p6)
 data_point = []
 mc_point = []
 mc_error = []
@@ -67,10 +87,9 @@ mc_error_z = []
 filename = "pTH-" + highlow + "mbbcut-" + str(nbtag) + "tag"
 print(filename)
 # load data
-with open("output/t_make_plot_rescale/" + filename + ".csv") as f:
+with open("output/t_make_plot_rescale_zlf/" + filename + ".csv") as f:
     for each_line in f:
         data_tem = each_line.split(",")
-        
         if len(data_tem) > 3:
             bin_edge.append(float(data_tem[0]))
             data_point.append(float(data_tem[1]))
@@ -125,14 +144,14 @@ diff_error = np.sqrt(data_point/ mc_point_z**2 + mc_error_other**2/ mc_point_z**
 #fit
 chi2nod = []
 upper = len(diff_error)
-# for i, each in enumerate(diff_error):
-#     if i == 0:
-#         continue
-#     if each > 0.08:
-#         upper = i
-#         break
-
-popt1, pcov1 = curve_fit(fitfunction, bin_centre, diff, sigma=diff_error, p0=[g1,g2,g3,g4], bounds=((-np.inf, -np.inf, -np.inf, 0), (np.inf, np.inf, np.inf, 1000)) )
+for i, each in enumerate(diff_error):
+    if i == 0:
+        continue
+    if each > 0.08:
+        upper = i
+        break
+print(bin_centre[upper])
+popt1, pcov1 = curve_fit(fitfunction, bin_centre, diff, sigma=diff_error, p0=[1,0,0,bin_centre[upper]-50], bounds=((-np.inf, -np.inf, -np.inf, 0), (np.inf, np.inf, np.inf, bin_centre[upper])) )
 print(popt1)
 print(pcov1)
 print(np.sqrt(np.diag(pcov1)))
@@ -178,14 +197,14 @@ title3 = "2 lep., " + str(nbtag) + " b-tag"
 plt.text(0.05, 0.3 + labelshift, title1, fontsize=25, transform=ax.transAxes, style='italic', fontweight='bold')
 plt.text(0.327, 0.3 + labelshift, title1_1, fontsize=25, transform=ax.transAxes)
 plt.text(0.05, 0.2 + labelshift, title3, fontsize=18, weight='bold', style='italic', transform=ax.transAxes)
-plt.savefig("output/slopefit/" + filename + "polyfitresult.pdf" ,bbox_inches='tight', pad_inches = 0)
+plt.savefig("output/slopefit_zlf/" + filename + "polyfitresult.pdf" ,bbox_inches='tight', pad_inches = 0)
 plt.show()
 
 popt1 = popt1.tolist()
 pcov1 = np.sqrt(np.diag(pcov1)).tolist()
 
 # print data
-with open("output/slopefit/" + filename + "polyfitresult.csv", "w") as f:
+with open("output/slopefit_zlf/" + filename + "polyfitresult.csv", "w") as f:
     for each in popt1:
         f.write(str(Decimal(repr(each))) + ',')
     f.write('\n')
