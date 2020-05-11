@@ -35,7 +35,7 @@ highlow = "low"
 if nbtag == 1:
     labelshift = 0.55
     g1 = 1
-    g2 = 0
+    g2 = 100
     g3 = 0
     g4 = 450
     # def fitfunction1(x, p0, p1, p2):# p5, p6):
@@ -49,7 +49,7 @@ if nbtag == 2:
         plt.ylim(top=3)
         plt.ylim(bottom=-0.4)
     g1 = 1.1
-    g2 = 180
+    g2 = 20
     g3 = 0
     g4 = 600
     # def fitfunction1(x, p0, p1, p2):# p5, p6):
@@ -151,7 +151,7 @@ for i, each in enumerate(diff_error):
         upper = i
         break
 print(bin_centre[upper])
-popt1, pcov1 = curve_fit(fitfunction, bin_centre, diff, sigma=diff_error, p0=[1,0,0,bin_centre[upper]-50], bounds=((-np.inf, -np.inf, -np.inf, 0), (np.inf, np.inf, np.inf, bin_centre[upper])) )
+popt1, pcov1 = curve_fit(fitfunction, bin_centre, diff, sigma=diff_error, p0=[1,0,0,bin_centre[upper]-50], bounds=((-np.inf, 0, -np.inf, 0), (np.inf, np.inf, np.inf, bin_centre[upper])) )
 print(popt1)
 print(pcov1)
 print(np.sqrt(np.diag(pcov1)))

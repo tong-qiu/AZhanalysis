@@ -99,8 +99,9 @@ if __name__ == '__main__':
     rescale = True
     rebin_factor = 0
     ul = 3000
-    filename = "run2_pTV_mBBcr_1tag2pjet-_.json"
+    #filename = "run2_pTV_mBBcr_1tag2pjet-_.json"
     #filename = "run2_mVH_mBBcr_1tag2pjet-_.json"
+    filename = "run2_mVH_topemucr_1tag2pjet-_.json"
     sub_filename = filename.split('_')
     period = sub_filename[0]
     variable_name = sub_filename[1]
@@ -121,7 +122,7 @@ if __name__ == '__main__':
     mc_Wlvjet = ["Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc"]
     mc_Zlljet = ["Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb"]
     mc_tt_bar = ["ttbar"]
-    mc_singletop = ["stopWt", "stops", "stopt"]
+    mc_singletop = ["stops", "stopt", "stopWtDilep"]#"stopWt", 
     mc_Diboson = ["WZ", "WW", "ZZ", "ggZZ", "ggWW"]
     sm_Higgs = ["ggZllH125", "qqZllH125"]
     file_name_array = [mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet, mc_Wlvjet]#, sm_Higgs]
@@ -198,7 +199,7 @@ if __name__ == '__main__':
         if rescale:
             postfix = "_rescale"
         stackplot(all_sample1,variable_name,bins,1.,
-                xlabel=r"$m_{VH}[GeV]$", title3="2 lep.," + btag +" b-tag " + region, filename="output/cpp_make_plot_test" + postfix + "/" + filename[0:-5], print_height=True,
+                xlabel=r"$m_{VH}[GeV]$", title3="2 lep.," + btag +" b-tag " + region, filename="output/cpp_make_plot" + postfix + "/" + filename[0:-5], print_height=True,
                 title2=t2,auto_colour=False, limit_y = 0.6, upper_y=2.6, sys=True, log_y=True)
     '''
     sample_list = {"Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc", "WZ", "WW",              "Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb", "ZZ", "stopWt", "stops", "stopt", "ttbar", "ggZllH125", "qqZllH125", "stopWt_dilep"}

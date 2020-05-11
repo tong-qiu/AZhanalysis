@@ -39,28 +39,40 @@ def poly(x, *argv):
     return s
 
 labelshift = 0
-nbtag = 1
-highlow = ""
+nbtag = 2
+highlow = "high"
+limity = False
 if nbtag == 1:
     labelshift = 0.55
     g1 = 1
     g2 = 10
     g3 = 0
-    g4 = 500
+    g4 = 200
+    # if highlow == "low":
+    #     g1 = 1
+    #     g2 = 10
+    #     g3 = 0
+    #     g4 = 200
     # def fitfunction1(x, p0, p1, p2):# p5, p6):
     #     return poly(x, p0, p1, p2)# p5, p6)
 
     # def fitfunction2(x, p0, p1):#, p2):# p5, p6):
     #     return poly(x, p0, p1)#, p2)# p5, p6)
 if nbtag == 2:
+    limity = True
     labelshift = 0.55
     if highlow == "low":
         plt.ylim(top=3)
         plt.ylim(bottom=-0.4)
     g1 = 1
-    g2 = 100
+    g2 = 200
     g3 = 0
-    g4 = 300
+    g4 = 400
+    # if highlow == "low":
+    #     g1 = 1
+    #     g2 = 200
+    #     g3 = 0
+    #     g4 = 300
     # def fitfunction1(x, p0, p1, p2):# p5, p6):
     #     return poly(x, p0, p1, p2)# p5, p6)
 
@@ -170,7 +182,8 @@ plt.plot(xs2, ys2, 'r-')
 plt.plot(xs3, ys3, 'b-')
 plt.xlabel(r"$p_{TH}$ [GeV]", fontsize=17)
 plt.ylabel("reweight factor", fontsize=17)
-#plt.ylim([0.5,1.5])
+if limity:
+    plt.ylim([-0.5,2.5])
 #plt.yscale("log")
 ax = plt.gca()
 plt.text(0.05, 0.1 + labelshift, "$\chi^2$/ndf: " + "{:.5f}".format(chi2nod[0]), fontsize=15, transform=ax.transAxes)

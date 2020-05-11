@@ -142,7 +142,7 @@ def get_slope_correction(path):
     return p1s
 
 if __name__ == '__main__':
-    ntag = 1
+    ntag = 2
     debug = False
     cut = True
     sample_directory = ["../CxAOD31_01a/"]

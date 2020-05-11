@@ -13,7 +13,9 @@ def s_mbbcr(mata):
 def s_sr(mata):
     mask = mata["Description"] == zlib.adler32(b'SR')
     return mask
-
+def s_topemucr(mata):
+    mask = mata["Description"] == zlib.adler32(b'topemucr')
+    return mask
 def s_zhf(mata):
     mask = mata["Sample"] == zlib.adler32(b'Zbb')
     mask = np.logical_or(mata["Sample"] == zlib.adler32(b'Zbc'), mask)
