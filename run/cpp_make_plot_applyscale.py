@@ -99,9 +99,9 @@ if __name__ == '__main__':
     rescale = True
     rebin_factor = 0
     ul = 3000
-    #filename = "run2_pTV_mBBcr_1tag2pjet-_.json"
+    filename = "run2_mVH_mBBcr_2tag2pjet-_.json"
     #filename = "run2_mVH_mBBcr_1tag2pjet-_.json"
-    filename = "run2_mVH_topemucr_1tag2pjet-_.json"
+    #filename = "run2_mVH_topemucr_1tag2pjet-_.json"
     sub_filename = filename.split('_')
     period = sub_filename[0]
     variable_name = sub_filename[1]
@@ -130,10 +130,9 @@ if __name__ == '__main__':
     colors = ['g',    'yellow', 'tab:orange','royalblue', 'm',     'r']
 
     if rescale:
-        rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
-        "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
-        rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/confignormonly.cfg",
-        "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
+        # rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
+        # "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
+        rescaledic = loadnorm("../fitconfig/config_m2000.cfg", "../fitconfig/GlobalFit_fitres_conditionnal_mu1.txt")
     #print(rescaledic)
     all_sample = []
     binning = []

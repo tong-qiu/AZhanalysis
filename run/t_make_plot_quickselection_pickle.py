@@ -271,6 +271,7 @@ if __name__ == '__main__':
     all_sample_after = [each for i, each in enumerate(all_sample_after) if i not in poplist]
     all_sample_after.append(zhf)
     all_sample_after.append(zlf)
+    sumtotal = 0
     #-------------------------------------------------------
 
     backup = [each for each in all_sample_after]
