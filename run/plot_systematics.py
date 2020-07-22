@@ -1,5 +1,9 @@
 import uproot
 import numpy as np
+import os
+import sys
+lib_path = os.path.abspath(os.path.join(__file__, '..', '..'))
+sys.path.append(lib_path)
 import package
 from package.events import *
 from package.stackplot import *
@@ -37,8 +41,9 @@ def fake_data(bins, hist, variable, stat2, sys2, alias, color, rescaledic=None, 
 
 bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
 bins = range(0,900,30)
-file = uproot.open("../sample/histo/run2dbl.root")
+file = uproot.open("../sample/histo/output1.root")
 region = "_mBBcr_"
+#region = "_topemucr_"
 variable = "mVH"
 btag = "2tag2pjet"
 rescale = False
@@ -46,8 +51,8 @@ dodown = True
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_VlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph", "SysMODEL_ZlJets_MadGraph"]
 
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph"]
-systematics = ["SysZHFMEPSMod"]
-systematics = ["SysFT_EFF_Eigen_B_2_AntiKt4EMTopoJets"]
+systematics = ["JET_CR_JET_Pileup_RhoTopology"]
+#systematics = ["SysFT_EFF_Eigen_B_2_AntiKt4EMTopoJets"]
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph"]
 mc_Wlvjet = ["Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc"]
 mc_Zlljet = ["Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb"]
@@ -172,7 +177,7 @@ for each_mc_name in file_name_array:
         error = []
         for row in histpd.head(10000).itertuples():
             edge.append(row.Index[0].left)
-            print(edge)
+            #print(edge)
             count.append(row.count)
             error.append(row.variance)
         edge.append(row.Index[0].right)

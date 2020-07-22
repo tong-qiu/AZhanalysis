@@ -6,25 +6,20 @@ import ROOT
 
 def fitfunction(x, p0, p1, p2, p3):
     y = np.zeros(len(x))
-    y += p0 * (x <= p1)
-    y += (p2 * (x - p1) + p0 ) * (x <= p3) * (x > p1)
-    y +=  (p2 * (p3 - p1) + p0 ) * (x > p3)
+    y += (p1 * x + p0 ) * (x <= p2)
+    y += p3 * (x > p2)
     return y
 def fitfunction_real(x, p0, p1, p2, p3):
-    if x <= p1:
-        return p0
-    if x <=p3:
-        return p2 * (x - p1) + p0
+    if x <= p2:
+        return p1 * x + p0
     else:
-        return p2 * (p3 - p1) + p0
+        return p3
 
 def fitfunction_root(x, par):
-    if x[0] <= par[1]:
-        return par[0]
-    if x[0] <= par[3]:
-        return par[2] * (x[0] - par[1]) + par[0]
+    if x[0] <= par[2]:
+        return par[1] * x[0] + par[0]
     else:
-        return par[2] * (par[3] - par[1]) + par[0]
+        return par[3]
 
 # def fitfunction2(x, p0, p1, p2, p3, p4):
 #     y = np.zeros(len(x))
@@ -39,7 +34,7 @@ def poly(x, *argv):
     return s
 
 labelshift = 0
-nbtag = 1
+nbtag = 2
 highlow = "low"
 limity = False
 if nbtag == 1:
@@ -68,8 +63,8 @@ if nbtag == 2:
         plt.ylim(bottom=-0.4)
     g1 = 1
     g2 = 0
-    g3 = 0
-    g4 = 200
+    g3 = 280
+    g4 =  0.8
     # if highlow == "low":
     #     g1 = 1
     #     g2 = 200
@@ -170,18 +165,18 @@ xs1 = []
 xs2 = []
 xs3 = []
 for each in xs:
-    if each <= popt1[1]:
+    if each <= popt1[2]:
         xs1.append(each)
         ys1.append(fitfunction_real(each, popt1[0], popt1[1], popt1[2], popt1[3]))
-    elif each <= popt1[3]:
+    else:
         xs2.append(each)
         ys2.append(fitfunction_real(each, popt1[0], popt1[1], popt1[2], popt1[3]))
-    else:
-        xs3.append(each)
-        ys3.append(fitfunction_real(each, popt1[0], popt1[1], popt1[2], popt1[3]))
+    # else:
+    #     xs3.append(each)
+    #     ys3.append(fitfunction_real(each, popt1[0], popt1[1], popt1[2], popt1[3]))
 plt.plot(xs1, ys1, 'g-')
 plt.plot(xs2, ys2, 'r-')
-plt.plot(xs3, ys3, 'b-')
+# plt.plot(xs3, ys3, 'b-')
 plt.xlabel(r"$p_{T}^{BB}$ [GeV]", fontsize=17)
 plt.ylabel("reweight factor", fontsize=17)
 if limity:

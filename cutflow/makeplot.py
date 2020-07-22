@@ -28,7 +28,7 @@ if __name__ == "__main__":
     # barplot(y,tick,colors,"test", legend)
     # samples = {}
     # exit(1)
-    with open("cutflow.json", 'r') as f:
+    with open("result/cutflow.json", 'r') as f:
         for each in f:
             samples = json.loads(each)
             break

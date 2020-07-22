@@ -1,5 +1,17 @@
 import numpy as np
 
+def cut_ptl1(data):
+    mask = data[b'ptL1'] > 27
+    return mask
+
+def cut_ptl2tresolved(data):
+    mask = data[b'ptL2'] > 20
+    return mask
+
+def cut_ptl2tmerged(data):
+    mask = data[b'ptL1'] > 25
+    return mask
+
 def cut_btagin_is(data, b):
     mask = data[b'nbTagsInFJ'] == b
     return mask

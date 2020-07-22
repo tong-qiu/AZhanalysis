@@ -63,7 +63,7 @@ def loadnorm(configpath, normpath):
                             norm_table_witherror[each[1]][each[0]][1] = (norm_table_witherror[each[1]][each[0]][1]**2 + sys_tem_error**2)**0.5
                         else:
                             norm_table_witherror[each[1]][each[0]] = [sys_tem + 1, sys_tem_error]
-        #print(norm_table_witherror)
+        print(norm_table_witherror)
         #print(norm_table)
         return norm_table
 
@@ -95,6 +95,6 @@ if __name__ == "__main__":
     # "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
     # rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/pullandcorrelation/2hdm_norm/config.cfg",
     # "C:/Users/qiutt/Desktop/postreader/pullandcorrelation/2hdm_norm/GlobalFit_fitres_unconditionnal_mu0.txt")
-    rescaledic = loadnorm("../fitconfig/config_m2000.cfg",
-    "../fitconfig/GlobalFit_fitres_conditionnal_mu1.txt")
+    rescaledic = loadnorm("../2HDMNPs/config_m300.cfg",
+    "../2HDMNPs/GlobalFit_fitres_conditionnal_mu0.txt")
     generatejson(rescaledic)

@@ -39,30 +39,18 @@ def poly(x, argv):
         s += x**i * each
     return s
 
-# def fitfunction_real(x, p0, p1, p2, p4):
-#     if x < p4:
-#         return p0 + p1 * x + p2 * x**2
-#     return p0 + p1 * p4 + p2 * p4**2
-
-# def fitfunction(x, p0, p1, p2, p4):
-#     y = np.zeros(len(x))
-#     y += (p0 + p1 * x + p2 * x**2) * (x <= p4)
-#     y += (p0 + p1 * p4 + p2 * p4**2) * (x > p4)
-#     return y
-def fitfunction(x, p0, p1, p2, p3):
+def fitfunction_1tag(x, p0, p1, p2, p3):
     y = np.zeros(len(x))
     y += p0 * (x <= p1)
     y += (p2 * (x - p1) + p0 ) * (x <= p3) * (x > p1)
     y +=  (p2 * (p3 - p1) + p0 ) * (x > p3)
     return y
 
-def fitfunction_real(x, p0, p1, p2, p3):
-    if x <= p1:
-        return p0
-    if x <=p3:
-        return p2 * (x - p1) + p0
-    else:
-        return p2 * (p3 - p1) + p0
+def fitfunction_2tag(x, p0, p1, p2, p3):
+    y = np.zeros(len(x))
+    y += (p1 * x + p0 ) * (x <= p2)
+    y += p3 * (x > p2)
+    return y
 
 def autobin(data_list, bins, alias=None, variable=b"pTV"):
     new_data = None
@@ -188,9 +176,10 @@ if __name__ == '__main__':
     sample_directory = ["../CxAOD31_01a/"]
     tag = "run2"
     rescale = True
-    slopecorrection = True
+    slopecorrection = False
     loadeasytree = False
     region = "mbbcr"
+    #region = "topemucr"
     dorebin = True
     if loadeasytree:
         mysamplembbcr1tag, t2 = get_sample(["topemucr", "resolved", "1tag"])
@@ -236,16 +225,17 @@ if __name__ == '__main__':
         t2 = r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$"
     # for i in range(len(all_sample)):
     #     all_sample[i].pth()
-    
+    fitfunction = fitfunction_1tag
+    if ntag == 2:
+        fitfunction = fitfunction_2tag
     all_sample_after = [each for each in all_sample]
     rescaledic = None
     if rescale:
         #rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/confignormonly.cfg",
         #"C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
-        rescaledic = loadnorm("../fitconfig/config_m2000.cfg", "../fitconfig/GlobalFit_fitres_conditionnal_mu1.txt")
+        rescaledic = loadnorm("../fitconfig/config_m2000.cfg", "../fitconfig/GlobalFit_fitres_conditionnal_mu0.txt")
     if slopecorrection:
         p1s = get_slope_correction("output/slopefit/" + "pTH-mbbcut-"+str(ntag)+"tagpolyfitresult.csv")
-
 
     if rescale:
         print("Performing rescale...")
@@ -326,10 +316,8 @@ if __name__ == '__main__':
         bins = autobin_withdatazlljet(all_sample_after_beforecorrection, bins, alias="Zlljet", variable=b'ptHcorr')
     print(bins)
     chi2, nod = stackplot(all_sample_after,b'ptHcorr',bins,1000.,
-            xlabel=r"$p_{TH}[GeV]$", title3=title3, filename=direct + "pTH" + name, print_height=True,
+            xlabel=r"$p_{T}^{BB}[GeV]$", title3=title3, filename=direct + "pTH" + name, print_height=True,
             title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
-
-
 
     if region == "mbbcr":
         all_sample_after1 = copy.deepcopy(backup)
@@ -371,7 +359,7 @@ if __name__ == '__main__':
         bins = autobin_withdatazlljet(all_sample_after1_beforecorrection, bins, alias="Zlljet", variable=b'ptHcorr')
         print(bins)
         chi2, nod = stackplot(all_sample_after1,b'ptHcorr',bins,1000.,
-                xlabel=r"$p_{TH}[GeV]$", title3=title3, filename=direct + "pTH" + name, print_height=True,
+                xlabel=r"$p_{T}^{BB}[GeV]$", title3=title3, filename=direct + "pTH" + name, print_height=True,
                 title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)
 
 
@@ -398,5 +386,5 @@ if __name__ == '__main__':
         bins = autobin_withdatazlljet(all_sample_after2_beforecorrection, bins, alias="Zlljet", variable=b'ptHcorr')
         print(bins)
         chi2, nod = stackplot(all_sample_after2,b'ptHcorr',bins,1000.,
-                xlabel=r"$p_{TH}[GeV]$", title3=title3, filename=direct + "pTH" + name, print_height=True,
+                xlabel=r"$p_{T}^{BB}[GeV]$", title3=title3, filename=direct + "pTH" + name, print_height=True,
                 title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, printzpjets=True, chi2=True)

@@ -97,7 +97,7 @@ def bincheck(orginal, userbin):
 if __name__ == '__main__':
     rebin_factor = 1
     #filename = "a_mVH_SR_2tag2pjet-_.json"
-    filename = "run2_pTV_mBBcr_1tag2pjet-_.json"
+    filename = "run2_mVH_mBBcr_1tag2pjet-_.json"
     sub_filename = filename.split('_')
     period = sub_filename[0]
     variable_name = sub_filename[1]
@@ -160,6 +160,7 @@ if __name__ == '__main__':
                 data = fake_data(binning,content,variable_name,stat**2,sys,"data",'k')
                 all_sample.append(data)
         bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+        bins = [50, 200, 350, 500, 650, 800, 950, 1100, 1250, 1400, 1550, 1700, 1850, 2000]
         bincheck(binning, bins)
         all_sample1 = []
         for each in all_sample:

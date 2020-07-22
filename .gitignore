@@ -10,3 +10,6 @@ __pycache__/
 *.root
 *.cfg
 pickle
+run/pickle_wrongjet
+*.lst
+*.json

@@ -30,8 +30,8 @@ def poly(x, *argv):
     return s
 
 labelshift = 0
-nbtag = 1
-highlow = "low"
+nbtag = 2
+highlow = ""
 if nbtag == 1:
     labelshift = 0.55
     g1 = 1
@@ -87,7 +87,7 @@ mc_error_z = []
 filename = "pTH-" + highlow + "mbbcut-" + str(nbtag) + "tag"
 print(filename)
 # load data
-with open("output/t_make_plot_rescale_zlf/" + filename + ".csv") as f:
+with open("output/t_make_plot_rescale/" + filename + ".csv") as f:
     for each_line in f:
         data_tem = each_line.split(",")
         if len(data_tem) > 3:

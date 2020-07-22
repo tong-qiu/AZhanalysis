@@ -36,10 +36,10 @@ def cut_ptl2tmerged(data):
     return mask
 
 def hvt300(data):
-    mask = data[b'MCChannelNumber'] == 307358
+    mask = data[b'MCChannelNumber'] == 343509
     return mask
 def hvt700(data):
-    mask = data[b"MCChannelNumber"] == 302393
+    mask = data[b"MCChannelNumber"] == 343516
     return mask
 def hvt2000(data):
     mask = data[b"MCChannelNumber"] == 302406
@@ -133,6 +133,13 @@ def resolved1btag(data):
     mask = data[b'nTags'] >= 1
     return mask
 
+def resolved3pbtag(data):
+    mask = data[b'nTags'] >= 3
+    return mask
+
+def resolved4pbtag(data):
+    mask = data[b'nTags'] >= 4
+    return mask
 
 def merged1btag(data):
     mask = data[b'nbTagsInFJ'] >= 1
@@ -246,6 +253,17 @@ def calculatecutcommonflow(samples, domerged):
     sum_temlen = len(samples.weight)
     resolveoutputlen.append([">= 1 b-tagged", sum_temlen])
 
+    samples.cut(resolved3pbtag)
+    sum_tem = np.sum(samples.weight)
+    resolveoutput.append([">= 3 b-tagged", sum_tem])
+    sum_temlen = len(samples.weight)
+    resolveoutputlen.append([">= 3 b-tagged", sum_temlen])
+
+    samples.cut(resolved4pbtag)
+    sum_tem = np.sum(samples.weight)
+    resolveoutput.append([">= 4 b-tagged", sum_tem])
+    sum_temlen = len(samples.weight)
+    resolveoutputlen.append([">= 4 b-tagged", sum_temlen])
 
     if not domerged:
         return [{"resolved": resolveoutput}, {"resolved": resolveoutputlen}]
@@ -363,54 +381,54 @@ if __name__ == "__main__":
         _stack_cxaod(sample_directory, mc_Zlljet, "zlljet", 'blue', branches_list_data, False, zjet, matas)
         pickleit(zjet, "zlljet")
         exit(1)
-    ttbar = unpickleit("ttbar")
-    outputtem = calculatecutcommonflow(ttbar[0], True)
-    output["ttbar"] = outputtem[0]
-    outputlen["ttbar"] = outputtem[1]
+    # ttbar = unpickleit("ttbar")
+    # outputtem = calculatecutcommonflow(ttbar[0], True)
+    # output["ttbar"] = outputtem[0]
+    # outputlen["ttbar"] = outputtem[1]
 
-    zjet = unpickleit("zlljet")
-    outputtem = calculatecutcommonflow(zjet[0], True)
-    output["Z+jets"] = outputtem[0]
-    outputlen["Z+jets"] = outputtem[1]
+    # zjet = unpickleit("zlljet")
+    # outputtem = calculatecutcommonflow(zjet[0], True)
+    # output["Z+jets"] = outputtem[0]
+    # outputlen["Z+jets"] = outputtem[1]
 
-    diboson = unpickleit("diboson")
-    outputtem = calculatecutcommonflow(diboson[0], False)
-    output["diboson"] = outputtem[0]
-    outputlen["diboson"] = outputtem[1]
+    # diboson = unpickleit("diboson")
+    # outputtem = calculatecutcommonflow(diboson[0], False)
+    # output["diboson"] = outputtem[0]
+    # outputlen["diboson"] = outputtem[1]
 
-    stop = unpickleit("stop")
-    outputtem = calculatecutcommonflow(stop[0], False)
-    output["stop"] = outputtem[0]
-    outputlen["stop"] = outputtem[1]
+    # stop = unpickleit("stop")
+    # outputtem = calculatecutcommonflow(stop[0], False)
+    # output["stop"] = outputtem[0]
+    # outputlen["stop"] = outputtem[1]
 
     dbl_tem = unpickleit("dbl")
     dbl_tem1 = copy.deepcopy(dbl_tem)
     dbl_tem1[0].cut(hvt300)
     outputtem = calculatecutcommonflow(dbl_tem1[0], True)
-    output["HVT300"] = outputtem[0]
-    outputlen["HVT300"] = outputtem[1]
+    output["bbA400"] = outputtem[0]
+    outputlen["bbA400"] = outputtem[1]
 
     dbl_tem1 = copy.deepcopy(dbl_tem)
     dbl_tem1[0].cut(hvt700)
     outputtem = calculatecutcommonflow(dbl_tem1[0], True)
-    output["HVT700"] = outputtem[0]
-    outputlen["HVT700"] = outputtem[1]
+    output["bbA600"] = outputtem[0]
+    outputlen["bbA600"] = outputtem[1]
 
-    dbl_tem1 = copy.deepcopy(dbl_tem)
-    dbl_tem1[0].cut(hvt2000)
-    outputtem = calculatecutcommonflow(dbl_tem1[0], True)
-    output["HVT2000"] = outputtem[0]
-    outputlen["HVT2000"] = outputtem[1]
+    # dbl_tem1 = copy.deepcopy(dbl_tem)
+    # dbl_tem1[0].cut(hvt2000)
+    # outputtem = calculatecutcommonflow(dbl_tem1[0], True)
+    # output["HVT2000"] = outputtem[0]
+    # outputlen["HVT2000"] = outputtem[1]
 
 
-    dbl_tem1 = copy.deepcopy(dbl_tem)
-    dbl_tem1[0].cut(hvt5000)
-    outputtem = calculatecutcommonflow(dbl_tem1[0], True)
-    output["HVT5000"] = outputtem[0]
-    outputlen["HVT5000"] = outputtem[1]
+    # dbl_tem1 = copy.deepcopy(dbl_tem)
+    # dbl_tem1[0].cut(hvt5000)
+    # outputtem = calculatecutcommonflow(dbl_tem1[0], True)
+    # output["HVT5000"] = outputtem[0]
+    # outputlen["HVT5000"] = outputtem[1]
 
     with open("cutflow.json", "w") as f:
         f.write(json.dumps(output))
 
-    with open("cutflowlen.json", "w") as f:
-        f.write(json.dumps(outputlen))
+    # with open("cutflowlen.json", "w") as f:
+    #     f.write(json.dumps(outputlen))

@@ -72,7 +72,7 @@ def get_allsample(debug=False, sample_list=None, tag="run2"):
     #         alias += ["Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet"]
     #         colors += ['royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue']
     file_name_array = []
-    branches_list_data = [b"EventWeight", b'mVH', b'nTags', b'nSigJet', b"passedTrigger", b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b"mLL", b"METHT", b'pTV', b'j1px', b'j1py', b'mBB', b'ptL1', b'ptL2', b'nFatJets', b'etaL1', b'MCChannelNumber']#b'nbTagsInFJ',,  b'nTrkjetsInFJ', b'nbTagsOutsideFJ'
+    branches_list_data = [b"EventWeight", b'mVHres', b'mVH', b'mVHmerg', b'nTags', b'nSigJet', b"passedTrigger", b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b"mLL", b"METHT", b'pTV', b'j1px', b'j1py', b'mBB', b'ptL1', b'ptL2', b'nFatJets', b'etaL1', b'MCChannelNumber']#b'nbTagsInFJ',,  b'nTrkjetsInFJ', b'nbTagsOutsideFJ'
     matas = ["Sample", "Description", "Regime"]
     branches_list_MC = branches_list_data
 
