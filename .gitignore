@@ -13,3 +13,4 @@ pickle
 run/pickle_wrongjet
 *.lst
 *.json
+*.png
