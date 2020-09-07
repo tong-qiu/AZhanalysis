@@ -23,7 +23,11 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
         #"title3": r"$\mathbf{2\;lep.,2\;b-tag}$",
         "title3": "2 lep., 2 b-tag",
         "filename": "deltatest2",
-        "log_y":False
+        "log_y":False,
+        "ylimit":[0.5,1.2],
+        "yshift":1.3,
+        "verticleline":None,
+        "verticlelinetext": ""
         }
     for each_key in kwargs.items():
         settings[each_key[0]] = kwargs[each_key[0]]
@@ -40,11 +44,11 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
     if labels is not None:
         plt.legend(loc='upper right', prop={'size': 20})
     ax = plt.gca()
-    shift = 1.3
+    shift = settings["yshift"]
     ax.text(0.05, (1.55 - shift) / 1.7, settings['title1'], fontsize=25, transform=ax.transAxes)
     ax.text(0.227, (1.55 - shift) / 1.7, settings['title1_1'], fontsize=21, transform=ax.transAxes)
     ax.text(0.05, (1.40 - shift) / 1.7, settings['title2'], fontsize=23, transform=ax.transAxes)
-    #ax1.text(0.05, 1.26 / 1.7, settings['title3'], fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
+    ax.text(0.05, (1.26  - shift) / 1.7, settings['title3'], fontsize=18, weight='bold', style='italic', transform=ax.transAxes)
     #ax1.text(0.05, 1.12 / 1.7, settings["title4"], fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
     
     if len(error_list)!=0:
@@ -53,10 +57,13 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
     plt.tick_params(labelsize=16)
     plt.tick_params(labelsize=16)
     axes = plt.gca()
-    axes.set_ylim([0.5,1.2])
+    axes.set_ylim(settings["ylimit"])
+    if settings["verticleline"] is not None:
+        plt.plot([settings["verticleline"], settings["verticleline"]], [0,100000], ':', color='silver')
+        plt.annotate(settings["verticlelinetext"], xy=(settings["verticleline"],10), xycoords='data', color='grey')
     plt.ylabel(settings['ylabel'], fontsize=20)
     plt.xlabel(settings['xlabel'], fontsize=20)
-    plt.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0)
+    plt.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0.25)
     plt.show()
 
 def histplot(data_lists, varible_to_plot, bins, labels = None, scales=1., **kwargs):

@@ -14,3 +14,6 @@ run/pickle_wrongjet
 *.lst
 *.json
 *.png
+*OutputDir*
+*.pickle
+*.tex

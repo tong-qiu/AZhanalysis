@@ -114,6 +114,20 @@ def ATLASInternal(x=None, y=None, size=textsize):
     # print('DrawLatexNDC({}, {}, #bf{{#it{{ATLAS}}}} Internal)'.format(x, y))
     ltx.DrawLatexNDC(x, y, "#bf{#it{ATLAS}} Internal")
 
+def ATLASPre(x=None, y=None, size=textsize):
+    """Draw on ROOT.gPad"""
+    if not x:
+        global x_pos
+        x = x_pos
+    if not y:
+        global y_pos
+        y = y_pos
+        y_pos -= step_y * size / size
+    ltx.SetTextSize(size)
+    ltx.SetTextFont(42)
+    # print('DrawLatexNDC({}, {}, #bf{{#it{{ATLAS}}}} Internal)'.format(x, y))
+    ltx.DrawLatexNDC(x, y, "#bf{#it{ATLAS}} Preliminary")
+
 
 def ATLASWIP():
     """Draw on ROOT.gPad"""

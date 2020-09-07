@@ -61,6 +61,15 @@ def load_CxAODs(directories, sample_names, branches, debug=False, sys_name=None,
                     sample_exist = True
                     if not uproot.open(file_address).keys():
                         print('Warning: file ' + file_address + ' is damaged.')
+                    missingbranch = None
+                    for each_branch in branches:
+                        if each_branch not in uproot.open(file_address)[b"Nominal"].keys():
+                            missingbranch = each_branch
+                            break
+                    if missingbranch is not None:
+                        print('Warning: variable ' + missingbranch.decode("utf-8") + " is missing from " + file_address + '.')
+                        continue
+                    #for each in branches
                     # loop over cycles
                     for each_cycle in uproot.open(file_address).keys():
                         if sys_name is None and "Nominal" not in each_cycle.decode("utf-8"):
@@ -513,6 +522,7 @@ class Events:
         if self.mata:
             for each_key in self.mata:
                 self.mata[each_key] = self.mata[each_key][mask]
+        return self
 
     def matacut(self,cuts):
         mask = cuts(self.mata)
@@ -535,6 +545,7 @@ class Events:
         if self.mata:
             for each_key in self.mata:
                 self.mata[each_key] = self.mata[each_key][mask]
+
     def rescale(self, factor, mask=None):
         if mask is not None:
             self.weight[mask] *= factor

@@ -3,7 +3,7 @@ import os
 
 
 class niceTLegend(ROOT.TLegend):
-    def __init__(self, xlow=0.6, ylow=0.6, xhigh=0.85, yhigh=0.85, textsize=0.05):
+    def __init__(self, xlow=0.6, ylow=0.6, xhigh=0.85, yhigh=0.85, textsize=0.04):
         super(niceTLegend, self).__init__()
         self.SetX1NDC(xlow)
         self.SetX2NDC(xhigh)

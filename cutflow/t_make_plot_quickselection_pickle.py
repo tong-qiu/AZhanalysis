@@ -60,9 +60,16 @@ def osmuon(data):
     mask = np.logical_or(data[b'flavL1'] == 1, data[b'chargeL1'] != data[b'chargeL2'])
     return mask
 
-def mll(data):
-    lower_limit = [max(40, 87 - 0.03 * each) for each in (data[b"mVH"]/1000.)]
-    higher_limit = 97 + 0.013 * data[b"mVH"]/1000.
+def mllres(data):
+    lower_limit = [max(40, 87 - 0.03 * each) for each in (data[b"mVHres"]/1000.)]
+    higher_limit = 97 + 0.013 * data[b"mVHres"]/1000.
+    mask = lower_limit < data[b"mLL"]/1000.
+    mask = np.logical_and(data[b"mLL"]/1000. < higher_limit, mask)
+    return mask
+
+def mllmerg(data):
+    lower_limit = [max(40, 87 - 0.03 * each) for each in (data[b"mVHmerg"]/1000.)]
+    higher_limit = 97 + 0.013 * data[b"mVHmerg"]/1000.
     mask = lower_limit < data[b"mLL"]/1000.
     mask = np.logical_and(data[b"mLL"]/1000. < higher_limit, mask)
     return mask
@@ -81,8 +88,12 @@ def ptvmer(data):
     mask = data[b'pTV']/1000. > ptll1_cut(data[b'mVHmerg']/1000.)
     return mask
 
-def metht(data):
-    mask = data[b"METHT"]/(1000.**0.5) < 1.15 + 8 * (10**(-3))*data[b"mVH"]/1000.
+def methtres(data):
+    mask = data[b"METHT"]/(1000.**0.5) < 1.15 + 8 * (10**(-3))*data[b"mVHres"]/1000.
+    return mask
+
+def methtmerg(data):
+    mask = data[b"METHT"]/(1000.**0.5) < 1.15 + 8 * (10**(-3))*data[b"mVHmerg"]/1000.
     return mask
 
 def muoneta(data):
@@ -108,17 +119,17 @@ def mergedb1pt(data):
     return mask
 
 def resolvedmbb(data):
-    mask = data[b'mBB']/1000. > 100
-    mask = np.logical_and(data[b'mBB']/1000. < 145, mask)
+    mask = data[b'mBBres']/1000. > 100
+    mask = np.logical_and(data[b'mBBres']/1000. < 145, mask)
     return mask
 
 def mergedmbb(data):
-    mask = data[b'mBB']/1000. > 75
-    mask = np.logical_and(data[b'mBB']/1000. < 145, mask)
+    mask = data[b'mBBmerg']/1000. > 75
+    mask = np.logical_and(data[b'mBBmerg']/1000. < 145, mask)
     return mask
 
 def resolvednjet(data):
-    mask = data[b"nSigJet"] >= 2
+    mask = data[b"nSigJets"] >= 2
     return mask
 
 def mergednjet(data):
@@ -132,7 +143,6 @@ def ntrackjet(data):
 def resolved1btag(data):
     mask = data[b'nTags'] >= 1
     return mask
-
 
 def merged1btag(data):
     mask = data[b'nbTagsInFJ'] >= 1
@@ -191,24 +201,19 @@ def calculatecutcommonflow(samples, domerged):
     resolveoutputlen.append(["muon eta", sum_temlen])
     mergedoutputlen.append(["muon eta", sum_temlen])
 
-    samples.cut(mll)
+    samplesmerged = copy.deepcopy(samples)
+
+    samples.cut(mllres)
     sum_tem = np.sum(samples.weight)
     resolveoutput.append(["mll", sum_tem])
-    mergedoutput.append(["mll", sum_tem])
     sum_temlen = len(samples.weight)
     resolveoutputlen.append(["mll", sum_temlen])
-    mergedoutputlen.append(["mll", sum_temlen])
 
-    samples.cut(metht)
+    samples.cut(methtres)
     sum_tem = np.sum(samples.weight)
     resolveoutput.append(["METHT", sum_tem])
-    mergedoutput.append(["METHT", sum_tem])
     sum_temlen = len(samples.weight)
     resolveoutputlen.append(["METHT", sum_temlen])
-    mergedoutputlen.append(["METHT", sum_temlen])
-
-
-    samplesmerged = copy.deepcopy(samples)
 
     samples.cut(cut_ptl2tresolved)
     sum_tem = np.sum(samples.weight)
@@ -249,6 +254,18 @@ def calculatecutcommonflow(samples, domerged):
 
     if not domerged:
         return [{"resolved": resolveoutput}, {"resolved": resolveoutputlen}]
+
+    samplesmerged.cut(mllmerg)
+    sum_tem = np.sum(samplesmerged.weight)
+    mergedoutput.append(["mll", sum_tem])
+    sum_temlen = len(samplesmerged.weight)
+    mergedoutputlen.append(["mll", sum_temlen])
+
+    samplesmerged.cut(methtmerg)
+    sum_tem = np.sum(samplesmerged.weight)
+    mergedoutput.append(["METHT", sum_tem])
+    sum_temlen = len(samplesmerged.weight)
+    mergedoutputlen.append(["METHT", sum_temlen])
 
     samplesmerged.cut(cut_ptl2tmerged)
     sum_tem = np.sum(samplesmerged.weight)
@@ -321,7 +338,7 @@ def unpickleit(path):
 
 if __name__ == "__main__":
     sample_directory = ["../sample/a/", "../sample/d/", "../sample/e/"]
-    branches_list_data = [b"EventWeight", b'mVHres', b'mVHmerg', b'mVH', b'nTags', b'nSigJet', b"passedTrigger", b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b"mLL", b"METHT", b'pTV', b'j1px', b'j1py', b'mBB', b'ptL1', b'ptL2', b'nFatJets', b'etaL1', b'MCChannelNumber', b'nbTagsInFJ', b'nTrkjetsInFJ', b'nbTagsOutsideFJ']
+    branches_list_data = [b"EventWeight", b'mVHres', b'mVHmerg', b'mVH', b'nTags', b'nSigJets', b"passedTrigger", b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b"mLL", b"METHT", b'pTV', b'j1px', b'j1py', b'mBB', b'ptL1', b'ptL2', b'nFatJets', b'etaL1', b'MCChannelNumber', b'mBBres', b'mBBmerg', b'nbTagsInFJ', b'nTrkjetsInFJ', b'nbTagsOutsideFJ']
     mc_Wlvjet = ["Wenu_Sh221", "WenuB_Sh221", "WenuC_Sh221", "WenuL_Sh221", "Wmunu_Sh221", "WmunuB_Sh221", "WmunuC_Sh221", "WmunuL_Sh221", "Wtaunu_Sh221", "WtaunuB_Sh221", "WtaunuC_Sh221", "WtaunuL_Sh221"]
     mc_Zlljet1 = ["Zee_Sh221", "ZeeB_Sh221"]
     mc_Zlljet2 = ["ZeeC_Sh221", "ZeeL_Sh221"]
@@ -331,7 +348,7 @@ if __name__ == "__main__":
     mc_Zlljet = ["Znunu_Sh221", "ZnunuB_Sh221", "ZnunuC_Sh221", "ZnunuL_Sh221"]
     mc_Zlljet = ["Zee_Sh221", "ZeeB_Sh221", "ZeeC_Sh221", "ZeeL_Sh221", "Zmumu_Sh221", "ZmumuB_Sh221", "ZmumuC_Sh221", "ZmumuL_Sh221", "Ztautau_Sh221", "ZtautauB_Sh221", "ZtautauC_Sh221", "ZtautauL_Sh221"]
     mc_tt_bar = [ "ttbar_nonallhad_PwPy8", "ttbar_allhad_PwPy8", "ttbar_dilep_PwPy8"]#"ttbar_nonallhad_PwPy8", , "ttbar_allhad_PwPy8"]#"ttbar_nonallhad_PwPy8"]#, "ttbar_allhad_PwPy8"]
-    mc_singletop = ["stops_PwPy8", "stopt_PwPy8", "stopWt_dilep_PwPy8"] # "stopWt_PwPy8", 
+    mc_singletop = ["stops_PwPy8", "stopWt_dilep_PwPy8"] # "stopWt_PwPy8", 
     mc_Diboson = ["WqqWlv_Sh221", "WqqZll_Sh221", "WqqZvv_Sh221", "ZqqZll_Sh221", "ZqqZvv_Sh221", "WlvZqq_Sh221", "ggZqqZll_Sh222", "ggWqqWlv_Sh222"]
     #sm_Higgs = ["qqWlvHbbJ_PwPy8MINLO", "qqZllHbbJ_PwPy8MINLO", "qqZvvHbbJ_PwPy8MINLO", "ggZllHbb_PwPy8", "ggZvvHbb_PwPy8", "ggHbb_PwPy8NNLOPS"] 
     sm_Higgs = ["bbHinc_aMCatNLOPy8", "ggHinc_PwPy8", "ggZllHbb_PwPy8","ggZllHcc_PwPy8","ggZvvHbb_PwPy8","ggZvvHcc_PwPy8","qqWlvHbbJ_PwPy8MINLO","qqWlvHccJ_PwPy8MINLO","qqZllHbbJ_PwPy8MINLO","qqZllHccJ_PwPy8MINLO","qqZvvHbbJ_PwPy8MINLO","qqZvvHccJ_PwPy8MINLO"]
