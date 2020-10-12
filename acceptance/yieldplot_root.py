@@ -57,9 +57,9 @@ def main():
     samplenameinhist = "AZhllbb"
     samplenameininfo = "ggA"
     signalname = "AZhllbb"
-    samplenameinhist = "HVTZHllqq"
-    samplenameininfo = "HVT"
-    signalname = "HVTZHllqq"
+    # samplenameinhist = "HVTZHllqq"
+    # samplenameininfo = "HVT"
+    # signalname = "HVTZHllqq"
     ids = []
     masses = []
     yields = {}
@@ -90,7 +90,7 @@ def main():
                 masses.append(int(re.findall("\d+", sample[2].split("_")[-1])[0]))
 
 
-    
+    print(ids)
     yieldfiles = ["a.txt", "d.txt", "e.txt"]
     for eachfile in yieldfiles:
         with open(eachfile) as f:
@@ -100,6 +100,8 @@ def main():
                 for each in sample_tem:
                     if each != "" and each != "\n":
                         sample.append(each)
+                if sample[0][0] == "0":
+                    continue
                 if int(sample[0]) in ids:
                     i = ids.index(int(sample[0]))
                     if masses[i] not in yields:
@@ -113,9 +115,9 @@ def main():
         each_histname = each_histname.decode("utf-8")
         for each_mass in masses:
             if samplenameinhist  + str(each_mass) + "_" in each_histname and "_SR_" in each_histname:
-                if each_mass == 500:
-                    print(each_histname)
-                if "topaddbjetcr" in each_histname or "4ptag2pjet" in each_histname or "3tag2pjet" in each_histname or "0tag" in each_histname:
+                # if each_mass == 500:
+                #     print(each_histname)
+                if "topaddbjetcr" in each_histname or "4ptag2pjet" in each_histname or "3tag2pjet" in each_histname or "0tag" in each_histname or "bbA" in each_histname:
                     continue
                 if each_mass not in selected:
                     selected[each_mass] = f[each_histname_b]._fEntries
@@ -137,7 +139,7 @@ def main():
                     if each_mass not in selectedm1:
                         selectedm1[each_mass] = f[each_histname_b]._fEntries
                     else:
-                        print("error3")
+                        print("error3", each_mass)
                         exit(1)
                 if "2tag1pfat0pjet_0ptv_SR_noaddbjetsr_mVH" in each_histname:
                     if each_mass not in selectedm2:
@@ -156,7 +158,8 @@ def main():
     for each in masses:
         if each in selected:
             acceptance.append(selected[each]/yields[each])
-        print(each, selected[each]/yields[each])
+        #print(each, selected[each]/yields[each])
+        print(each, selected[each], yields[each], selected[each]/yields[each])
 
     acceptancer1 = []
     for each in masses:

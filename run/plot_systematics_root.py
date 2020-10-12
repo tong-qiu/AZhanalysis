@@ -32,7 +32,7 @@ from package.loadnormfactor import *
 #     edge.append(roothist.GetBinLowEdge(nbins))
 #     return edge, count, errors
 
-def fake_data(bins, hist, variable, stat2, sys2, alias, color, rescaledic=None, rescaledicalias=None):
+def fake_data(bins, hist, variable, stat2, sys2, alias, color, rescaledic=None, rescaledicalias=None, rescaleregion = "ALL"):
     is_fake_data = True
     new_data = []
     weight = []
@@ -55,28 +55,35 @@ def fake_data(bins, hist, variable, stat2, sys2, alias, color, rescaledic=None, 
             print("Warning: " + rescaledicalias + "rescale is not applied.")
             return sample
 
-        if "ALL" in rescaledic[rescaledicalias]:
-            sample = sample * (1 + rescaledic[rescaledicalias]["ALL"])
+        if rescaleregion in rescaledic[rescaledicalias]:
+            sample = sample * (1 + rescaledic[rescaledicalias][rescaleregion])
 
     return sample
 
-bins = [200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+bins = [200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550]
+
+# bins = [200, 350, 500, 650, 800, 1000, 1350, 1550, 1800]
+bins = [200, 250, 300, 350, 400, 450, 650]
 #bins = range(200,2000,20)
-path = "../sample/histo/output2.root"
+path = "run2dbl.root"
 file = uproot.open(path)
-#region = "mBBcr_noaddbjetsr"
+#region = "topemucr"
 region = "mBBcr"
 variable = "mVH"
-#btag = "1tag1pfat0pjet_0ptv"
-btag = "2tag2pjet"
-rescale = False
-dodown = True
+#btag = "1pfat0pjet_0ptv_mBBcr_noaddbjetsr"
+#rescaletag = "1pfat0pjet"
+rescaletag = "ALL"
+#btag = "1tag1pfat0pjet_0ptv_mBBcr_noaddbjetsr"
+btag = "1tag2pjet"
+removenorm = "nominal"
+rescale = True
+dodown = False
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_VlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph", "SysMODEL_ZlJets_MadGraph"]
 
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph"]
 #systematics = ["SysFT_EFF_Eigen_Light_0_AntiKtVR30Rmax4Rmin02TrackJets"]
 #systematics = ["ttbarNNPDFalpha"]
-systematics = ["SysJET_CR_JET_EffectiveNP_Detector1"]
+systematics = ["MODEL_Zjets_PThReweight1T"]
 #systematics = ["SysttbarHFNNPDFalpha"]
 mc_Wlvjet = ["Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc"]
 mc_Zlljet = ["Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb"]
@@ -92,8 +99,9 @@ file_name_array = [num for elem in file_name_array for num in elem]
 
 rescaledic = None
 if rescale:
-    rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
-    "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
+    # rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
+    # "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
+    rescaledic = loadnorm("../fitconfig/config_m2000.cfg", "../fitconfig/GlobalFit_fitres_conditionnal_mu0.txt")
 sysfile = file["Systematics"]
 allhistname = sysfile.keys()
 allhistname_nominal = file.keys()
@@ -131,14 +139,14 @@ for each_mc_name in file_name_array + ["data"]:
         error.append(row.variance)
     edge.append(row.Index[0].right)
     if each_mc_name == "data":
-        data = fake_data(edge, count, variable, error, None, "data", 'k', rescaledic, each_mc_name)
+        data = fake_data(edge, count, variable, error, None, "data", 'k', rescaledic, each_mc_name, rescaleregion=rescaletag)
         continue
-    data_tem = fake_data(edge, count, variable, error, None, "sys", 'r', rescaledic, each_mc_name)
+    data_tem = fake_data(edge, count, variable, error, None, "sys", 'r', rescaledic, each_mc_name, rescaleregion=rescaletag)
     nominal_dic[each_mc_name] = data_tem
     if nominal is None:
-        nominal = fake_data(edge, count, variable, error, None, "Nominal", 'r', rescaledic, each_mc_name)
+        nominal = fake_data(edge, count, variable, error, None, "Nominal", 'r', rescaledic, each_mc_name, rescaleregion=rescaletag)
     else:
-        nominal = nominal + fake_data(edge, count, variable, error, None, "Nominal", 'r', rescaledic, each_mc_name)
+        nominal = nominal + fake_data(edge, count, variable, error, None, "Nominal", 'r', rescaledic, each_mc_name, rescaleregion=rescaletag)
 if data is None:
     print("Warning: no data found!")
 # histplot_withsub([[nominal], [nominal],[data]], variable, bins,labels = ["nominal", "nominal2","data"] )
@@ -213,9 +221,9 @@ for each_mc_name in file_name_array:
             if each_mc_name == "data":
                 continue
             if datasysdown is None:
-                datasysdown = fake_data(edge, count, variable, error, None, "sys", 'y', rescaledic, each_mc_name)
+                datasysdown = fake_data(edge, count, variable, error, None, "sys", 'y', rescaledic, each_mc_name, rescaleregion=rescaletag)
             else:
-                datasysdown = datasysdown + fake_data(edge, count, variable, error, None, "sys", 'y', rescaledic, each_mc_name)
+                datasysdown = datasysdown + fake_data(edge, count, variable, error, None, "sys", 'y', rescaledic, each_mc_name, rescaleregion=rescaletag)
     
 
     if thenameup is None:
@@ -244,20 +252,21 @@ for each_mc_name in file_name_array:
     if each_mc_name == "data":
         continue
     if datasysup is None:
-        datasysup = fake_data(edge, count, variable, error, None, "sys", 'b', rescaledic, each_mc_name)
+        datasysup = fake_data(edge, count, variable, error, None, "sys", 'b', rescaledic, each_mc_name, rescaleregion=rescaletag)
     else:
-        datasysup = datasysup + fake_data(edge, count, variable, error, None, "sys", 'b', rescaledic, each_mc_name)
+        datasysup = datasysup + fake_data(edge, count, variable, error, None, "sys", 'b', rescaledic, each_mc_name, rescaleregion=rescaletag)
 nominal.colour = "b"
 data.colour = "k"
 datasysup.colour = "y"
 if dodown:
     datasysdown.colour = 'c'
     print(np.sum(datasysup.weight), np.sum(datasysdown.weight))
-    histplot_withsub([[nominal],[data], [datasysup], [datasysdown]], variable, bins,labels =["nominal","data", "sysup", "sysdown"], xlabel=r"$m_{VH}[GeV]$", filename="data_" + systematics[0] )
-    histplot_withsub([[nominal],[datasysup], [datasysdown]], variable, bins,labels =["nominal","sysup", "sysdown"], xlabel=r"$m_{VH}[GeV]$", central="nominal", filename="nominal_" + systematics[0] + "_" + btag + "_" + region )
+    histplot_withsub([[nominal],[data], [datasysup], [datasysdown]], variable, bins,labels =["nominal","data", "sysup", "sysdown"], xlabel=r"$m_{VH}[GeV]$", filename="data_" + systematics[0] + "_" + btag + "_" + region, central="nominal", removenorm=removenorm)
+    histplot_withsub([[nominal],[datasysup], [datasysdown]], variable, bins,labels =["nominal","sysup", "sysdown"], xlabel=r"$m_{VH}[GeV]$", central="nominal", filename="nominal_" + systematics[0] + "_" + btag + "_" + region, removenorm=removenorm )
 else:
     #histplot_withsub([[nominal],[data], [datasysup]], variable, bins,labels =["nominal","data", "sys"], xlabel=r"$m_{VH}[GeV]$", filename="data_" + systematics[0] )
-    histplot_withsub([[nominal],[datasysup]], variable, bins,labels =["nominal","data", "sys"], xlabel=r"$m_{VH}[GeV]$", central="nominal", filename="nominal_" + systematics[0]+ "_" + btag + "_" + region)
+    histplot_withsub([[nominal],[data], [datasysup]], variable, bins,labels =["nominal","data", "sysup"], xlabel=r"$m_{VH}[GeV]$", filename="data_" + systematics[0] + "_" + btag + "_" + region, central="nominal")#, removenorm=removenorm)
+    histplot_withsub([[nominal],[datasysup]], variable, bins,labels =["nominal","data", "sys"], xlabel=r"$m_{VH}[GeV]$", central="nominal", filename="nominal_" + systematics[0]+ "_" + btag + "_" + region)#, removenorm=removenorm)
 # height_nominal, sigma2_mominal = nominal.binned_weight_variation(variable,bins,1)
 # height_data, sigma2_data = data.binned_weight_variation(variable,bins,1)
 # height_datasys, sigma2_datasys = datasys.binned_weight_variation(variable,bins,1)

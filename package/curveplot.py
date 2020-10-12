@@ -130,7 +130,7 @@ def histplot(data_lists, varible_to_plot, bins, labels = None, scales=1., **kwar
     plt.savefig(settings['filename'] + '.pdf')
     plt.show()
 
-def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1., **kwargs):
+def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1., removenorm = None, **kwargs,):
     # data_list = [[sample1, sample2, ...],[sample3, sample4, ...], ...]
     rcParams['mathtext.fontset'] = 'custom'
     #rcParams["font.family"] = "Times New Roman"
@@ -185,6 +185,17 @@ def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1.
     for i in range(len(bins)-1):
         bin_centre.append((bins[i]+bins[i+1])/2.)
         bin_width.append(bins[i+1]-bins[i])
+    
+    if removenorm is not None:
+        for i in range(len(all_label)):
+            if all_label[i] == removenorm:
+                sumweightnorm = sum(all_height[i])
+                break
+        for i in range(len(all_label)):
+            if all_label == "data":
+                continue
+            all_height[i] = all_height[i] * sumweightnorm/sum(all_height[i])
+            all_sigma2[i] = all_sigma2[i] * sumweightnorm/sum(all_height[i])
     for each_height, each_sigma2, each_label, each_width, each_color in zip(all_height, all_sigma2, all_label, bin_width, all_color):
         ax1.hist(bin_centre, bins, weights = each_height, label=each_label, density=settings["norm"], histtype=u'step', color=each_color)
         #plt.errorbar(bin_centre, each_height, yerr=each_sigma2**0.5, label=each_label, fmt='.') # xerr=each_width/2.

@@ -41,7 +41,7 @@ def fake_data(bins, hist, variable, stat2, sys2, alias, color, rescaledic=None, 
 
 bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
 bins = range(0,900,30)
-file = uproot.open("../sample/histo/output1.root")
+file = uproot.open("run2dbl.root")
 region = "_mBBcr_"
 #region = "_topemucr_"
 variable = "mVH"
@@ -51,7 +51,7 @@ dodown = True
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_VlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph", "SysMODEL_ZlJets_MadGraph"]
 
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph", "SysMODEL_ZHFJets_MadGraph", "SysMODEL_ZhlJets_MadGraph"]
-systematics = ["JET_CR_JET_Pileup_RhoTopology"]
+systematics = ["SysZHLFScaleShapeOnly"]
 #systematics = ["SysFT_EFF_Eigen_B_2_AntiKt4EMTopoJets"]
 #systematics = ["SysMODEL_VHFJets_MadGraph", "SysMODEL_VhlJets_MadGraph"]
 mc_Wlvjet = ["Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc"]

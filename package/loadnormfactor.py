@@ -33,6 +33,7 @@ def loadnorm(configpath, normpath):
             match = re.search(r"(.+)\&\$([\-e0-9.]+)\^\{([e\-\+0-9.]+)\}\_\{([e\+\-0-9.]+)", eachline)
             if match is not None and match.group(1) in sysdic:
                 for each in sysdic[match.group(1)]:
+                    print(each)
                     if "norm" in match.group(1):
                         sys_tem = float(match.group(2)) - 1.
                         sys_tem_error = float(match.group(3))

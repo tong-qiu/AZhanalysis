@@ -33,7 +33,7 @@ def main():
     region1 = ["1tag2pjet_0ptv_SR_mVH", "2tag2pjet_0ptv_SR_mVH"]
     region2 = ["1tag2pjet_0ptv_topemucr_mVH", "2tag2pjet_0ptv_topemucr_mVH"]
     nom1, nom2 = getweight("run2dbl.root", "ttbar", region1, region2)
-    altdir = ["a", "d", "e"]
+    altdir = ["a"]
     altsamples = ["PwHwg7", "aMCat"]
     alt = [[0, 0] for each in range(len(altsamples))]
     for eachdir in altdir:

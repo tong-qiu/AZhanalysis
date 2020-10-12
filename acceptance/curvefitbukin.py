@@ -19,15 +19,37 @@ def poplist(inputs, index):
             out.append(inputs[i])
     return out
 
+def formatnumber(value, error):
+    valuestring = "{:.2e}".format(value)
+    valuedigit = int(valuestring.split("e")[1])
+    errorstring = "{:.2e}".format(error)
+    errordigit = int(errorstring.split("e")[1])
+    error = float(errorstring.split("e")[0]) * 10.**(-valuedigit + errordigit)
+
+    # error1 = str(error).split(".")[0]
+    # error2 = str(error).split(".")[1]
+    # if len(error2) > 15:
+    #     error2 = error2[0:14]
+    #     error2 = str(int(error2)).rstrip("0")
+    # error = float(error1 + "." + error2)
+    error = round(error,2)
+    return("(" + valuestring.split("e")[0] + "+/-" + str(error) + ")e" + valuestring.split("e")[1])
+
+def texformatnumber(value, error):
+    origin = formatnumber(value, error).replace("+/-", r"\pm")
+    p1 = origin.split("e")[0]
+    p2 = origin.split("e")[1]
+    return "$" + p1 + r" \times 10^{" + p2 + "}$"
+
 # 0 xp, 1 sigma, 2 ksai, 3 p1, 4 p2
 def fitfunction_root(x, par):
     # source: https://github.com/root-project/root/blob/master/roofit/roofit/src/RooBukinPdf.cxx
-    Xp = par[0]
-    sigp = par[1]
-    xi = par[2]
-    rho1 = par[3]
-    rho2 = par[4]
-    ap = par[5]
+    Xp = par[0] # x_p
+    sigp = par[1] # \sigma_p
+    xi = par[2] # \xi
+    rho1 = par[3] # \rho_1
+    rho2 = par[4] # \rho_2
+    ap = par[5] # \ \A_p
     consts = 2*math.sqrt(2*math.log(2.0))
     r1=0
     r2=0
@@ -89,11 +111,16 @@ def rebin(inputs, factor, order=1):
 
 
 def main():
-    doplot = False
+    doplot = True
     samplenameinhist = "AZhllbb"
     samplenameininfo = "ggA"
-    samplenameinhist = "HVTZHllqq"
-    samplenameininfo = "HVT"
+    signalSymbol = "A"
+    # samplenameinhist = "HVTZHllqq"
+    # samplenameininfo = "HVT"
+    # signalSymbol = "Z'"
+    # samplenameinhist = "bbAZhllbb"
+    # samplenameininfo = "bbA"
+    # signalSymbol = "A"
     ids = []
     masses = []
     yields = {}
@@ -121,7 +148,11 @@ def main():
                             break
             elif samplenameininfo == "HVT":
                 masses.append(int(re.findall("\d+", sample[2].split("_")[-1])[0]))
-
+            elif samplenameininfo == "bbA":
+                for each in sample[2].split("_"):
+                        if samplenameininfo in each:
+                            masses.append(int(each.replace(samplenameininfo, "")))
+                            break
     masses = sorted(masses)
     masses_tem = masses
     masses = []
@@ -129,24 +160,29 @@ def main():
         if each < 5001:
             masses.append(each)
     
-    f = uproot.open("run2dblnominal.root")
+    f = uproot.open("dblnominal.root")
     for each_histname in f.keys():
         each_histname_b = each_histname
         each_histname = each_histname.decode("utf-8")
         for each_mass in masses:
             if samplenameinhist  + str(each_mass) + "_" in each_histname and "_SR_" in each_histname and "_mVHresolution" in each_histname:
-                if each_mass == 500:
-                    print(each_histname)
-                if "topaddbjetcr" in each_histname or "4ptag2pjet" in each_histname or "3tag2pjet" in each_histname or "0tag" in each_histname:
-                    continue
-                if "1tag2pjet" in each_histname or "2tag2pjet" in each_histname:
+                if samplenameininfo != "bbA":
+                    if "bbA" in each_histname:
+                        continue
+                    if "topaddbjetcr" in each_histname or "4ptag2pjet" in each_histname or "3tag2pjet" in each_histname or "3ptag2pjet" in each_histname or "0tag" in each_histname:
+                        continue
+                else:
+                    if "4ptag2pjet" in each_histname or "3tag2pjet" in each_histname or "0tag" in each_histname:
+                        continue
+                bbAtag = samplenameininfo == "bbA" and "3ptag2pjet" in each_histname
+                if "1tag2pjet" in each_histname or "2tag2pjet" in each_histname or bbAtag:
                     if each_mass not in selectedr1:
                         selectedr1[each_mass] = [(np.array(f[each_histname_b].edges[0:-1]) + np.array(f[each_histname_b].edges[1:]))/2, np.array(f[each_histname_b].values), np.array(f[each_histname_b].variances)**0.5]
                     else:
                         selectedr1[each_mass][1] += np.array(f[each_histname_b].values)
                         selectedr1[each_mass][2] = (selectedr1[each_mass][2]**2 + np.array(f[each_histname_b].variances))**0.5
-
-                if "1tag1pfat0pjet_0ptv_SR_noaddbjetsr" in each_histname or "2tag1pfat0pjet_0ptv_SR_noaddbjetsr_mVH" in each_histname:
+                bbAtag = samplenameininfo == "bbA" and "SR_topaddbjetcr" in each_histname
+                if "1tag1pfat0pjet_0ptv_SR_noaddbjetsr" in each_histname or "2tag1pfat0pjet_0ptv_SR_noaddbjetsr_mVH" in each_histname or bbAtag:
                     if each_mass not in selectedm1:
                         selectedm1[each_mass] = [(np.array(f[each_histname_b].edges[0:-1]) + np.array(f[each_histname_b].edges[1:]))/2, f[each_histname_b].values, np.array(f[each_histname_b].variances)**0.5]
                     else:
@@ -165,6 +201,8 @@ def main():
     xlow = -0.5
     xhigh = 0.5
     masses_resolved = []
+    #ROOT.Math.MinimizerOptions.SetDefaultMaxFunctionCalls(90000000)
+    #ROOT.Math.MinimizerOptions.SetDefaultTolerance(10000); 
     for each_mass in masses:
         if each_mass > 3000:
             continue
@@ -175,9 +213,22 @@ def main():
             graph.SetPointError(i, 0, selectedr1[each_mass][2][i])
         fit1 = ROOT.TF1("fit1", fitfunction_root,-1, 1, 6)
         fit1.SetParameters(0,0.1,0,0,0,100)
-        graph.Fit(fit1)
-        result = fit1.GetParameters()
-        error = fit1.GetParErrors()
+        print("Fit for resolved:", each_mass)
+        Ntry = 0
+        while 1:
+            fitStatus = graph.Fit(fit1)
+            result = fit1.GetParameters()
+            error = fit1.GetParErrors()
+            if error[0] > 0.3:
+                print("not converge, try again...")
+                fit1.SetParameters(result[0], result[1], result[2], result[3], result[4], result[5])
+                Ntry += 1
+                if Ntry > 4:
+                    print("fit failed")
+                    break
+                continue
+            break
+        
         effs.append(result[1])
         errors.append(error[1])
 
@@ -206,8 +257,16 @@ def main():
             plt.text(0.05, 0.9, title1, fontsize=18, transform=ax.transAxes, style='italic', fontweight='bold')
             plt.text(0.25, 0.9, title1_1, fontsize=18, transform=ax.transAxes)
             plt.text(0.05, 0.82, title3, fontsize=14, weight='bold', style='italic', transform=ax.transAxes)
-            plt.text(0.05, 0.75, "$m_{Z'}$ = " + str(each_mass) + " GeV, 2 lep. resolved", fontsize=14, transform=ax.transAxes)
-            plt.savefig("fitplot/hvt" + str(each_mass) + "resolved"+".pdf" ,bbox_inches='tight', pad_inches = 0.02)
+            plt.text(0.05, 0.75, "$m_{" + signalSymbol + "}$ = " + str(each_mass) + " GeV, 2 lep. resolved", fontsize=11, transform=ax.transAxes)
+
+            plt.text(0.57, 0.95, r"$x_p$ = " + texformatnumber(result[0], error[0]), fontsize=10, transform=ax.transAxes, style='italic')
+            plt.text(0.57, 0.90, r"$\sigma_p$ = " + texformatnumber(result[1], error[1]), fontsize=10, transform=ax.transAxes, style='italic')
+            plt.text(0.57, 0.85, r"$\xi$ = " + texformatnumber(result[2], error[2]), fontsize=10, transform=ax.transAxes, style='italic')
+            plt.text(0.57, 0.80, r"$\rho_1$ = " + texformatnumber(result[3], error[3]), fontsize=10, transform=ax.transAxes, style='italic')
+            plt.text(0.57, 0.75, r"$\rho_2$ = " + texformatnumber(result[4], error[4]), fontsize=10, transform=ax.transAxes, style='italic')
+            plt.text(0.57, 0.70, r"$A_p$ = " + texformatnumber(result[5], error[5]), fontsize=10, transform=ax.transAxes, style='italic')
+
+            plt.savefig("fitplot/" + str(each_mass) + "resolved"+".pdf" ,bbox_inches='tight', pad_inches = 0.02)
             plt.clf()
             plt.cla()
             plt.close()
@@ -228,9 +287,21 @@ def main():
             graph.SetPointError(i, 0, selectedm1[each_mass][2][i])
         fit1 = ROOT.TF1("fit1", fitfunction_root,-1, 1, 6)
         fit1.SetParameters(0,0.1,0,0,0,100)
-        graph.Fit(fit1)
-        result = fit1.GetParameters()
-        error = fit1.GetParErrors()
+        print("Fit for merged:", each_mass)
+        Ntry = 0
+        while 1:
+            graph.Fit(fit1)
+            result = fit1.GetParameters()
+            error = fit1.GetParErrors()
+            if error[0] > 0.3:
+                print("not converge, try again...")
+                fit1.SetParameters(result[0], result[1], result[2], result[3], result[4], result[5])
+                Ntry += 1
+                if Ntry > 4:
+                    print("fit failed")
+                    break
+                continue
+            break
         effsm.append(result[1])
         errorsm.append(error[1])
         if doplot:
@@ -257,8 +328,15 @@ def main():
             plt.text(0.05, 0.9, title1, fontsize=18, transform=ax.transAxes, style='italic', fontweight='bold')
             plt.text(0.25, 0.9, title1_1, fontsize=18, transform=ax.transAxes)
             plt.text(0.05, 0.82, title3, fontsize=14, weight='bold', style='italic', transform=ax.transAxes)
-            plt.text(0.05, 0.75, "$m_{Z'}$ = " + str(each_mass) + " GeV, 2 lep. merged", fontsize=14, transform=ax.transAxes)
-            plt.savefig("fitplot/hvt" + str(each_mass) + "merged"+".pdf" ,bbox_inches='tight', pad_inches = 0.02)
+            plt.text(0.05, 0.75, "$m_{" + signalSymbol + "}$ = " + str(each_mass) + " GeV, 2 lep. merged", fontsize=11, transform=ax.transAxes)
+
+            plt.text(0.57, 0.95, r"$x_p$ = " + texformatnumber(result[0], error[0]), fontsize=10, transform=ax.transAxes, style='italic')
+            plt.text(0.57, 0.90, r"$\sigma_p$ = " + texformatnumber(result[1], error[1]), fontsize=10, transform=ax.transAxes, style='italic')
+            plt.text(0.57, 0.85, r"$\xi$ = " + texformatnumber(result[2], error[2]), fontsize=10, transform=ax.transAxes, style='italic')
+            plt.text(0.57, 0.80, r"$\rho_1$ = " + texformatnumber(result[3], error[3]), fontsize=10, transform=ax.transAxes, style='italic')
+            plt.text(0.57, 0.75, r"$\rho_2$ = " + texformatnumber(result[4], error[4]), fontsize=10, transform=ax.transAxes, style='italic')
+            plt.text(0.57, 0.70, r"$A_p$ = " + texformatnumber(result[5], error[5]), fontsize=10, transform=ax.transAxes, style='italic')
+            plt.savefig("fitplot/" + str(each_mass) + "merged"+".pdf" ,bbox_inches='tight', pad_inches = 0.02)
             plt.clf()
             plt.cla()
             plt.close()
@@ -279,11 +357,11 @@ def main():
     title3 = r"$\sqrt{s}=13\:TeV,139\:fb^{-1}$"
     ax = plt.gca()
     plt.ylabel(r"resolution", fontsize=17)
-    plt.xlabel("$m_{Zh}$ [GeV]", fontsize=17)
+    plt.xlabel("$m_{" + signalSymbol + "}$ [GeV]", fontsize=17)
     plt.text(0.05, 0.9, title1, fontsize=18, transform=ax.transAxes, style='italic', fontweight='bold')
     plt.text(0.25, 0.9, title1_1, fontsize=18, transform=ax.transAxes)
     plt.text(0.05, 0.82, title3, fontsize=14, weight='bold', style='italic', transform=ax.transAxes)
-    plt.text(0.05, 0.75, "HVT Z', 2 lep", fontsize=14, transform=ax.transAxes)
+    plt.text(0.05, 0.75, samplenameininfo + ", 2 lep", fontsize=14, transform=ax.transAxes)
     plt.savefig("fitplot/overall.pdf" ,bbox_inches='tight', pad_inches = 0.02)
     plt.clf()
     plt.cla()

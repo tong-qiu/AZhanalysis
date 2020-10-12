@@ -17,7 +17,7 @@ def barplot(height, tick, filename, legend):
     plt.xticks(np.array(x)+0.5, tick, fontsize=10)
     plt.xticks(rotation=45, rotation_mode="anchor", ha='right',)
     plt.ylabel("Relative yield after applying given cuts", fontsize=10)
-    plt.savefig(filename + '.pdf', bbox_inches='tight', pad_inches = 0,)
+    plt.savefig(filename + '.pdf', bbox_inches='tight', pad_inches = 0.2,)
     plt.show()
 
 if __name__ == "__main__":

@@ -140,15 +140,22 @@ def main():
                     else:
                         yields[masses[i]] += int(sample[1])
     
-    f = uproot.open("run2dbl.root")
+    f = uproot.open("run2dbl_bbA.root")
+    # for each_histname in f.keys():
+    #     if "bbA" in each_histname.decode("utf-8") and "300_" in each_histname.decode("utf-8") and "_SR_" in each_histname.decode("utf-8"):
+    #         print(each_histname)
+    # exit(1)
+    print(masses)
     for each_histname in f.keys():
         each_histname_b = each_histname
         each_histname = each_histname.decode("utf-8")
         for each_mass in masses:
             if samplenameinhist  + str(each_mass) + "_" in each_histname and "_SR_" in each_histname:
-                if each_mass == 500:
-                    print(each_histname)
+                # if each_mass == 500:
+                #     print(each_histname)
                 if "0tag" in each_histname:
+                    continue
+                if "bbA" not in each_histname:
                     continue
                 if samplenameininfo != "bbA":
                     if "topaddbjetcr" in each_histname or "4ptag2pjet" in each_histname or "3tag2pjet" in each_histname or "3ptag2pjet" in each_histname:
@@ -215,7 +222,7 @@ def main():
     for each in masses:
         if each in selected:
             acceptance.append(selected[each]/yields[each])
-        print(each, selected[each]/yields[each])
+        print(each, selected[each], yields[each], selected[each]/yields[each])
 
     acceptancer1 = []
     for each in masses:
@@ -324,8 +331,8 @@ def main():
     legend.UpdateCoords(0.52, 0.65, 0.9, 0.93)
     legend.Draw()
 
-    #ATLASInternal(x=0.15, y=0.88)
-    ATLASPre(x=0.15, y=0.88)
+    ATLASInternal(x=0.15, y=0.88)
+    #ATLASPre(x=0.15, y=0.88)
     EnergyAndLumi(x=0.15, y=0.82, lumi=139, size=0.035)
     DrawText(text[signalname]["title"], x=0.15, y=0.78, size=0.035)
 
