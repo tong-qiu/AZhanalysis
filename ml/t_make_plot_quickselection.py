@@ -12,7 +12,7 @@ import zlib
 
 lib_path = os.path.abspath(os.path.join(__file__, '..', '..'))
 sys.path.append(lib_path)
-#sys.path.append('../package')
+sys.path.append('../package')
 
 from package.events import *
 from mlcut import *
@@ -28,14 +28,13 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
     if not sample:
         print("Warning: No "+each_alias+" samples found!")
     if cut and sample:
-        #sample.matacut(s_sr)
         # choose event selections here
 
         # select resolved event using the "Regime" branch
         # This is a string-based event selection. The easytree branch which contains the string 
         # should be defined in the "matas" list. 
         # The event selection criterion is defined in ml/cutstring.py
-        sample.matacut(s_merged)
+        sample.matacut(s_resolved)
 
         # select events with certain number of b-tagged jets
         # This is a value-based event selection. The easytree branch which contains the values 
@@ -45,7 +44,7 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
         # sample.cut_parameter(cut_btag_is, ntag)
 
         # other user defined event selection
-        #sample.cut(cut_basic)
+        # sample.cut(cut_basic)
 
         m_allsamples.append(sample)
     if not cut:
@@ -56,13 +55,12 @@ if __name__ == '__main__':
     # only load limited number of the events if debug
     debug = True
     # Do event selection?
-    cut = True
+    cut = False
     # save event after selection as root file?
     saveevent = True
     tag = "a"
     # directory of the easytrees
-    sample_directory = ["/data/atlas/projects/AZh/" + tag + "/"]
-    sample_directory = ["../sample/student3a/"]
+    sample_directory = ["../sample/a/"]
     data = ["data16", "data15"]
     # Text on the plot. Delete if not needed.
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
@@ -103,16 +101,16 @@ if __name__ == '__main__':
     ggA300 = ["AZhllbb300"]
 
     # signal/background to be loaded
-    file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet, bbA300]
+    file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet]
     # choose a name for your backgrounds
-    alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet", "bbA300"]
+    alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet"]
     # Colours of each background on the plot. Delete if not needed.
-    colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm', "r"]
+    colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm']
 
     # Variables to load.
-    branches_list_data = [b"mBBres", b"EventWeight"]
+    branches_list_data = [b"mBBres", b"EventWeight", b"METHT", b'mVH', b'nTags', b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b'passedTrigger']
     # Strings to load.
-    matas = ["Regime", "Description", "Sample" ]
+    matas = ["Regime"]#, "Description" ]
     branches_list_MC = branches_list_data
 
 
@@ -161,65 +159,35 @@ if __name__ == '__main__':
     # Event.weight: a numpy array contains the weight of each event
     # Event.alias: a string which stores the type of the background
     # Event.__add__: merged two event.Events object. Example: merged = Eventsobject1 + Eventsobject2
-    count_zbb = 0
-    count_zbc = 0
-    count_zcc = 0
-    count_zbl = 0
-    count_zcl = 0
-    count_zl = 0
-    count_z = 0
-    for each in all_sample_after:
-        print(len(each.weight), each.alias)
-        if each.alias == "Zlljet":
-            for eachdes in each.mata["Sample"]:
-                if eachdes == zlib.adler32(b"Zbb"):
-                    count_zbb += 1
-                elif eachdes == zlib.adler32(b"Zbc"):
-                    count_zbc += 1
-                elif eachdes == zlib.adler32(b"Zbl"):
-                    count_zbl += 1
-                elif eachdes == zlib.adler32(b"Zcc"):
-                    count_zcc += 1
-                elif eachdes == zlib.adler32(b"Zcl"):
-                    count_zcl += 1
-                elif eachdes == zlib.adler32(b"Zl"):
-                    count_zl += 1
-                elif eachdes == zlib.adler32(b"Z"):
-                    count_z += 1
-                else:
-                    print(eachdes)
-                    exit(1)
-            print(count_zbb, count_zbc, count_zbl, count_zcc, count_zcl, count_zl, count_z)
+
     # save as root files for MVA. delete if not needed.
-    # dataweight = 0
-    # mcweight = 0
-    # if saveevent:
-    #     print("Saving events for MVA training...")
-    #     backgroundlist = None
-    #     datalist = []
-    #     signallist = []
-    #     backgroundlist = []
-    #     for content in all_sample_after:
-    #         if "data" in content.alias:
-    #             datalist.append(content)
-    #         elif "A" in content.alias:
-    #             signallist.append(content)
-    #         else:
-    #             backgroundlist.append(content)
-    #     if datalist:
-    #         saveevents(datalist,"data")
-    #     if signallist:
-    #         saveevents(signallist,"signal")
-    #     if backgroundlist:
-    #         saveevents(backgroundlist,"backgrounds")
+    if saveevent:
+        print("Saving events for MVA training...")
+        backgroundlist = None
+        datalist = []
+        signallist = []
+        backgroundlist = []
+        for content in all_sample_after:
+            if "data" in content.alias:
+                datalist.append(content)
+            elif "A" in content.alias:
+                signallist.append(content)
+            else:
+                backgroundlist.append(content)
+        if datalist:
+            saveevents(datalist,"data")
+        if signallist:
+            saveevents(signallist,"signal")
+        if backgroundlist:
+            saveevents(backgroundlist,"backgrounds")
     
 
-    # # make stack plot. delete if not needed.
-    # print("Making plots...")
-    # title3="mBBcr"
-    # direct = ""
-    # name = "mbbcut-"
-    # bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
-    # stackplot(all_sample_after,b'mVH',bins,1000.,
-    #     xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
-    #     title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
+    # make stack plot. delete if not needed.
+    print("Making plots...")
+    title3="mBBcr"
+    direct = ""
+    name = "mbbcut-"
+    bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+    stackplot(all_sample_after,b'mVH',bins,1000.,
+        xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
+        title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
