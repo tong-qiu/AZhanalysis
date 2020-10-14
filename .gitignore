@@ -18,3 +18,7 @@ run/pickle_wrongjet
 *.pickle
 *.tex
 testmodel
+!sample_info.txt
+!a.txt
+!d.txt
+!e.txt
