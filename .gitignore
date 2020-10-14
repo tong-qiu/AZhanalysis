@@ -17,3 +17,4 @@ run/pickle_wrongjet
 *OutputDir*
 *.pickle
 *.tex
+testmodel

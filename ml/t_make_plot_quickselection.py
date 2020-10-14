@@ -9,6 +9,8 @@ import pickle
 from matplotlib import rc
 import sys
 import zlib
+import re
+import copy
 
 lib_path = os.path.abspath(os.path.join(__file__, '..', '..'))
 sys.path.append(lib_path)
@@ -20,6 +22,42 @@ from package.stackplot import *
 from curveplot import *
 from cutstring import *
 import multiprocessing
+
+def get_signalid(samplenameininfo):
+    masses = []
+    ids = []
+    with open("sample_info.txt") as f:
+        for eachline in f:
+            sample_tem = eachline.split(" ")
+            sample = []
+            for each in sample_tem:
+                if each != "" and each != "\n":
+                    sample.append(each)
+            #print(sample[1])
+            if samplenameininfo in sample[1]:
+                ids.append(int(sample[0]))
+            else:
+                continue
+            if samplenameininfo == "ggA" or samplenameininfo == "bbA":
+                for each in sample[2].split("_"):
+                        if samplenameininfo in each:
+                            masses.append(int(each.replace(samplenameininfo, "")))
+                            break
+            elif samplenameininfo == "HVT":
+                masses.append(int(re.findall("\d+", sample[2].split("_")[-1])[0]))
+        output = {}
+    for eachmass, eachid in zip(masses, ids):
+        output[eachid] = eachmass
+    return output
+
+def splitesamples(eventsobj, dicobj):
+    output = []
+    for eachkey in dicobj.keys():
+        eventobj_tem = copy.deepcopy(eventsobj)
+        eventobj_tem.cut(cut_mcid(eachkey))
+        eventobj_tem.alias = dicobj[eachkey]
+        output.append((dicobj[eachkey], eventobj_tem))
+    return output
 
 # function to load easytrees and perform event selections
 def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, cut, m_allsamples, matas=None):
@@ -35,13 +73,14 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
         # should be defined in the "matas" list. 
         # The event selection criterion is defined in ml/cutstring.py
         sample.matacut(s_resolved)
+        sample.matacut(s_sr)
 
         # select events with certain number of b-tagged jets
         # This is a value-based event selection. The easytree branch which contains the values 
         # should be defined in the "branches_list_data" list.
         # The event selection criterion is defined in ml/mlcut.py
-        # ntag = 1
-        # sample.cut_parameter(cut_btag_is, ntag)
+        ntag = 2
+        sample.cut_parameter(cut_btag_is, ntag)
 
         # other user defined event selection
         # sample.cut(cut_basic)
@@ -53,15 +92,16 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
 
 if __name__ == '__main__':
     # only load limited number of the events if debug
-    debug = True
+    debug = False
     # Do event selection?
-    cut = False
+    cut = True
     # save event after selection as root file?
     saveevent = True
     tag = "a"
     # directory of the easytrees
+    sample_directory = ["../sample/a/", "../sample/d/", "../sample/e/"]
     sample_directory = ["../sample/a/"]
-    data = ["data16", "data15"]
+    data = ["data16", "data15", "data17", "data18"]
     # Text on the plot. Delete if not needed.
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
 
@@ -97,21 +137,20 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------
 
     # signal files
-    bbA300 = ["bbAZhllbb300"]
-    ggA300 = ["AZhllbb300"]
+    ggA = ["ggA"]
 
     # signal/background to be loaded
-    file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet]
+    file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet, ggA]
     # choose a name for your backgrounds
-    alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet"]
+    alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet", "ggA"]
     # Colours of each background on the plot. Delete if not needed.
-    colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm']
+    colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm', "r"]
 
     # Variables to load.
-    branches_list_data = [b"mBBres", b"EventWeight", b"METHT", b'mVH', b'nTags', b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b'passedTrigger']
+    branches_list_data = [b"mBBres", b"EventWeight", b"METHT", b'mVHres', b'nTags', b"mLL", b"ptL1", b"ptL2", b"pTB1", b"pTB2", b"ptH", b"pTV"]
     # Strings to load.
-    matas = ["Regime"]#, "Description" ]
-    branches_list_MC = branches_list_data
+    matas = ["Regime", "Description" ]
+    branches_list_MC = [b"mBBres", b"EventWeight", b"METHT", b'mVHres', b'nTags', b"mLL", b"ptL1", b"ptL2", b"pTB1", b"pTB2", b"ptH", b"pTV", b'MCChannelNumber']
 
 
     # Load samples and event selection
@@ -174,20 +213,28 @@ if __name__ == '__main__':
                 signallist.append(content)
             else:
                 backgroundlist.append(content)
-        if datalist:
-            saveevents(datalist,"data")
-        if signallist:
-            saveevents(signallist,"signal")
-        if backgroundlist:
-            saveevents(backgroundlist,"backgrounds")
+        
+        test = get_signalid("ggA")
+        out = splitesamples(signallist[0], test)
+        for each in out:
+            print(each[0], sum(each[1].weight))
+            saveevents_pandas([each[1]], str(each[0])+".csv")
+        saveevents_pandas(backgroundlist, "background.csv")
+
+        # if datalist:
+        #     saveevents(datalist,"data")
+        # if signallist:
+        #     saveevents(signallist,"signal")
+        # if backgroundlist:
+        #     saveevents(backgroundlist,"backgrounds")
     
 
     # make stack plot. delete if not needed.
-    print("Making plots...")
-    title3="mBBcr"
-    direct = ""
-    name = "mbbcut-"
-    bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
-    stackplot(all_sample_after,b'mVH',bins,1000.,
-        xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
-        title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
+    # print("Making plots...")
+    # title3="mBBcr"
+    # direct = ""
+    # name = "mbbcut-"
+    # bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
+    # stackplot(all_sample_after,b'mVHres',bins,1000.,
+    #     xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
+    #     title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)

@@ -5,6 +5,7 @@ import copy
 import math
 import sys
 import zlib
+import pandas as pd
 sys.path.append(os.path.abspath(os.path.join(__file__, '..')))
 from fourvector import *
 import cutstring
@@ -210,6 +211,17 @@ def saveevents(eventslist, filename, treename="Nominal"):
             f[treename][eachkey].newbasket(eachcontent.tolist())
         #f[treename].extend(extend_branchdict)
 
+def saveevents_pandas(eventslist, filename):
+    alldata = None
+    for each in eventslist:
+        if alldata is None:
+            alldata = each
+        else:
+            alldata = alldata + each
+    extend_branchdict = {"weight": alldata.weight}
+    for eachkey in alldata.data.keys():
+        extend_branchdict[eachkey.decode("utf-8")] = alldata.data[eachkey]
+    pd.DataFrame(extend_branchdict).to_csv(filename)
 
 def significant(backgrounds, signal, variable, bins, scale=1, logsig=True):
     backgrounds_content = backgrounds.binned_weight(variable, bins, scale)
