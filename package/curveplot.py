@@ -25,7 +25,9 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
         "filename": "deltatest2",
         "log_y":False,
         "ylimit":[0.5,1.2],
+        "xlimit":None,
         "yshift":1.3,
+        "xshift":0,
         "verticleline":None,
         "verticlelinetext": ""
         }
@@ -45,10 +47,11 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
         plt.legend(loc='upper right', prop={'size': 20})
     ax = plt.gca()
     shift = settings["yshift"]
-    ax.text(0.05, (1.55 - shift) / 1.7, settings['title1'], fontsize=25, transform=ax.transAxes)
-    ax.text(0.227, (1.55 - shift) / 1.7, settings['title1_1'], fontsize=21, transform=ax.transAxes)
-    ax.text(0.05, (1.40 - shift) / 1.7, settings['title2'], fontsize=23, transform=ax.transAxes)
-    ax.text(0.05, (1.26  - shift) / 1.7, settings['title3'], fontsize=18, weight='bold', style='italic', transform=ax.transAxes)
+    xshift = settings["xshift"]
+    ax.text(0.05 + xshift, (1.55 - shift) / 1.7, settings['title1'], fontsize=25, transform=ax.transAxes)
+    ax.text(0.227 + xshift, (1.55 - shift) / 1.7, settings['title1_1'], fontsize=25, transform=ax.transAxes)
+    ax.text(0.05 + xshift, (1.40 - shift) / 1.7, settings['title2'], fontsize=23, transform=ax.transAxes)
+    ax.text(0.05 + xshift, (1.26  - shift) / 1.7, settings['title3'], fontsize=18, weight='bold', style='italic', transform=ax.transAxes)
     #ax1.text(0.05, 1.12 / 1.7, settings["title4"], fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
     
     if len(error_list)!=0:
@@ -58,6 +61,8 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
     plt.tick_params(labelsize=16)
     axes = plt.gca()
     axes.set_ylim(settings["ylimit"])
+    if settings["xlimit"] is not None:
+        axes.set_xlim(settings["xlimit"])
     if settings["verticleline"] is not None:
         plt.plot([settings["verticleline"], settings["verticleline"]], [0,100000], ':', color='silver')
         plt.annotate(settings["verticlelinetext"], xy=(settings["verticleline"],10), xycoords='data', color='grey')

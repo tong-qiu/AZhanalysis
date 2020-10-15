@@ -100,7 +100,7 @@ if __name__ == '__main__':
     tag = "a"
     # directory of the easytrees
     sample_directory = ["../sample/a/", "../sample/d/", "../sample/e/"]
-    sample_directory = ["../sample/a/"]
+    #sample_directory = ["../sample/a/"]
     data = ["data16", "data15", "data17", "data18"]
     # Text on the plot. Delete if not needed.
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
@@ -147,10 +147,11 @@ if __name__ == '__main__':
     colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm', "r"]
 
     # Variables to load.
-    branches_list_data = [b"mBBres", b"EventWeight", b"METHT", b'mVHres', b'nTags', b"mLL", b"ptL1", b"ptL2", b"pTB1", b"pTB2", b"ptH", b"pTV"]
+    branches_list_data = [b"mBBres", b"EventWeight", b"METHT", b'mVHres', b'nTags', b"mLL", b"ptL1", b"ptL2", b"pTB1", b"pTB2", b"ptH", b"pTV", b"dEtaBB", b"dEtaLL", b"dPhiBB", b"dPhiLL", b"MV2c10B1", b"MV2c10B2"]
     # Strings to load.
     matas = ["Regime", "Description" ]
-    branches_list_MC = [b"mBBres", b"EventWeight", b"METHT", b'mVHres', b'nTags', b"mLL", b"ptL1", b"ptL2", b"pTB1", b"pTB2", b"ptH", b"pTV", b'MCChannelNumber']
+    branches_list_MC = copy.deepcopy(branches_list_data)
+    branches_list_MC.append(b'MCChannelNumber')
 
 
     # Load samples and event selection
