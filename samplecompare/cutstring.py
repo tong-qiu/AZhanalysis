@@ -17,3 +17,6 @@ def s_sr(mata):
 def s_srmbb(mata):
     mask = np.logical_or(mata["Description"] == zlib.adler32(b'SR'), mata["Description"] == zlib.adler32(b'mBBcr'))
     return mask
+def cut_btag_more(data, b):
+    mask = data[b'nTags'] > b
+    return mask

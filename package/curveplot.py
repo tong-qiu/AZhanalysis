@@ -121,7 +121,6 @@ def histplot(data_lists, varible_to_plot, bins, labels = None, scales=1., **kwar
         bin_width.append(bins[i+1]-bins[i])
     for each_height, each_sigma2, each_label, each_width in zip(all_height, all_sigma2, all_label, bin_width):
         plt.hist(bin_centre, bins, weights = each_height, label=each_label, density=settings["norm"], histtype=u'step')
-        #print("here")
         #plt.errorbar(bin_centre, each_height, yerr=each_sigma2**0.5, label=each_label, fmt='.') # xerr=each_width/2.
     if len(all_height) > 1:
         plt.legend(loc='upper right',prop={'size': 25})
@@ -137,11 +136,6 @@ def histplot(data_lists, varible_to_plot, bins, labels = None, scales=1., **kwar
 
 def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1., removenorm = None, **kwargs,):
     # data_list = [[sample1, sample2, ...],[sample3, sample4, ...], ...]
-    rcParams['mathtext.fontset'] = 'custom'
-    #rcParams["font.family"] = "Times New Roman"
-    rcParams['mathtext.it'] = 'DejaVu Sans:italic'
-    rcParams['mathtext.bf'] = 'DejaVu Sans:italic:bold'
-    #rcParams['axes.unicode_minus'] = True
     # default label
     settings = {
         "xlabel" : r"$m_{Vh}[GeV]$",
@@ -154,7 +148,9 @@ def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1.
         "filename": "deltatest2",
         "log_y":False,
         "norm":False,
-        "central":"data",
+        "central":"none",
+        "upper_y": 1.5, 
+        "do_errorbar": False
         }
     for each_key in kwargs.items():
         settings[each_key[0]] = kwargs[each_key[0]]
@@ -172,7 +168,7 @@ def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1.
         for each_sample in each_sample_list:
             color = each_sample.colour
             height_tem, sigma2_tem = each_sample.binned_weight_variation(varible_to_plot,bins,scales)
-            if not height:
+            if len(height) == 0:
                 height = np.array(height_tem)
                 sigma2 = np.array(sigma2_tem)
             else:
@@ -201,31 +197,66 @@ def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1.
                 continue
             all_height[i] = all_height[i] * sumweightnorm/sum(all_height[i])
             all_sigma2[i] = all_sigma2[i] * sumweightnorm/sum(all_height[i])
+    handles = []
     for each_height, each_sigma2, each_label, each_width, each_color in zip(all_height, all_sigma2, all_label, bin_width, all_color):
         ax1.hist(bin_centre, bins, weights = each_height, label=each_label, density=settings["norm"], histtype=u'step', color=each_color)
-        #plt.errorbar(bin_centre, each_height, yerr=each_sigma2**0.5, label=each_label, fmt='.') # xerr=each_width/2.
+        handles.append(mpl.lines.Line2D([], [], c=each_color, label=each_label))
+
+        #ax1.errorbar(bin_centre, each_height, yerr=each_sigma2*0, label=each_label, fmt='.', color=each_color) # xerr=each_width/2.
     # lower plot
     data_height = None
+    data_error = None
     for each_height, each_sigma2, each_label, each_width in zip(all_height, all_sigma2, all_label, bin_width):
         #if "data" in each_label:
         if settings["central"] in each_label:
             data_height = np.array(each_height)
+            data_error = np.array(each_sigma2)**0.5
             break
     for each_height, each_sigma2, each_label, each_width, each_color in zip(all_height, all_sigma2, all_label, bin_width, all_color):
         #if "data" in each_label:
         if settings["central"] in each_label:
             continue
-
-        new_each_height = np.array(each_height)/data_height
+        if data_height is not None:
+            new_each_height = np.array(each_height)/data_height
+            new_each_sigma2 = each_sigma2**0.5/np.array(each_height)
+        else:
+            print("histplot_withsub: WARNING Cannot find central")
+            new_each_sigma2 = each_sigma2**0.5
+            new_each_height = np.array(each_height)
         new_each_height[np.isnan(new_each_height)] = -1
         # if "sys" in each_label:
         #     print("here")
         #     new_each_height = new_each_height + 0.1
+        if settings['do_errorbar']:
+            ax2.errorbar(bin_centre, new_each_height-1, yerr=new_each_sigma2, label=each_label, fmt='.', color=each_color)
         ax2.hist(bin_centre, bins, weights=new_each_height-1, label=each_label, histtype=u'step', color=each_color)
     ax2.plot([bins[0], bins[np.size(bins)-1]], [0, 0], linestyle='--', color='k')
+
+    i = -1
+    if settings['do_errorbar']:
+        for each_x, each_error, each_y_mc in zip(bin_centre, data_error, data_height):
+            i += 1
+            # do not plot bins without event?
+            if each_y_mc == 0:
+                continue
+            ax2.add_patch(
+                mpl.patches.Rectangle(
+                    (each_x - (bins[i+1]-bins[i]) / 2., - each_error/each_y_mc), # x, y
+                    bins[i+1]-bins[i],        # width
+                    each_error/each_y_mc*2,        # height
+                    color='black', alpha=0.5,
+                    hatch='/////', fill=False, linewidth=0,
+                    ))
+
+    ymin, ymax = ax1.get_ylim()
+    ax1.set_ylim([0,ymax* settings["upper_y"]])
+    ax1.text(0.05, 1.55 / 1.7, settings['title1'], fontsize=25, transform=ax1.transAxes, style='italic', fontweight='bold')
+    ax1.text(0.227, 1.55/ 1.7, settings['title1_1'], fontsize=25, transform=ax1.transAxes)
+    ax1.text(0.05, 1.40 / 1.7, settings['title2'], fontsize=23, transform=ax1.transAxes, style='italic', fontweight='bold')
+    ax1.text(0.05, 1.26 / 1.7, settings['title3'], fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
     #ax2.set_ylim([0.99, 1.01])
     if len(all_height) > 1:
-        ax1.legend(loc='upper right',prop={'size': 25})
+        ax1.legend(loc='upper right',prop={'size': 20}, frameon=False, handles=handles)
     ax1.get_xaxis().set_ticks([])
     ax1.tick_params(labelsize=16)
     ax1.tick_params(labelsize=16)
@@ -234,5 +265,5 @@ def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1.
     ax2.set_xlabel(settings['xlabel'], fontsize=20)
     font = font_manager.FontProperties(weight='bold',
                                        style='normal', size=18)
-    plt.savefig(settings['filename'] + '.pdf')
+    plt.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0.1)
     plt.close(fig)
