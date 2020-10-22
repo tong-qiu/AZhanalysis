@@ -64,6 +64,26 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
         m_allsamples.append(sample)
     return 0
 
+def splitszjetsamples(inputs):
+    zhfsample = None
+    zlfsample = None
+    for each in inputs:
+        tem_each1 = copy.deepcopy(each)
+        tem_each2 = copy.deepcopy(each)
+        tem_each1.matacut(cutstring.s_zhf)
+        tem_each2.matacut(cutstring.s_zlf)
+        if zhfsample is None:
+            zhfsample = tem_each1
+        else:
+            zhfsample = zhfsample + tem_each1
+        if zlfsample is None:
+            zlfsample = tem_each2
+        else:
+            zlfsample = zlfsample + tem_each2
+    zhfsample.alias = "Z+hf"
+    zlfsample.alias = "Z+lf"
+    return (zhfsample, zlfsample)
+
 if __name__ == '__main__':
     # only load limited number of the events if debug
     debug = False
@@ -124,9 +144,9 @@ if __name__ == '__main__':
     colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm']
 
     # Variables to load.
-    branches_list_data = [b"mBBres", b"EventWeight", b'mVHres', b'nTags', b"ptH", b"pTV", b"nJets"]
+    branches_list_data = [b"mBBres", b"EventWeight", b'mVHres', b'nTags', b"ptH", b"pTV", b"nJets", b"dEtaBB"]
     # Strings to load.
-    matas = ["Regime", "Description" ]
+    matas = ["Sample", "Description", "Regime"]
     branches_list_MC = copy.deepcopy(branches_list_data)
     branches_list_MC.append(b'MCChannelNumber')
 

@@ -167,7 +167,7 @@ def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1.
         color = None
         for each_sample in each_sample_list:
             color = each_sample.colour
-            height_tem, sigma2_tem = each_sample.binned_weight_variation(varible_to_plot,bins,scales)
+            height_tem, sigma2_tem = each_sample.binned_weight_variation(varible_to_plot, bins, scales)
             if len(height) == 0:
                 height = np.array(height_tem)
                 sigma2 = np.array(sigma2_tem)

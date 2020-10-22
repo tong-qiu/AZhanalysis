@@ -311,7 +311,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     ax2.set_ylabel(settings['ylabeldown'], fontsize=20,labelpad=20)
     ax2.set_xlabel(settings['xlabel'], fontsize=20)
     if settings['filename'] != "Notsave":
-        plt.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0, )#transparent = True)
+        plt.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0.1, )#transparent = True)
     if settings["pickle"] and settings['filename'] != "Notsave":
         with open(settings['filename'] + '.pkl', 'wb') as file:
             pickle.dump(fig, file)

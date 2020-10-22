@@ -20,3 +20,14 @@ def s_srmbb(mata):
 def cut_btag_more(data, b):
     mask = data[b'nTags'] > b
     return mask
+def s_zhf(mata):
+    mask = mata["Sample"] == zlib.adler32(b'Zbb')
+    mask = np.logical_or(mata["Sample"] == zlib.adler32(b'Zbc'), mask)
+    mask = np.logical_or(mata["Sample"] == zlib.adler32(b'Zcc'), mask)
+    return mask
+
+def s_zlf(mata):
+    mask = mata["Sample"] == zlib.adler32(b'Zbl')
+    mask = np.logical_or(mata["Sample"] == zlib.adler32(b'Zcl'), mask)
+    mask = np.logical_or(mata["Sample"] == zlib.adler32(b'Zl'), mask)
+    return mask
