@@ -249,7 +249,8 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     error_bar_bincentre = []
     for each_y, each_y_mc, each_menstd, each_error_bar_bincentre, each_error_mc in zip(bin_heights, y_mc, mean_std, bincenters, error_mc):
         error_bar_center.append(each_y / each_y_mc)
-        error_bar_size.append(np.sqrt(each_menstd**2 / each_y_mc**2 + each_menstd**4 / each_y_mc**4 * each_error_mc**2)) #np.sqrt(data_point/ mc_point**2  + data_point**2/  mc_point**4 * mc_error**2)
+        # error_bar_size.append(np.sqrt(each_menstd**2 / each_y_mc**2 + each_menstd**4 / each_y_mc**4 * each_error_mc**2)) #np.sqrt(data_point/ mc_point**2  + data_point**2/  mc_point**4 * mc_error**2)
+        error_bar_size.append(each_menstd / each_y_mc)
         error_bar_bincentre.append(each_error_bar_bincentre)
 
     ax2.errorbar(error_bar_bincentre, error_bar_center, color='k', linestyle="",

@@ -176,10 +176,10 @@ if __name__ == '__main__':
     sample_directory = ["../CxAOD31_01a/"]
     tag = "run2"
     rescale = True
-    slopecorrection = False
+    slopecorrection = True
     loadeasytree = False
-    region = "mbbcr"
-    #region = "topemucr"
+    #region = "mbbcr"
+    region = "topemucr"
     dorebin = True
     if loadeasytree:
         mysamplembbcr1tag, t2 = get_sample(["topemucr", "resolved", "1tag"])

@@ -8,7 +8,7 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLoc
 
 def z2p(z):
     return 0.5 * (1 - math.erf(z / np.sqrt(2)))
-ifhvt = False
+ifhvt = True
 alldirs = os.listdir("OutputDir")
 masses = []
 ps = []
