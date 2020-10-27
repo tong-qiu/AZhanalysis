@@ -16,18 +16,18 @@ class Histo:
         self.bkgs = {}
 
 def main():
-    with open("prefit.pickle", 'rb') as f:
+    with open("prefit-hvt.pickle", 'rb') as f:
         inputfile = pickle.load(f)
     bkgname = set()
     tags = set()
     histocollection = []
-    for each_plot in inputfile.keys():
-        if "cr" in each_plot:
-            print(inputfile[each_plot]['hsig'])
-            cserror = c_double(0.)
-            print (inputfile[each_plot]['hsig'].IntegralAndError(0, 99999, cserror, "width"))
-            print (cserror.value)
-    #exit(1)
+    # for each_plot in inputfile.keys():
+    #     if "cr" in each_plot:
+    #         print(inputfile[each_plot]['hsig'])
+    #         cserror = c_double(0.)
+    #         print (inputfile[each_plot]['hsig'].IntegralAndError(0, 99999, cserror, "width"))
+    #         print (cserror.value)
+    # exit(1)
     for each_plot in inputfile.keys():
         tag = each_plot.split("_")[0]
         tags.add(tag)
@@ -56,17 +56,16 @@ def main():
     print(bkgname)
     print(inputfile.keys())
 
-    namemapper = [["top", "ttbar+LF, other tops"], ["ttbarHF", "ttbar+HF"], ["Diboson", "Diboson"], ['Zl','Zl'], ['Zlf','Zhl'], ['Zhf','Zhf'], ['Wl','Wl'], ['Wc','Whl'], ['Wb','Whf'], ['SMVH', 'SM VH'], ["ttV", "ttV"]]
-    # tagsegion = ['llbb1tag2pjetSR', 'llbb2tag2pjetSR', 'llbb3ptag2pjetSR', 'llbb1ptag2pjettopemucr', 'llbb1tag1pfat0pjetSR_noaddbjetsr', 'llbb2tag1pfat0pjetSR_noaddbjetsr', "llbb1ptag1pfat0pjetSR_topaddbjetcr"]
-    tagsegion = ['llbb1tag2pjetSR', 'llbb2tag2pjetSR', 'llbb3ptag2pjetSR', 'Chllbb1ptag2pjettopemucr', "llbb3ptag2pjettopemucr", 'llbb1tag1pfat0pjetSR_noaddbjetsr', 'llbb1tag1pfat0pjetSR_noaddbjetsr', "Chllbb1ptag1pfat0pjetSR_topaddbjetcr"]
-    with open("outtable.tex", "w") as f:
+    namemapper = [["top", "top"], ["Diboson", "Diboson"], ['Zl','Zl'], ['Zlf','Zhl'], ['Zhf','Zhf'], ['Wl','Wl'], ['Wc','Whl'], ['Wb','Whf'], ['SMVH', 'SM VH'], ["ttV", "ttV"]]
+    tagsegion = ['llbb1tag2pjetSR', 'llbb2tag2pjetSR', 'llbb1ptag2pjettopemucr', 'llbb1tag1pfat0pjetSR_noaddbjetsr', 'llbb2tag1pfat0pjetSR_noaddbjetsr']
+    with open("outtable-hvt.tex", "w") as f:
         f.write(r"\begin{table}[t]"+ "\n")
         f.write(r"    \begin{center}" + "\n")
         f.write(r"    \begin{footnotesize}"+ "\n")
-        f.write(r"    \begin{tabular}{l|ccccc|cccc}"+ "\n")
+        f.write(r"    \begin{tabular}{l|ccc|cccc}"+ "\n")
         f.write(r"    \hline\hline"+ "\n")
-        f.write(r"      & \multicolumn{5}{c|}{ Resolved }  & \multicolumn{3}{c}{ Merged }  \\"+ "\n")
-        f.write(r"    2-lepton &1 $b$-tag &2 $b$-tag &3+ $b$-tag & 1+2 $b$-tag topemucr & 3+ $b$-tag topemucr & 1 $b$-tag &2 $b$-tag &\multicolumn{2}{c}{1+2 $b$-tag add. $b$-tag} \\ "+ "\n")
+        f.write(r"      & \multicolumn{3}{c|}{ Resolved }  & \multicolumn{2}{c}{ Merged }  \\"+ "\n")
+        f.write(r"    2-lepton &1 $b$-tag &2 $b$-tag & 1+2 $b$-tag topemucr & 1 $b$-tag &2 $b$-tag \\ "+ "\n")
         f.write(r"    \hline"+ "\n")
 
         for each_mapper in namemapper:

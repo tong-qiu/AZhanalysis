@@ -16,7 +16,7 @@ class Histo:
         self.bkgs = {}
 
 def main():
-    with open("postfit-hvt", 'rb') as f:
+    with open("prefit-hvt.pickle", 'rb') as f:
         inputfile = pickle.load(f)
     bkgname = set()
     tags = set()
@@ -56,7 +56,7 @@ def main():
     print(bkgname)
     print(inputfile.keys())
 
-    namemapper = [["top", "top"], ["Diboson", "Diboson"], ['Zl','Zl'], ['Zlf','Zhl'], ['Zhf','Zhf'], ['Wl','Wl'], ['Wc','Whl'], ['Wb','Whf'], ['SMVH', 'SM VH']]
+    namemapper = [["top", "top"], ["Diboson", "Diboson"], ['Zl','Zl'], ['Zlf','Zhl'], ['Zhf','Zhf'], ['Wl','Wl'], ['Wc','Whl'], ['Wb','Whf'], ['SMVH', 'SM VH'], ["ttV", "ttV"]]
     tagsegion = ['llbb1tag2pjetSR', 'llbb2tag2pjetSR', 'llbb1ptag2pjettopemucr', 'llbb1tag1pfat0pjetSR_noaddbjetsr', 'llbb2tag1pfat0pjetSR_noaddbjetsr']
     with open("outtable-hvt.tex", "w") as f:
         f.write(r"\begin{table}[t]"+ "\n")

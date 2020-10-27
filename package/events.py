@@ -338,6 +338,36 @@ class Events:
 
             self.data[b"MT"].append(w2.transverse_mass())
         self.data[b"MT"] = np.array(self.data[b"MT"])
+
+    def add_region(self):
+        regions = []
+        mbb = zlib.adler32(b'mBBcr')
+        sr = zlib.adler32(b'SR')
+        topemucr = zlib.adler32(b'topemucr')
+        for each in self.mata["Description"]:
+            if each == sr:
+                regions.append(1)
+            elif each == mbb:
+                regions.append(2)
+            elif each == topemucr:
+                regions.append(3)
+            else:
+                regions.append(0)
+        self.data[b"region"] = np.array(regions)
+
+    def add_regime(self):
+        regime = []
+        r = zlib.adler32(b'resolved')
+        m = zlib.adler32(b'merged')
+        for each in self.mata["Regime"]:
+            if each == r:
+                regime.append(1)
+            elif each == m:
+                regime.append(2)
+            else:
+                regime.append(0)
+        self.data[b"regime"] = np.array(regime)
+
     def pth(self):
         self.data[b"pTH"] = ( (np.array(self.data[b"j1px"]) + np.array(self.data[b"j2px"]))**2 + (np.array(self.data[b"j1py"]) + np.array(self.data[b"j2py"]))**2 )**0.5
     def more1(self):
