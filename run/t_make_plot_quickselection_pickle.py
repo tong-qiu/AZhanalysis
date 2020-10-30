@@ -177,7 +177,7 @@ if __name__ == '__main__':
     tag = "run2"
     rescale = True
     slopecorrection = True
-    loadeasytree = False
+    loadeasytree = True
     #region = "mbbcr"
     region = "topemucr"
     dorebin = True
@@ -194,6 +194,8 @@ if __name__ == '__main__':
         pickleit((mysamplesr1tag, t2), "pickle/sr1tag")
         mysamplesr2tag, t2 = get_sample(["sr", "resolved", "2tag"])
         pickleit((mysamplesr2tag, t2), "pickle/sr2tag")
+        # mysamplesr2tag, t2 = get_sample(["sr", "resolved", "3ptag"])
+        # pickleit((mysamplesr2tag, t2), "pickle/sr2tag")
         exit(1)
     else:
         if ntag == 1 and region == "topemucr":

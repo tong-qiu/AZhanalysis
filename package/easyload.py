@@ -105,7 +105,7 @@ def _stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_
         if "2tag" in selection:
             sample.cut_parameter(cut_btag_is, 2)
         if "3ptag" in selection:
-            sample.cut_parameter(cut_btag_more, 3)
+            sample.cut_parameter(cut_btag_more, 2)
         m_allsamples.append(sample)
     return 0
 
@@ -133,22 +133,22 @@ def get_sample(selection, debug=False, sample_list=None, tag="run2"):
     mc_Zlljet4 = ["ZmumuC_Sh221", "ZmumuL_Sh221"]
     mc_Zlljet5 = ["Ztautau_Sh221", "ZtautauB_Sh221", "ZtautauC_Sh221", "ZtautauL_Sh221","Znunu_Sh221", "ZnunuB_Sh221", "ZnunuC_Sh221", "ZnunuL_Sh221"]
     mc_tt_bar = [ "ttbar_nonallhad_PwPy8", "ttbar_allhad_PwPy8", "ttbar_dilep_PwPy8"]#"ttbar_nonallhad_PwPy8", , "ttbar_allhad_PwPy8"]#"ttbar_nonallhad_PwPy8"]#, "ttbar_allhad_PwPy8"]
-    mc_singletop = ["stops_PwPy8", "stopt_PwPy8", "stopWt_dilep_PwPy8"] # "stopWt_PwPy8", 
+    mc_singletop = ["stops_PwPy8", "stopt_PwPy8", "stopWt_PwPy8"] # "stopWt_PwPy8", 
     mc_Diboson = ["WqqWlv_Sh221", "WqqZll_Sh221", "WqqZvv_Sh221", "ZqqZll_Sh221", "ZqqZvv_Sh221", "WlvZqq_Sh221", "ggZqqZll_Sh222", "ggWqqWlv_Sh222"]
     #sm_Higgs = ["qqWlvHbbJ_PwPy8MINLO", "qqZllHbbJ_PwPy8MINLO", "qqZvvHbbJ_PwPy8MINLO", "ggZllHbb_PwPy8", "ggZvvHbb_PwPy8", "ggHbb_PwPy8NNLOPS"] 
     sm_Higgs = ["bbHinc_aMCatNLOPy8", "ggHinc_PwPy8", "ggZllHbb_PwPy8","ggZllHcc_PwPy8","ggZvvHbb_PwPy8","ggZvvHcc_PwPy8","qqWlvHbbJ_PwPy8MINLO","qqWlvHccJ_PwPy8MINLO","qqZllHbbJ_PwPy8MINLO","qqZllHccJ_PwPy8MINLO","qqZvvHbbJ_PwPy8MINLO","qqZvvHccJ_PwPy8MINLO"]
-    #other = ["ggZqqZll_Sh222", "ggWqqWlv_Sh222"]#,"ttV_aMCatNLOPy8","ggWqqWlv_Sh222","ggZqqZvv_Sh222","stoptZ_MGPy8"]#[ "ttV_aMCatNLOPy8"]#"VV_fulllep_Sh222",
+    ttV = ["ttV_aMCatNLOPy8_alternative-0"]#,"ttV_aMCatNLOPy8","ggWqqWlv_Sh222","ggZqqZvv_Sh222","stoptZ_MGPy8"]#[ "ttV_aMCatNLOPy8"]#"VV_fulllep_Sh222",
     data = ["data16", "data15", "data17", "data18"]
     bbA300 = [ "bbA300"]
-    ggA300 = [ "ggA300"]
+    ggA = [ "ggA"]
 
     file_name_array = []
     alias = []
     colors = []
     if sample_list is None:
-        file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet, sm_Higgs]#, bbA300, ggA300]#, sm_ggHiggs, sm_qqHiggs]
-        alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet", "smHiggs"]#,'bbA300', 'ggA300']#, "sm_ggHiggs", "sm_qqHiggs"]
-        colors = [None,   'g',       'yellow',     'tab:orange',   'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm',    'teal']#, 'k', 'dimgrey']
+        file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet, sm_Higgs, ttV, ggA]#, ggA300]#, sm_ggHiggs, sm_qqHiggs]
+        alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet", "smHiggs", 'ttV', 'ggA']#, 'ggA300']#, "sm_ggHiggs", "sm_qqHiggs"]
+        colors = [None,   'g',       'yellow',     'tab:orange',   'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm',    'teal', 'dimgrey', 'k']
     else:
         if "zlljet" in sample_list:
             file_name_array += [mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5]
@@ -158,9 +158,10 @@ def get_sample(selection, debug=False, sample_list=None, tag="run2"):
             file_name_array += [data]
             alias += ["data"]
             colors += [None]
-    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mVH', b'nTags', b'j1px', b'j1py', b'j2px', b'j2py', b'ptH', b'ptHcorr', b'ptL1', b'ptL2', b'METHT']
+    #branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mVH', b'nTags', b'j1px', b'j1py', b'j2px', b'j2py', b'ptH', b'ptHcorr', b'ptL1', b'ptL2', b'METHT']
+    branches_list_data = [b"mVH", b"EventWeight", b'nTags']
     matas = ["Sample", "Description", "Regime"]
-    branches_list_MC = branches_list_data
+    branches_list_MC = branches_list_data + [b'MCChannelNumber']
 
     processes = []
     manager = multiprocessing.Manager()

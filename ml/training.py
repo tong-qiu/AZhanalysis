@@ -15,19 +15,26 @@ sys.path.append(lib_path)
 sys.path.append('../package')
 from package.curveplot import curveplot
 
+def pre_selection(df):
+    dfout = df.loc[df["region"] == 1]
+    dfout = dfout.loc[dfout["regime"] == 1]
+    dfout = dfout.loc[dfout["nTags"] == 2]
+    dfout.drop(columns=["nTags", "MCChannelNumber", "mVHres", "MV2c10B3", "pTJ3", "phiJ3", "etaJ3", "region", "regime", "phiB1", "phiB2"], inplace=True)
+    return dfout
+
 signal_all = pd.DataFrame()
 signal_mass = [300, 400, 420, 440, 460, 500, 600, 700]#, 800, 900, 1000, 1200, 1400, 1600, 2000]
 #signal_mass_train = [300, 400, 420, 440, 460, 600, 700]
 for each in signal_mass:
     df_temp = pd.read_csv(str(each) + ".csv", index_col=0)
+    df_temp = pre_selection(df_temp)
     df_temp["mass"] = each
-    # df_temp["mLL"] *= 1000
-    df_temp.drop(columns=["nTags", "MCChannelNumber", "mVHres"], inplace=True)
     signal_all = pd.concat([df_temp, signal_all], ignore_index=True)
 background_all = pd.read_csv("background.csv", index_col=0)
+background_all = pre_selection(background_all)
 #background_all["mass"] = np.random.rand(len(background_all)) * 2000
 background_all["mass"] = np.random.choice(signal_mass, len(background_all))
-background_all.drop(columns=["nTags", "MCChannelNumber", "mVHres"], inplace=True)
+
 
 train_bkg, test_bkg = train_test_split(background_all, test_size=0.4, random_state=2)
 train_signal, test_signal = train_test_split(signal_all, test_size=0.4, random_state=2)
@@ -48,23 +55,23 @@ test_x = scaler.transform(test_x)
 # train_y = np.array(train_y)[[each for each in train_x[train_x.mass != 500].index.values]]
 # train_x = train_x.drop(train_x[train_x.mass == 500].index)
 
-# start = time.time()
-# with tf.device('/CPU:' + str(0)):
-#     model = keras.models.Sequential()
-#     model.add(keras.layers.Dense(100, input_dim=len(train_x_before.columns), activation="relu"))
-#     model.add(keras.layers.Dense(100, activation="relu"))
-#     model.add(keras.layers.Dense(100, activation="relu"))
-#     model.add(keras.layers.Dense(1, activation=activations.sigmoid))
-#     model.compile(loss="binary_crossentropy", optimizer=keras.optimizers.SGD(lr=0.005), metrics=["accuracy"])#0.00000000005
-#     history = model.fit(train_x, np.array(train_y), sample_weight=train_weight, epochs=5, validation_data=(test_x, np.array(test_y), test_weight), shuffle=True, batch_size=70)
-#     #history = model.fit(train_x, np.array(train_y), epochs=13, validation_data=(test_x, np.array(test_y)), shuffle=True, batch_size=70)
-# model.save('testmodel') 
-# end = time.time() - start
-# print(end)
-# pd.DataFrame(history.history).plot(figsize=(8, 5))
-# plt.grid(True)
-# plt.gca().set_ylim(0, 1)
-# plt.show()
+start = time.time()
+with tf.device('/CPU:' + str(0)):
+    model = keras.models.Sequential()
+    model.add(keras.layers.Dense(100, input_dim=len(train_x_before.columns), activation="relu"))
+    model.add(keras.layers.Dense(100, activation="relu"))
+    model.add(keras.layers.Dense(100, activation="relu"))
+    model.add(keras.layers.Dense(1, activation=activations.sigmoid))
+    model.compile(loss="binary_crossentropy", optimizer=keras.optimizers.SGD(lr=0.005), weighted_metrics=["accuracy"])#0.00000000005
+    history = model.fit(train_x, np.array(train_y), sample_weight=train_weight, epochs=5, validation_data=(test_x, np.array(test_y), test_weight), shuffle=True, batch_size=70)
+    #history = model.fit(train_x, np.array(train_y), epochs=13, validation_data=(test_x, np.array(test_y)), shuffle=True, batch_size=70)
+model.save('testmodel') 
+end = time.time() - start
+print(end)
+pd.DataFrame(history.history).plot(figsize=(8, 5))
+plt.grid(True)
+plt.gca().set_ylim(0, 1)
+plt.show()
 
 
 model = tf.keras.models.load_model('testmodel')

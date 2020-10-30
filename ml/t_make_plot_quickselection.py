@@ -138,17 +138,19 @@ if __name__ == '__main__':
     mc_tt_bar = [ "ttbar_nonallhad_PwPy8", "ttbar_allhad_PwPy8", "ttbar_dilep_PwPy8"] # must include all three
     mc_singletop = ["stops_PwPy8", "stopt_PwPy8", "stopWt_PwPy8"]
     mc_Diboson = ["WqqWlv_Sh221", "WqqZll_Sh221", "WqqZvv_Sh221", "ZqqZll_Sh221", "ZqqZvv_Sh221", "WlvZqq_Sh221", "ggZqqZll_Sh222", "ggWqqWlv_Sh222"]
+    sm_Higgs = ["bbHinc_aMCatNLOPy8", "ggHinc_PwPy8", "ggZllHbb_PwPy8","ggZllHcc_PwPy8","ggZvvHbb_PwPy8","ggZvvHcc_PwPy8","qqWlvHbbJ_PwPy8MINLO","qqWlvHccJ_PwPy8MINLO","qqZllHbbJ_PwPy8MINLO","qqZllHccJ_PwPy8MINLO","qqZvvHbbJ_PwPy8MINLO","qqZvvHccJ_PwPy8MINLO"]
+    ttV = ["ttV_aMCatNLOPy8_alternative-0"]
     # --------------------------------------------------------------------
 
     # signal files
     ggA = ["ggA"]
 
     # signal/background to be loaded
-    file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet, ggA]
+    file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet, ggA, ttV, sm_Higgs]
     # choose a name for your backgrounds
-    alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet", "ggA"]
+    alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet", "ggA", 'ttV', 'sm_Higgs']
     # Colours of each background on the plot. Delete if not needed.
-    colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm', "r"]
+    colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm', "r", 'dimgrey', 'teal']
 
     # Variables to load.
     branches_list_data = [b"mBBres", b"EventWeight", b"METHT", b'mVHres', b'nTags', b"mLL", b"ptL1", b"ptL2", b"pTB1", b"pTB2", b"ptH", b"pTV", b"dEtaBB", b"dEtaLL", b"dPhiBB", b"dPhiLL", b"MV2c10B1", b"MV2c10B2", b"MV2c10B3", b"pTJ3", b"etaJ3", b"phiJ3", b"phiB1", b"phiB2"]

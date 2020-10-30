@@ -52,7 +52,7 @@ with tf.device('/CPU:' + str(0)):
     model.add(keras.layers.Dense(100, activation="relu"))
     model.add(keras.layers.Dense(100, activation="relu"))
     model.add(keras.layers.Dense(1, activation=activations.sigmoid))
-    model.compile(loss="binary_crossentropy", optimizer=keras.optimizers.SGD(lr=0.005), metrics=["accuracy"])#0.00000000005
+    model.compile(loss="binary_crossentropy", optimizer=keras.optimizers.SGD(lr=0.005), weighted_metrics=["accuracy"])#0.00000000005
     history = model.fit(train_x, np.array(train_y), sample_weight=train_weight, epochs=5, validation_data=(test_x, np.array(test_y), test_weight), shuffle=True, batch_size=70)
 model.save('testmodel') 
 end = time.time() - start
