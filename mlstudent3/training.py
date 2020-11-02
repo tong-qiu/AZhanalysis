@@ -41,18 +41,20 @@ test_weight = test_x["weight"].to_numpy()
 test_x.drop(columns=["weight"], inplace=True)
 
 scaler = StandardScaler()
-train_x_before = train_x
-train_x = scaler.fit_transform(train_x)
-test_x = scaler.transform(test_x)
+train_x_before = train_x.drop(columns=["mass"])
+train_x = scaler.fit_transform(train_x.drop(columns=["mass"]))
+test_x = scaler.transform(test_x.drop(columns=["mass"]))
 
 start = time.time()
 with tf.device('/CPU:' + str(0)):
     model = keras.models.Sequential()
-    model.add(keras.layers.Dense(100, input_dim=len(train_x_before.columns), activation="relu"))
-    model.add(keras.layers.Dense(100, activation="relu"))
-    model.add(keras.layers.Dense(100, activation="relu"))
+    model.add(keras.layers.Dense(100, input_dim=len(train_x_before.columns), activation="selu"))
+    model.add(keras.layers.Dense(100, activation="selu"))
+    model.add(keras.layers.Dense(100, activation="selu"))
     model.add(keras.layers.Dense(1, activation=activations.sigmoid))
-    model.compile(loss="binary_crossentropy", optimizer=keras.optimizers.SGD(lr=0.005), weighted_metrics=["accuracy"])#0.00000000005
+    opt1 = keras.optimizers.SGD(lr=0.005)
+    opt2 = keras.optimizers.Adam(lr=0.0004, beta_1=0.9, beta_2=0.999)
+    model.compile(loss="binary_crossentropy", optimizer=opt2, weighted_metrics=["accuracy"])#0.00000000005
     history = model.fit(train_x, np.array(train_y), sample_weight=train_weight, epochs=5, validation_data=(test_x, np.array(test_y), test_weight), shuffle=True, batch_size=70)
 model.save('testmodel') 
 end = time.time() - start
@@ -63,8 +65,8 @@ model = tf.keras.models.load_model('testmodel')
 for each_mass in signal_mass:
     test_bkg = test_bkg.assign(mass=each_mass)
     thissignal = test_signal.loc[test_signal['mass'] == each_mass]
-    bkgresult = model.predict(scaler.transform(test_bkg.drop(columns=["weight"]).to_numpy()))
-    sigresult = model.predict(scaler.transform(thissignal.drop(columns=["weight"]).to_numpy()))
+    bkgresult = model.predict(scaler.transform(test_bkg.drop(columns=["weight", "mass"]).to_numpy()))
+    sigresult = model.predict(scaler.transform(thissignal.drop(columns=["weight", "mass"]).to_numpy()))
     bkgresultweight = test_bkg["weight"]
     sigresultweight = thissignal["weight"]
     

@@ -7,6 +7,7 @@ from events import *
 import matplotlib.font_manager as font_manager
 import matplotlib.patches as mpatches
 import copy
+from matplotlib.ticker import MultipleLocator
 def nevent(asample):
     thesum = sum(asample.weight)
     return thesum#len(asample.data[varible_to_plot])
@@ -33,6 +34,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         "upper_y": 1.7,
         "ncol":1,
         "log_y":False,
+        "log_x":False,
         "sys":False,
         "blind":False,
         "printzpjets":False,
@@ -311,6 +313,9 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     ax1.set_ylabel(settings['ylabelup'], fontsize=20)
     ax2.set_ylabel(settings['ylabeldown'], fontsize=20,labelpad=20)
     ax2.set_xlabel(settings['xlabel'], fontsize=20)
+    if settings["log_x"]:
+        ax1.set_xscale('log')
+        ax2.set_xscale('log')
     if settings['filename'] != "Notsave":
         plt.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0.1, )#transparent = True)
     if settings["pickle"] and settings['filename'] != "Notsave":

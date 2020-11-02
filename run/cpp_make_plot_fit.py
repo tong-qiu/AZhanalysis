@@ -105,11 +105,12 @@ def bincheck(orginal, userbin):
 
 
 if __name__ == '__main__':
-    rescale = True
-    slopecorrection = True
+    rescale = False
+    rescaleyaml = 1
+    slopecorrection = False
     rebin_factor = 0
     ul = 3000
-    filename = "run2_mVH_mBBcr_1tag2pjet-_"
+    filename = "run2_mVH_mBBcr_2tag2pjet-_"
     filename += ".json"
     #filename = "e_mVH_mBBcr_2tag2pjet-_.json"
     sub_filename = filename.split('_')
@@ -131,17 +132,19 @@ if __name__ == '__main__':
     
     mc_Wlvjet = ["Wl", "Wcl", "Wbl", "Wbb", "Wbc", "Wcc"]
     mc_Zlljet = ["Zcc", "Zcl", "Zbl", "Zbc", "Zl", "Zbb"]
-    mc_tt_bar = ["ttbar"]
+    mc_tt_bar = ["ttbar", "ttbarB", "ttbarC", "ttH", "ttV"]
     mc_singletop = ["stopWt", "stops", "stopt"]
     mc_Diboson = ["WZ", "WW", "ZZ", "ggZZ", "ggWW"]
     sm_Higgs = ["ggZllH125", "qqZllH125"]
-    file_name_array = [mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet, mc_Wlvjet]#, sm_Higgs]
+    file_name_array = [mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet, mc_Wlvjet, sm_Higgs]
     alias = ["Diboson", "ttbar", "singletop", "Zlljet", "Wlvjet", "smHiggs"]
     colors = ['g',    'yellow', 'tab:orange','royalblue', 'm',     'r']
 
     if rescale:
         rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
         "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0.txt")
+    if rescaleyaml:
+        rescaledic = yamlfactor("../2HDMNPs/sf_hvt_20201031.yml")
     if slopecorrection:
         p1s = []
         p2s = []
@@ -185,9 +188,18 @@ if __name__ == '__main__':
                                     content = [each * (1 + rescaledic[each_sample]["ALL"]) for each in content]
                                 if region in rescaledic[each_sample]:
                                     content = [each * (1 + rescaledic[each_sample][region]) for each in content]
+
                         if not sys_done:
                             sys = np.array(jsondic["nominal"]["syst"])**2
                             sys_done = True
+
+                        if rescaleyaml:
+                            if each_sample in rescaledic["resolved"]:
+                                content = [each * (rescaledic["resolved"][each_sample]) for each in content]
+                                stat = np.array([each * (rescaledic["resolved"][each_sample]) for each in stat])
+                                
+                            else:
+                                print(each_sample)
                         if data == "nodata":
                             data = fake_data(binning,content, variable_name, stat**2,sys,each_alias,each_color)
                         else: 
@@ -225,7 +237,8 @@ if __name__ == '__main__':
             postfix = "_rescale"
         if slopecorrection:
             postfix += "_slopecorrection"
+        bins = [120,  200,  250,  300,  350,  400,  450,  500,  550,  600,  700,  800,  900, 1000, 1200, 2200]
         stackplot(all_sample1,variable_name,bins,1.,
                 xlabel=r"$m_{VH}[GeV]$", title3="2 lep.," + btag +" b-tag " + region, filename="output/cpp_make_plot" + postfix + "/" + filename[0:-5], print_height=False,
-                title2=t2,auto_colour=False, limit_y = 0.6, upper_y=2.6, sys=True, log_y=True)
+                title2=t2,auto_colour=False, limit_y = 0.3, upper_y=2.6, sys=True, log_y=True)
 

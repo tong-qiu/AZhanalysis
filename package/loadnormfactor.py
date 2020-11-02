@@ -88,6 +88,11 @@ def generatejson(inputs):
     dp = {"resolved": resolved, "merged": merged}
     print(yaml.dump(dp))
 
+def yamlfactor(inputfile):
+    with open(inputfile, "r") as f:
+        dictinput = yaml.safe_load(f)
+    return dictinput
+
 
 if __name__ == "__main__":
     # loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/configLLBB_190517_HVT_PRSR_MCstat0_Prun1_finalNPtreatment_RFfixC0_2000.cfg",
@@ -96,6 +101,8 @@ if __name__ == "__main__":
     # "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
     # rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/pullandcorrelation/2hdm_norm/config.cfg",
     # "C:/Users/qiutt/Desktop/postreader/pullandcorrelation/2hdm_norm/GlobalFit_fitres_unconditionnal_mu0.txt")
-    rescaledic = loadnorm("../2HDMNPs/config_m300.cfg",
-    "../2HDMNPs/GlobalFit_fitres_conditionnal_mu0.txt")
-    generatejson(rescaledic)
+    yamlfactor("../2HDMNPs/sf_hvt_20201031.yml")
+    
+    # rescaledic = loadnorm("../2HDMNPs/config_m300.cfg",
+    # "../2HDMNPs/GlobalFit_fitres_conditionnal_mu0.txt")
+    # generatejson(rescaledic)
