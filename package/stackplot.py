@@ -40,6 +40,8 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         "printzpjets":False,
         "printzpljets":False,
         "chi2":False,
+        "signal":None,
+        "signallabel":None
         }
     for each_key in kwargs.items():
         settings[each_key[0]] = kwargs[each_key[0]]
@@ -129,11 +131,8 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
             colours.append(each.colour)
             if settings["sys"] and len(each.systematics(varible_to_plot, bins, scales))>0:
                 sys2.append(each.systematics(varible_to_plot, bins, scales))
-        else:
-            if settings["blind"]:
-                data_weight = [0 for each in range(len(each.data[varible_to_plot]))]
-            else:
-                data_weight = [1 for each in range(len(each.data[varible_to_plot]))]
+        elif not settings["blind"]:
+            data_weight = [1 for each in range(len(each.data[varible_to_plot]))]
             data_content = each.data[varible_to_plot]/scales
     # calculate uncertainty
     sigma2 = np.transpose(sigma2)
@@ -151,14 +150,18 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     #plt.set_ylim([ymin,ymax])
 
     # upper plot
-    bin_heights, bin_edges = np.histogram(data_content, bins=bins, weights=data_weight)
-    bincenters = 0.5*(bin_edges[1:]+bin_edges[:-1])
-    mean_std = np.sqrt(bin_heights)
-    
-    # plot data
-    error_patch = ax1.errorbar(bincenters, bin_heights, color='k',
-                               linestyle="", yerr=mean_std, fmt='o', markersize='8')
-    #ax1.plot(bincenters, bin_heights, marker=".", linestyle="", color="k")
+    if not settings["blind"]:
+        bin_heights, bin_edges = np.histogram(data_content, bins=bins, weights=data_weight)
+        bincenters = 0.5*(bin_edges[1:]+bin_edges[:-1])
+        mean_std = np.sqrt(bin_heights)
+        
+        # plot data
+        error_patch = ax1.errorbar(bincenters, bin_heights, color='k',
+                                linestyle="", yerr=mean_std, fmt='o', markersize='8')
+        #ax1.plot(bincenters, bin_heights, marker=".", linestyle="", color="k")
+    else:
+        bin_heights, bin_edges = np.histogram(np.concatenate(varibles_content).ravel(), bins=bins, weights=np.concatenate(weight).ravel())
+        bincenters = 0.5*(bin_edges[1:]+bin_edges[:-1])
 
     # plot MC
     if settings['auto_colour']:
@@ -205,7 +208,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
                 hatch='/////', fill=False, linewidth=0,
                 ))
 
-    if settings["print_height"] and settings['filename'] != "Notsave":
+    if settings["print_height"] and settings['filename'] != "Notsave" and not settings["blind"]:
         if not (settings["printzpjets"] or settings["printzpljets"]):
             with open(settings["filename"]+".csv", "w") as f:
                 #f.write("data" + "," + "MC" + ",\n")
@@ -228,7 +231,10 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
 
     # add legend
     sys_patch = mpatches.Patch(color='black', hatch='/////', fill=False, linewidth=0)
-    ax1.legend([error_patch, sys_patch] + y_mcs[2], ["data", "uncertainty"] + alias, prop=font, frameon=False, ncol=settings["ncol"])
+    if not settings["blind"]:
+        ax1.legend([error_patch, sys_patch] + y_mcs[2], ["data", "uncertainty"] + alias, prop=font, frameon=False, ncol=settings["ncol"])
+    else:
+        ax1.legend([sys_patch] + y_mcs[2], ["uncertainty"] + alias, prop=font, frameon=False, ncol=settings["ncol"])
     if settings["log_y"]:
         ax1.set_yscale('log')
         #math.log10(max(bin_heights))
@@ -246,33 +252,34 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         y_mc = y_mcs[0]
     # plot error bar of data
     # remove bins without MC events?
-    error_bar_center = []
-    error_bar_size = []
-    error_bar_bincentre = []
-    for each_y, each_y_mc, each_menstd, each_error_bar_bincentre, each_error_mc in zip(bin_heights, y_mc, mean_std, bincenters, error_mc):
-        error_bar_center.append(each_y / each_y_mc)
-        # error_bar_size.append(np.sqrt(each_menstd**2 / each_y_mc**2 + each_menstd**4 / each_y_mc**4 * each_error_mc**2)) #np.sqrt(data_point/ mc_point**2  + data_point**2/  mc_point**4 * mc_error**2)
-        error_bar_size.append(each_menstd / each_y_mc)
-        error_bar_bincentre.append(each_error_bar_bincentre)
-
-    ax2.errorbar(error_bar_bincentre, error_bar_center, color='k', linestyle="",
-                 yerr=error_bar_size, fmt='o', markersize='8')
-    
-    # calculate chi2
-    error_bar_center = np.array(error_bar_center)
-    error_bar_size = np.array(error_bar_size)
-
     chi2 = 0
     nod = 0
-    for each_y, each_sigma in zip(error_bar_center, error_bar_size):
-        if math.isnan(each_y) or math.isnan(each_sigma) or each_sigma == 0:
-            continue
-        chi2 += ((each_y - 1)/each_sigma)**2
-        nod += 1
-    if settings["chi2"]:
-        ax1.text(0.05, 1.12 / 1.7, "$\chi^2$/ndf: " + str(round(chi2/nod,3)), fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
-    #chi2 = sum((error_bar_center/error_bar_size)**2)p
-    #nod = len(error_bar_center)
+    if not settings["blind"]:
+        error_bar_center = []
+        error_bar_size = []
+        error_bar_bincentre = []
+        for each_y, each_y_mc, each_menstd, each_error_bar_bincentre, each_error_mc in zip(bin_heights, y_mc, mean_std, bincenters, error_mc):
+            error_bar_center.append(each_y / each_y_mc)
+            # error_bar_size.append(np.sqrt(each_menstd**2 / each_y_mc**2 + each_menstd**4 / each_y_mc**4 * each_error_mc**2)) #np.sqrt(data_point/ mc_point**2  + data_point**2/  mc_point**4 * mc_error**2)
+            error_bar_size.append(each_menstd / each_y_mc)
+            error_bar_bincentre.append(each_error_bar_bincentre)
+
+        ax2.errorbar(error_bar_bincentre, error_bar_center, color='k', linestyle="",
+                    yerr=error_bar_size, fmt='o', markersize='8')
+        
+        # calculate chi2
+        error_bar_center = np.array(error_bar_center)
+        error_bar_size = np.array(error_bar_size)
+
+        for each_y, each_sigma in zip(error_bar_center, error_bar_size):
+            if math.isnan(each_y) or math.isnan(each_sigma) or each_sigma == 0:
+                continue
+            chi2 += ((each_y - 1)/each_sigma)**2
+            nod += 1
+        if settings["chi2"]:
+            ax1.text(0.05, 1.12 / 1.7, "$\chi^2$/ndf: " + str(round(chi2/nod,3)), fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
+        #chi2 = sum((error_bar_center/error_bar_size)**2)p
+        #nod = len(error_bar_center)
 
     # plot line at the centre
     ax2.plot([bins[0], bins[np.size(bins)-1]], [1, 1], linestyle='--', color='k')
@@ -293,7 +300,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
                 hatch='/////', fill=False, linewidth=0,
                 ))
     # limit the range of y
-    if settings["limit_y"] > 0:
+    if settings["limit_y"] > 0 and not settings["blind"]:
         ax2.set_ylim([1 - settings["limit_y"], 1 + settings["limit_y"]])
         error_bar_center = np.array(error_bar_center)
         error_bar_bincentre = np.array(error_bar_bincentre)
@@ -303,6 +310,10 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         #error_bar_center_down = error_bar_center[error_bar_center < 1 - settings["limit_y"]]
         ax2.plot(error_bar_bincentre_up,np.linspace(1 + settings["limit_y"]*0.85, 1 + settings["limit_y"]*0.85, len(error_bar_bincentre_up)), 'k^', markersize='8')
         ax2.plot(error_bar_bincentre_down,np.linspace(1 - settings["limit_y"]*0.85, 1 - settings["limit_y"]*0.85, len(error_bar_bincentre_down)), 'kv', markersize='8')
+    elif settings["limit_y"] > 0:
+        ax2.set_ylim([1 - settings["limit_y"], 1 + settings["limit_y"]])
+    else:
+        ax2.set_ylim([0.5, 1.5])
     # tick setting
     ax1.tick_params(labelsize=16)
     ax2.tick_params(labelsize=16)
