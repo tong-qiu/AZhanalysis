@@ -100,7 +100,6 @@ if __name__ == '__main__':
     tag = "run2"
     # directory of the easytrees
     sample_directory = ["/data/atlas/projects/AZhML/a/", "/data/atlas/projects/AZhML/d/", "/data/atlas/projects/AZhML/e/"]
-    #sample_directory = ["../sample/a/"]
     data = ["data16", "data15", "data17", "data18"]
     # Text on the plot. Delete if not needed.
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
@@ -217,8 +216,12 @@ if __name__ == '__main__':
         
         test = get_signalid("ggA")
         out = splitesamples(signallist[0], test)
+        new_signallist = []
+        for each in out:
+            new_signallist.append(each[1])
         for each in out:
             print(each[0], sum(each[1].weight))
+            each[1].alias = "ggA" + str(each[0]) + " GeV"
             saveevents_pandas([each[1]], str(each[0])+".csv")
         saveevents_pandas(backgroundlist, "background.csv")
 
@@ -236,6 +239,6 @@ if __name__ == '__main__':
     direct = ""
     name = "SR-"
     bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
-    stackplot(backgroundlist+datalist,b'mVHres',bins,1000.,
+    stackplot(backgroundlist,b'mVHres',bins,1000.,
         xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
-        title2=t2, auto_colour=False, limit_y=0.5, upper_y=2.0, log_y=True)
+        title2=t2, auto_colour=False, limit_y=0.5, upper_y=2.0, log_y=True, blind=True, signal=[new_signallist[5]])

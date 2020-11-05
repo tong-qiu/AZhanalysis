@@ -8,6 +8,7 @@ import matplotlib.font_manager as font_manager
 import matplotlib.patches as mpatches
 import copy
 from matplotlib.ticker import MultipleLocator
+from itertools import cycle
 def nevent(asample):
     thesum = sum(asample.weight)
     return thesum#len(asample.data[varible_to_plot])
@@ -40,8 +41,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         "printzpjets":False,
         "printzpljets":False,
         "chi2":False,
-        "signal":None,
-        "signallabel":None
+        "signal":[],
         }
     for each_key in kwargs.items():
         settings[each_key[0]] = kwargs[each_key[0]]
@@ -99,7 +99,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         else:
             error_mc_z = np.sqrt(np.sum(sigma2_z, (1)))
 
-
+    finddata = False
     data_list.sort(key=nevent)
     for each in data_list:
         print(nevent(each))
@@ -125,7 +125,6 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
             else:
                 alias.append(each.alias)
 
-
             sigma2.append(each.variation(varible_to_plot, bins, scales))
             weight_in_bin.append(each.binned_weight(varible_to_plot, bins, scales))
             colours.append(each.colour)
@@ -134,6 +133,9 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         elif not settings["blind"]:
             data_weight = [1 for each in range(len(each.data[varible_to_plot]))]
             data_content = each.data[varible_to_plot]/scales
+            finddata = True
+    if not finddata:
+        settings["blind"] = True
     # calculate uncertainty
     sigma2 = np.transpose(sigma2)
     if settings["sys"]:
@@ -180,6 +182,17 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
     y_mc_max = np.max(y_mcs[0][int(np.size(y_mcs[0])/np.size(y_mcs[0][0]))-1])
     if type(y_mcs[0][int(np.size(y_mcs[0])/np.size(y_mcs[0][0]))-1]) is not np.ndarray:
         y_mc_max = np.max(y_mcs[0])
+
+    # plot signal
+    sig_legend = []
+    sig_alias = []
+    if len(settings["signal"]) > 0:
+        color_cycle = cycle(['k', 'c', 'g', 'm', 'r', 'y', 'tab:orange', 'tab:brown', 'tab:pink', 'b'])
+        for each in settings["signal"]:
+            thiscolor = next(color_cycle)
+            y_sig = ax1.hist(each.data[varible_to_plot]/scales, bins, weights=each.weight, histtype='step', color=thiscolor)
+            sig_legend.append(matplotlib.lines.Line2D([], [], c=thiscolor))
+            sig_alias.append(each.alias)
 
     ax1.set_ylim([0,max([y_mc_max, max(bin_heights)])* settings["upper_y"]])
     ax1.text(0.05, 1.55 / 1.7, settings['title1'], fontsize=25, transform=ax1.transAxes, style='italic', fontweight='bold')
@@ -231,10 +244,16 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
 
     # add legend
     sys_patch = mpatches.Patch(color='black', hatch='/////', fill=False, linewidth=0)
+    legend_styles = [sys_patch] + y_mcs[2]
+    legend_name = ["uncertainty"] + alias
     if not settings["blind"]:
-        ax1.legend([error_patch, sys_patch] + y_mcs[2], ["data", "uncertainty"] + alias, prop=font, frameon=False, ncol=settings["ncol"])
-    else:
-        ax1.legend([sys_patch] + y_mcs[2], ["uncertainty"] + alias, prop=font, frameon=False, ncol=settings["ncol"])
+        legend_styles = [error_patch, sys_patch] + y_mcs[2]
+        legend_name = ["data", "uncertainty"] + alias
+    if len(settings["signal"]) > 0:
+        legend_styles += sig_legend
+        legend_name += sig_alias
+    ax1.legend(legend_styles, legend_name, prop=font, frameon=False, ncol=settings["ncol"])
+
     if settings["log_y"]:
         ax1.set_yscale('log')
         #math.log10(max(bin_heights))

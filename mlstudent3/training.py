@@ -54,7 +54,7 @@ with tf.device('/CPU:' + str(0)):
     model.add(keras.layers.Dense(1, activation=activations.sigmoid))
     opt1 = keras.optimizers.SGD(lr=0.005)
     opt2 = keras.optimizers.Adam(lr=0.0004, beta_1=0.9, beta_2=0.999)
-    model.compile(loss="binary_crossentropy", optimizer=opt2, weighted_metrics=["accuracy"])#0.00000000005
+    model.compile(loss="binary_crossentropy", optimizer=opt2, weighted_metrics=["accuracy"])
     history = model.fit(train_x, np.array(train_y), sample_weight=train_weight, epochs=5, validation_data=(test_x, np.array(test_y), test_weight), shuffle=True, batch_size=70)
 model.save('testmodel') 
 end = time.time() - start
