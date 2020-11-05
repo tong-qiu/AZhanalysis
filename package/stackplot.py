@@ -190,7 +190,7 @@ def stackplot(data_list, varible_to_plot, bins, scales=1., **kwargs):
         color_cycle = cycle(['k', 'c', 'g', 'm', 'r', 'y', 'tab:orange', 'tab:brown', 'tab:pink', 'b'])
         for each in settings["signal"]:
             thiscolor = next(color_cycle)
-            y_sig = ax1.hist(each.data[varible_to_plot]/scales, bins, weights=each.weight, histtype='step', color=thiscolor)
+            ax1.hist(each.data[varible_to_plot]/scales, bins, weights=each.weight, histtype='step', color=thiscolor)
             sig_legend.append(matplotlib.lines.Line2D([], [], c=thiscolor))
             sig_alias.append(each.alias)
 
