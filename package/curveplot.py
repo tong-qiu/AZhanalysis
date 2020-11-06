@@ -29,7 +29,8 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
         "yshift":1.3,
         "xshift":0,
         "verticleline":None,
-        "verticlelinetext": ""
+        "verticlelinetext": "",
+        "horizontalline":None,
         }
     for each_key in kwargs.items():
         settings[each_key[0]] = kwargs[each_key[0]]
@@ -40,7 +41,11 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
         label = "none"
         if labels is not None:
             label = labels[i]
-        cur = plt.plot(each_x, each_y, label=label)
+        if len(y_list) == 1:
+            cur = plt.plot(each_x, each_y, "k.", label=label)
+            plt.plot(each_x, each_y, "k")
+        else:
+            cur = plt.plot(each_x, each_y, label=label)
         all_curve.append(cur)
         i += 1
     if labels is not None:
@@ -66,6 +71,8 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
     if settings["verticleline"] is not None:
         plt.plot([settings["verticleline"], settings["verticleline"]], [0,100000], ':', color='silver')
         plt.annotate(settings["verticlelinetext"], xy=(settings["verticleline"],10), xycoords='data', color='grey')
+    if settings["horizontalline"] is not None:
+        plt.plot([0,100000], [settings["horizontalline"], settings["horizontalline"]], ':', color='silver')
     plt.ylabel(settings['ylabel'], fontsize=20)
     plt.xlabel(settings['xlabel'], fontsize=20)
     plt.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0.25)

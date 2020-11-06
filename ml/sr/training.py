@@ -14,10 +14,9 @@ import math
 import copy
 
 
-
+#[[2.0329042659758256, 1.5305701350793957, 1.4138801444744973, 1.3314296281745628, 1.292176475924642, 1.2270295972140122, 1.144769165236062, 1.0509325147950923]]
 # no sideband
-# [2.0430678624883347, 1.43312542155723, 1.4121729284953546, 1.398337068647945, 1.3156597431937982, 1.2399629052816066, 1.2280585389802612, 1.1285337629528844]
-# [1.9839632086466101, 1.4712313655503626, 1.4479517208453963, 1.4215206802627485, 1.3587278642095806, 1.283189124722305, 1.1736956185509486, 1.1112712251097387]
+
 lib_path = os.path.abspath(os.path.join(__file__, '..', '..'))
 sys.path.append(lib_path)
 sys.path.append('../package')
@@ -143,16 +142,17 @@ def main():
         exit(1)
     else:
         print("loading pickle files")
-        background_all = unpickleit("bkgmbb.pickle")
-        signal_all = unpickleit("sigmbb.pickle")
+        background_all = unpickleit("bkg.pickle")
+        signal_all = unpickleit("sig.pickle")
         print("Pre-precessing")
         post_process1(signal_all)
         post_process1(background_all)
         post_process2(signal_all)
         post_process2(background_all)
-        # signal_all.drop(columns=["MV2c10B3"], inplace=True)
-        # background_all.drop(columns=["MV2c10B3"], inplace=True)
-
+        signal_all.drop(columns=["MV2c10B3"], inplace=True)
+        background_all.drop(columns=["MV2c10B3"], inplace=True)
+        # post_process(signal_all)
+        # post_process(background_all)
         # background_all.drop(columns=["dRB1J3", "dRB2J3", "pTJ3"], inplace=True)
         #result_2tag = cal_significance(signal_all, background_all, signal_mass, binning2tagresolvedsr)
         result_2tag = dict([(300, 5.636571301755268), (400, 15.682911909977934), (420, 17.402946494678936), (440, 19.59381319990806), 
@@ -261,6 +261,12 @@ def main():
     curveplot([signal_mass], [significance], filename="significance", ylimit=[0,4], xlimit=[200, 800], horizontalline=1,
               yshift=0.05, xshift=0.03, ylabel="significance ratio", xlabel="mass [GeV]", title2=r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$")
 
+
+
+
+
+
 if __name__ == "__main__":
+    
+    exit(1)
     main()
-# [2.1418580752428897, 1.4530788861010047, 1.5235365211752725, 1.4791741001481007, 1.389333704054551, 1.2490290781819664, 1.1737140584701014, 1.0616901745774443]

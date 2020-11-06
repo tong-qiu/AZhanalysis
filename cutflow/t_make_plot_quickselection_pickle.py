@@ -233,17 +233,17 @@ def calculatecutcommonflow(samples, domerged):
     sum_temlen = len(samples.weight)
     resolveoutputlen.append(["pTB1", sum_temlen])
 
-    samples.cut(resolvedmbb)
-    sum_tem = np.sum(samples.weight)
-    resolveoutput.append(["mBB", sum_tem])
-    sum_temlen = len(samples.weight)
-    resolveoutputlen.append(["mBB", sum_temlen])
-
     samples.cut(resolvednjet)
     sum_tem = np.sum(samples.weight)
     resolveoutput.append([">= 2 signal jets", sum_tem])
     sum_temlen = len(samples.weight)
     resolveoutputlen.append([">= 2 signal jets", sum_temlen])
+
+    samples.cut(resolvedmbb)
+    sum_tem = np.sum(samples.weight)
+    resolveoutput.append(["mBB", sum_tem])
+    sum_temlen = len(samples.weight)
+    resolveoutputlen.append(["mBB", sum_temlen])
 
     samples.cut(resolved1btag)
     sum_tem = np.sum(samples.weight)
@@ -285,17 +285,17 @@ def calculatecutcommonflow(samples, domerged):
     sum_temlen = len(samplesmerged.weight)
     mergedoutputlen.append(["pTB1", sum_temlen])
 
-    samplesmerged.cut(mergedmbb)
-    sum_tem = np.sum(samplesmerged.weight)
-    mergedoutput.append(["mBB", sum_tem])
-    sum_temlen = len(samplesmerged.weight)
-    mergedoutputlen.append(["mBB", sum_temlen])
-
     samplesmerged.cut(mergednjet)
     sum_tem = np.sum(samplesmerged.weight)
     mergedoutput.append([">= 1 fat jets", sum_tem])
     sum_temlen = len(samplesmerged.weight)
     mergedoutputlen.append([">= 1 fat jets", sum_temlen])
+
+    samplesmerged.cut(mergedmbb)
+    sum_tem = np.sum(samplesmerged.weight)
+    mergedoutput.append(["mBB", sum_tem])
+    sum_temlen = len(samplesmerged.weight)
+    mergedoutputlen.append(["mBB", sum_temlen])
 
     samplesmerged.cut(ntrackjet)
     sum_tem = np.sum(samplesmerged.weight)
@@ -380,27 +380,27 @@ if __name__ == "__main__":
         _stack_cxaod(sample_directory, mc_Zlljet, "zlljet", 'blue', branches_list_data, False, zjet, matas)
         pickleit(zjet, "zlljet")
         exit(1)
-    ttbar = unpickleit("ttbar")
+    ttbar = unpickleit("ttbar.pickle")
     outputtem = calculatecutcommonflow(ttbar[0], True)
     output["ttbar"] = outputtem[0]
     outputlen["ttbar"] = outputtem[1]
 
-    zjet = unpickleit("zlljet")
+    zjet = unpickleit("zlljet.pickle")
     outputtem = calculatecutcommonflow(zjet[0], True)
     output["Z+jets"] = outputtem[0]
     outputlen["Z+jets"] = outputtem[1]
 
-    diboson = unpickleit("diboson")
+    diboson = unpickleit("diboson.pickle")
     outputtem = calculatecutcommonflow(diboson[0], False)
     output["diboson"] = outputtem[0]
     outputlen["diboson"] = outputtem[1]
 
-    stop = unpickleit("stop")
+    stop = unpickleit("stop.pickle")
     outputtem = calculatecutcommonflow(stop[0], False)
     output["stop"] = outputtem[0]
     outputlen["stop"] = outputtem[1]
 
-    dbl_tem = unpickleit("dbl")
+    dbl_tem = unpickleit("dbl.pickle")
     dbl_tem1 = copy.deepcopy(dbl_tem)
     dbl_tem1[0].cut(hvt300)
     outputtem = calculatecutcommonflow(dbl_tem1[0], True)

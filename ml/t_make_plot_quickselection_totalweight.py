@@ -87,10 +87,6 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
 
         m_allsamples.append(sample)
     if not cut:
-        sample.cut_parameter(cut_btag_more, 0)
-        sample.add_region()
-        sample.add_regime()
-        sample.mata = 0
         m_allsamples.append(sample)
     return 0
 
@@ -146,16 +142,16 @@ if __name__ == '__main__':
     ggA = ["ggA"]
 
     # signal/background to be loaded
-    file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet, ggA, ttV, sm_Higgs]
+    file_name_array = [ggA]
     # choose a name for your backgrounds
-    alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet", "ggA", 'ttV', 'sm_Higgs']
+    alias = ["ggA"]
     # Colours of each background on the plot. Delete if not needed.
-    colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm', "r", 'dimgrey', 'teal']
+    colors = ['teal']
 
     # Variables to load.
-    branches_list_data = [b"mBBres", b"EventWeight", b"METHT", b'mVHres', b'nTags', b"mLL", b"ptL1", b"ptL2", b"pTB1", b"pTB2", b"ptH", b"pTV", b"dEtaBB", b"dEtaLL", b"dPhiBB", b"dPhiLL", b"MV2c10B1", b"MV2c10B2", b"MV2c10B3", b"pTJ3", b"etaJ3",b"etaB1",b"etaB2", b"phiJ3", b"phiB1", b"phiB2"]
+    branches_list_data = [b"EventWeight"]
     # Strings to load.
-    matas = ["Regime", "Description"]
+    matas = []
     branches_list_MC = copy.deepcopy(branches_list_data)
     branches_list_MC.append(b'MCChannelNumber')
 
@@ -196,6 +192,9 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------
     # end of sample loading
 
+    print(set(all_sample_after[0].data[b"MCChannelNumber"]))
+
+
     # all_sample_after is a list of event.Events objects. event.Events is a class which stores 
     # all the events of a background.
     # variables and methods of event.Events class you may need to use:
@@ -207,6 +206,7 @@ if __name__ == '__main__':
     # Event.__add__: merged two event.Events object. Example: merged = Eventsobject1 + Eventsobject2
 
     # save as root files for MVA. delete if not needed.
+    output = []
     if saveevent:
         print("Saving events for MVA training...")
         backgroundlist = None
@@ -220,28 +220,11 @@ if __name__ == '__main__':
                 signallist.append(content)
             else:
                 backgroundlist.append(content)
-        
+
         test = get_signalid("ggA")
         out = splitesamples(signallist[0], test)
         for each in out:
+            w = sum(each[1].weight)
+            output.append((each[0],w))
             print(each[0], sum(each[1].weight))
-            saveevents_pandas([each[1]], str(each[0])+".csv")
-        saveevents_pandas(backgroundlist, "background.csv")
-
-        # if datalist:
-        #     saveevents(datalist,"data")
-        # if signallist:
-        #     saveevents(signallist,"signal")
-        # if backgroundlist:
-        #     saveevents(backgroundlist,"backgrounds")
-
-
-    # make stack plot. delete if not needed.
-    # print("Making plots...")
-    # title3="mBBcr"
-    # direct = ""
-    # name = "mbbcut-"
-    # bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
-    # stackplot(backgroundlist + datalist,b'mVHres',bins,1000.,
-    #     xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
-    #     title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
+    print(output)
