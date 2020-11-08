@@ -24,3 +24,4 @@ testmodel
 !e.txt
 *.log
 *.h5
+*.ipynb_checkpoints

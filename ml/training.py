@@ -12,7 +12,7 @@ import sys
 import pickle
 import math
 import copy
-
+import shap
 
 
 # no sideband
@@ -122,8 +122,10 @@ def main():
     os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
     # setting
     loadcsv = False
-    dotraining = True
+    dotraining = False
+    doprediction = False
     domassplot = True
+    doshap = True
 
     signal_mass = [300, 400, 420, 440, 460, 500, 600, 700]#, 800, 900, 1000, 1200, 1400, 1600, 2000]
     if loadcsv:
@@ -239,27 +241,49 @@ def main():
 
     
     significance = []
-    for each_mass in signal_mass:
-        test_bkg = test_bkg.assign(mass=each_mass)
-        thissignal = test_signal.loc[test_signal['mass'] == each_mass]
-        bkgresult = model.predict(scaler.transform(test_bkg.drop(columns=["weight"]).to_numpy()))
-        sigresult = model.predict(scaler.transform(thissignal.drop(columns=["weight"]).to_numpy()))
-        bkgresultweight = test_bkg["weight"]
-        sigresultweight = thissignal["weight"]
-        bins = np.linspace(0, 1, 50)
-        if domassplot:
-            sighist, bin_edges = np.histogram(sigresult.flatten(), density=True, bins=bins, weights=sigresultweight.to_numpy())
-            bkghist, bin_edges = np.histogram(bkgresult.flatten(), density=True, bins=bins, weights=bkgresultweight.to_numpy())
-            curveplot([(bin_edges[0:-1] + bin_edges[1:])/2]*2, [sighist, bkghist], filename="output" + str(each_mass), ylimit=[0,20], labels=["sig", "bkg"], xlimit=[0, 1], 
-                    yshift=0.05, xshift=0.03, ylabel="arbitary unit", xlabel="NN output", title2=r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$")
+    if doprediction:
+        for each_mass in signal_mass:
+            test_bkg = test_bkg.assign(mass=each_mass)
+            thissignal = test_signal.loc[test_signal['mass'] == each_mass]
+            bkgresult = model.predict(scaler.transform(test_bkg.drop(columns=["weight"]).to_numpy()))
+            sigresult = model.predict(scaler.transform(thissignal.drop(columns=["weight"]).to_numpy()))
+            bkgresultweight = test_bkg["weight"]
+            sigresultweight = thissignal["weight"]
+            bins = np.linspace(0, 1, 50)
+            if domassplot:
+                sighist, bin_edges = np.histogram(sigresult.flatten(), density=True, bins=bins, weights=sigresultweight.to_numpy())
+                bkghist, bin_edges = np.histogram(bkgresult.flatten(), density=True, bins=bins, weights=bkgresultweight.to_numpy())
+                curveplot([(bin_edges[0:-1] + bin_edges[1:])/2]*2, [sighist, bkghist], filename="output/output" + str(each_mass), ylimit=[0,20], labels=["sig", "bkg"], xlimit=[0, 1], 
+                        yshift=0.05, xshift=0.03, ylabel="arbitary unit", xlabel="NN output", title2=r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$")
 
-        sighist, bin_edges = np.histogram(sigresult.flatten(), bins=bins, weights=sigresultweight.to_numpy())
-        bkghist, bin_edges = np.histogram(bkgresult.flatten(), bins=bins, weights=bkgresultweight.to_numpy())
-        print(each_mass, significance_binned(bkghist, sighist, logsig=True, portion=0.2), result_2tag[each_mass])
-        significance.append(significance_binned(bkghist, sighist, logsig=True, portion=0.2)/result_2tag[each_mass])
-    print(significance)
-    curveplot([signal_mass], [significance], filename="significance", ylimit=[0,4], xlimit=[200, 800], horizontalline=1,
-              yshift=0.05, xshift=0.03, ylabel="significance ratio", xlabel="mass [GeV]", title2=r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$")
+            sighist, bin_edges = np.histogram(sigresult.flatten(), bins=bins, weights=sigresultweight.to_numpy())
+            bkghist, bin_edges = np.histogram(bkgresult.flatten(), bins=bins, weights=bkgresultweight.to_numpy())
+            print(each_mass, significance_binned(bkghist, sighist, logsig=True, portion=0.2), result_2tag[each_mass])
+            significance.append(significance_binned(bkghist, sighist, logsig=True, portion=0.2)/result_2tag[each_mass])
+        print(significance)
+        curveplot([signal_mass], [significance], filename="output/significance", ylimit=[0,4], xlimit=[200, 800], horizontalline=1,
+                yshift=0.05, xshift=0.03, ylabel="significance ratio", xlabel="mass [GeV]", title2=r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$")
+
+    if doshap:
+        def get_output(x):
+            p = model.predict(x)
+            out = []
+            for each in p:
+                out.append(each[0])
+            return np.array(out)
+        for each_mass in [300, 420, 700]:
+            print("info: ranking for " + str(each_mass) + " GeV mass point.")
+            thissignal = test_signal.loc[test_signal['mass'] == each_mass]
+            inputsignal = scaler.transform(thissignal.drop(columns=["weight"]).to_numpy())
+            test_bkg = test_bkg.assign(mass=each_mass)
+            test_bkg_np = scaler.transform(test_bkg.drop(columns=["weight"]).to_numpy())
+
+            explainer = shap.KernelExplainer(get_output, test_bkg_np[0:120], link="logit")
+            shap_values = explainer.shap_values(inputsignal[0:500], nsamples=100)
+            X_imputed_df = pd.DataFrame(inputsignal, columns = thissignal.drop(columns=["weight"]).columns)
+            a = shap.summary_plot(shap_values, X_imputed_df, plot_type="bar", show=False)
+            plt.savefig('output/ranking' + str(each_mass) + ".pdf", bbox_inches='tight')
+            plt.show()
 
 if __name__ == "__main__":
     main()
