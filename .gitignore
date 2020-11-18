@@ -25,3 +25,5 @@ testmodel
 *.log
 *.h5
 *.ipynb_checkpoints
+ml/log
+ml/logs

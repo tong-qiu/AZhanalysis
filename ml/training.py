@@ -123,9 +123,9 @@ def main():
     # setting
     loadcsv = False
     dotraining = False
-    doprediction = False
+    doprediction = True
     domassplot = True
-    doshap = True
+    doshap = False
 
     signal_mass = [300, 400, 420, 440, 460, 500, 600, 700]#, 800, 900, 1000, 1200, 1400, 1600, 2000]
     if loadcsv:
@@ -136,17 +136,19 @@ def main():
             df_temp = pre_selection(df_temp)
             df_temp["mass"] = each
             signal_all = pd.concat([df_temp, signal_all], ignore_index=True)
+        pickleit(signal_all, "sig.pickle")
+        signal_all = 0
+        df_temp = 0
         background_all = pd.read_csv("background.csv", index_col=0)
         background_all = pre_selection(background_all)
         #background_all["mass"] = np.random.rand(len(background_all)) * 2000
         background_all["mass"] = np.random.choice(signal_mass, len(background_all))
         pickleit(background_all, "bkg.pickle")
-        pickleit(signal_all, "sig.pickle")
         exit(1)
     else:
         print("loading pickle files")
-        background_all = unpickleit("bkgmbb.pickle")
-        signal_all = unpickleit("sigmbb.pickle")
+        background_all = unpickleit("bkg.pickle")
+        signal_all = unpickleit("sig.pickle")
         print("Pre-precessing")
         post_process1(signal_all)
         post_process1(background_all)
@@ -254,7 +256,7 @@ def main():
                 sighist, bin_edges = np.histogram(sigresult.flatten(), density=True, bins=bins, weights=sigresultweight.to_numpy())
                 bkghist, bin_edges = np.histogram(bkgresult.flatten(), density=True, bins=bins, weights=bkgresultweight.to_numpy())
                 curveplot([(bin_edges[0:-1] + bin_edges[1:])/2]*2, [sighist, bkghist], filename="output/output" + str(each_mass), ylimit=[0,20], labels=["sig", "bkg"], xlimit=[0, 1], 
-                        yshift=0.05, xshift=0.03, ylabel="arbitary unit", xlabel="NN output", title2=r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$")
+                        yshift=0.05, xshift=0.03, ylabel="arbitary unit", xlabel="NN output", title2=r"$\sqrt{s}=13\:TeV,139\:fb^{-1}$")
 
             sighist, bin_edges = np.histogram(sigresult.flatten(), bins=bins, weights=sigresultweight.to_numpy())
             bkghist, bin_edges = np.histogram(bkgresult.flatten(), bins=bins, weights=bkgresultweight.to_numpy())
@@ -262,7 +264,7 @@ def main():
             significance.append(significance_binned(bkghist, sighist, logsig=True, portion=0.2)/result_2tag[each_mass])
         print(significance)
         curveplot([signal_mass], [significance], filename="output/significance", ylimit=[0,4], xlimit=[200, 800], horizontalline=1,
-                yshift=0.05, xshift=0.03, ylabel="significance ratio", xlabel="mass [GeV]", title2=r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$")
+                yshift=0.05, xshift=0.03, ylabel="significance ratio", xlabel="mass [GeV]", title2=r"$\sqrt{s}=13\:TeV,139\:fb^{-1}$")
 
     if doshap:
         def get_output(x):
@@ -284,6 +286,7 @@ def main():
             a = shap.summary_plot(shap_values, X_imputed_df, plot_type="bar", show=False)
             plt.savefig('output/ranking' + str(each_mass) + ".pdf", bbox_inches='tight')
             plt.show()
+            plt.clf()
 
 if __name__ == "__main__":
     main()

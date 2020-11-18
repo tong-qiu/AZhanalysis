@@ -10,16 +10,16 @@ import matplotlib.font_manager as font_manager
 import matplotlib.patches as mpatches
 
 def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
-    rcParams['mathtext.fontset'] = 'custom'
-    rcParams['mathtext.it'] = 'DejaVu Sans:italic'
-    rcParams['mathtext.bf'] = 'DejaVu Sans:italic:bold'
+    # rcParams['mathtext.fontset'] = 'custom'
+    # rcParams['mathtext.it'] = 'DejaVu Sans:italic'
+    # rcParams['mathtext.bf'] = 'DejaVu Sans:italic:bold'
     # default label
     settings = {
         "xlabel" : r"$m_{Vh}[GeV]$",
         "ylabel": 'Number of Events',
-        "title1": r"$\mathbf{ATLAS}$",# \newline Ptl next-leading, full cuts, 2 b-tags $",
-        "title1_1": r"$\mathit{Internal}$",
-        "title2": r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$",# Ptl next-leading, full cuts, 2 b-tags $",
+        "title1": r"ATLAS",# \newline Ptl next-leading, full cuts, 2 b-tags $",
+        "title1_1": r"Internal",
+        "title2": r"$\sqrt{s}=13\:TeV,36.1\:fb^{-1}$",# Ptl next-leading, full cuts, 2 b-tags $",
         #"title3": r"$\mathbf{2\;lep.,2\;b-tag}$",
         "title3": "2 lep., 2 b-tag",
         "filename": "deltatest2",
@@ -53,9 +53,9 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
     ax = plt.gca()
     shift = settings["yshift"]
     xshift = settings["xshift"]
-    ax.text(0.05 + xshift, (1.55 - shift) / 1.7, settings['title1'], fontsize=25, transform=ax.transAxes)
+    ax.text(0.05 + xshift, (1.55 - shift) / 1.7, settings['title1'], fontsize=25, transform=ax.transAxes, style='italic', fontweight='bold')
     ax.text(0.227 + xshift, (1.55 - shift) / 1.7, settings['title1_1'], fontsize=25, transform=ax.transAxes)
-    ax.text(0.05 + xshift, (1.40 - shift) / 1.7, settings['title2'], fontsize=23, transform=ax.transAxes)
+    ax.text(0.05 + xshift, (1.40 - shift) / 1.7, settings['title2'], fontsize=23, transform=ax.transAxes, style='italic', fontweight='bold')
     ax.text(0.05 + xshift, (1.26  - shift) / 1.7, settings['title3'], fontsize=18, weight='bold', style='italic', transform=ax.transAxes)
     #ax1.text(0.05, 1.12 / 1.7, settings["title4"], fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
     
@@ -140,6 +140,7 @@ def histplot(data_lists, varible_to_plot, bins, labels = None, scales=1., **kwar
                                        style='normal', size=18)
     plt.savefig(settings['filename'] + '.pdf')
     plt.show()
+    plt.clf()
 
 def histplot_withsub(data_lists, varible_to_plot, bins, labels = None, scales=1., removenorm = None, **kwargs,):
     # data_list = [[sample1, sample2, ...],[sample3, sample4, ...], ...]
