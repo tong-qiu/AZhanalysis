@@ -96,6 +96,19 @@ def fitfunction_root(x, par):
     return fit_result *ap
 
 
+def rebin_x(inputs, factor):
+    out = []
+    i = 0
+    sums = 0
+    for each in inputs:
+        sums += each
+        i += 1
+        if i == factor:
+            out.append(sums/factor)
+            sums = 0
+            i = 0
+    return out
+
 def rebin(inputs, factor, order=1):
     out = []
     i = 0
@@ -112,12 +125,12 @@ def rebin(inputs, factor, order=1):
 
 def main():
     doplot = True
-    samplenameinhist = "AZhllbb"
-    samplenameininfo = "ggA"
-    signalSymbol = "A"
-    # samplenameinhist = "HVTZHllqq"
-    # samplenameininfo = "HVT"
-    # signalSymbol = "Z'"
+    # samplenameinhist = "AZhllbb"
+    # samplenameininfo = "ggA"
+    # signalSymbol = "A"
+    samplenameinhist = "HVTZHllqq"
+    samplenameininfo = "HVT"
+    signalSymbol = "Z'"
     # samplenameinhist = "bbAZhllbb"
     # samplenameininfo = "bbA"
     # signalSymbol = "A"
@@ -189,13 +202,13 @@ def main():
                         selectedm1[each_mass][1] += np.array(f[each_histname_b].values)
                         selectedm1[each_mass][2] = (selectedm1[each_mass][2]**2 + np.array(f[each_histname_b].variances))**0.5
     for eachkey in selectedm1.keys():
-        selectedm1[eachkey][0] = rebin(selectedm1[eachkey][0], 3)
-        selectedm1[eachkey][1] = rebin(selectedm1[eachkey][1], 3)
-        selectedm1[eachkey][2] = rebin(selectedm1[eachkey][2], 3, 2)
+        selectedm1[eachkey][0] = rebin_x(selectedm1[eachkey][0], 8)
+        selectedm1[eachkey][1] = rebin(selectedm1[eachkey][1], 8)
+        selectedm1[eachkey][2] = rebin(selectedm1[eachkey][2], 8, 2)
     for eachkey in selectedr1.keys():
-        selectedr1[eachkey][0] = rebin(selectedr1[eachkey][0], 3)
-        selectedr1[eachkey][1] = rebin(selectedr1[eachkey][1], 3)
-        selectedr1[eachkey][2] = rebin(selectedr1[eachkey][2], 3, 2)
+        selectedr1[eachkey][0] = rebin_x(selectedr1[eachkey][0], 5)
+        selectedr1[eachkey][1] = rebin(selectedr1[eachkey][1], 5)
+        selectedr1[eachkey][2] = rebin(selectedr1[eachkey][2], 5, 2)
     effs = []
     errors = []
     xlow = -0.5
@@ -204,8 +217,12 @@ def main():
     #ROOT.Math.MinimizerOptions.SetDefaultMaxFunctionCalls(90000000)
     #ROOT.Math.MinimizerOptions.SetDefaultTolerance(10000); 
     for each_mass in masses:
-        if each_mass > 3000:
-            continue
+        if samplenameininfo == "HVTxx":
+            if each_mass > 2500:
+                continue
+        else:
+            if each_mass > 3000:
+                continue
         masses_resolved.append(each_mass)
         graph = ROOT.TGraphErrors()
         for i in range(len(selectedr1[each_mass][0])):
@@ -219,9 +236,11 @@ def main():
             fitStatus = graph.Fit(fit1)
             result = fit1.GetParameters()
             error = fit1.GetParErrors()
-            if error[0] > 0.3:
+            if error[0] > 0.3 or error[1] > 0.2 or result[1] < 0.01:
                 print("not converge, try again...")
                 fit1.SetParameters(result[0], result[1], result[2], result[3], result[4], result[5])
+                if result[1] < 0.01:
+                    fit1.SetParameters(result[0], 0.02, result[2], result[3], result[4], result[5])
                 Ntry += 1
                 if Ntry > 4:
                     print("fit failed")
@@ -278,8 +297,12 @@ def main():
     xhigh = 1
     masses_merged = []
     for each_mass in masses:
-        if each_mass < 700:
-            continue
+        if samplenameininfo == "HVTxx":
+            if each_mass < 850:
+                continue
+        else:
+            if each_mass < 700:
+                continue
         masses_merged.append(each_mass)
         graph = ROOT.TGraphErrors()
         for i in range(len(selectedm1[each_mass][0])):
@@ -293,9 +316,11 @@ def main():
             graph.Fit(fit1)
             result = fit1.GetParameters()
             error = fit1.GetParErrors()
-            if error[0] > 0.3:
+            if error[0] > 0.3 or error[1] > 0.2 or result[1] < 0.01:
                 print("not converge, try again...")
                 fit1.SetParameters(result[0], result[1], result[2], result[3], result[4], result[5])
+                if result[1] < 0.01:
+                    fit1.SetParameters(result[0], 0.02, result[2], result[3], result[4], result[5])
                 Ntry += 1
                 if Ntry > 4:
                     print("fit failed")

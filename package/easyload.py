@@ -158,8 +158,9 @@ def get_sample(selection, debug=False, sample_list=None, tag="run2"):
             file_name_array += [data]
             alias += ["data"]
             colors += [None]
-    #branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mVH', b'nTags', b'j1px', b'j1py', b'j2px', b'j2py', b'ptH', b'ptHcorr', b'ptL1', b'ptL2', b'METHT']
-    branches_list_data = [b"mVH", b"EventWeight", b'nTags']
+    #branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mVH', b'nTags', b'j1px', b'j1py', b'j2px', b'j2py', b'ptH', b'ptHcorr']
+    branches_list_data = [b"mBBres", b"EventWeight", b"pTV", b'mVH', b'nTags', b'ptH', b'ptHcorr']
+    #branches_list_data = [b"mVH", b"EventWeight", b'nTags']
     matas = ["Sample", "Description", "Regime"]
     branches_list_MC = branches_list_data + [b'MCChannelNumber']
 

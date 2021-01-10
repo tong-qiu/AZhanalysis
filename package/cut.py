@@ -1,15 +1,36 @@
 import numpy as np
+import zlib
+def cutobj_1tagrm(data):
+    mask_merged = np.logical_and(data.mata["Regime"] == zlib.adler32(b'merged'), data.data[b'nbTagsInFJ'] >= 1)
+    mask_resolved = np.logical_and(data.mata["Regime"] == zlib.adler32(b'resolved'), data.data[b'nTags'] >= 1)
+    mask = np.logical_or(mask_merged, mask_resolved)
+    return mask
+
+def highptmuon(data):
+    mask = data[b'passhighptmuon'] == 1
+    return mask
+
+def highptmuon_selection(data):
+    mask_electron = data[b'flavL1'] == 1
+    mask_highpt1 = np.logical_or(data[b'ptL1']/1000.<300, data[b'highptmu1'] == 1)
+    mask_highpt2 = np.logical_or(data[b'ptL2']/1000.<300, data[b'highptmu2'] == 1)
+    mask = np.logical_or(mask_electron, np.logical_and(mask_highpt1, mask_highpt2))
+    return mask
 
 def cut_ptl1(data):
-    mask = data[b'ptL1'] > 27
+    mask = data[b'ptL1']/1000. > 27
+    return mask
+
+def cut_ptl1_more(data, thr):
+    mask = data[b'ptL1']/1000. > thr
     return mask
 
 def cut_ptl2tresolved(data):
-    mask = data[b'ptL2'] > 20
+    mask = data[b'ptL2']/1000. > 20
     return mask
 
 def cut_ptl2tmerged(data):
-    mask = data[b'ptL1'] > 25
+    mask = data[b'ptL1'] /1000.> 25
     return mask
 
 def cut_btagin_is(data, b):
@@ -18,6 +39,10 @@ def cut_btagin_is(data, b):
 
 def cut_btagout_is(data, b):
     mask = data[b'nbTagsOutsideFJ'] == b
+    return mask
+
+def cut_btagout_less(data, b):
+    mask = data[b'nbTagsOutsideFJ'] <= b
     return mask
 
 def cut_btagin_more(data, b):

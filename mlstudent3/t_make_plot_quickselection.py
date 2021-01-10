@@ -73,13 +73,13 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
         # should be defined in the "matas" list. 
         # The event selection criterion is defined in ml/cutstring.py
         sample.matacut(s_resolved)
-        sample.matacut(s_sr)
+        sample.matacut(s_mbbcr)
 
         # select events with certain number of b-tagged jets
         # This is a value-based event selection. The easytree branch which contains the values 
         # should be defined in the "branches_list_data" list.
         # The event selection criterion is defined in ml/mlcut.py
-        ntag = 2
+        ntag = 1
         sample.cut_parameter(cut_btag_is, ntag)
 
         # other user defined event selection
@@ -99,37 +99,37 @@ if __name__ == '__main__':
     saveevent = True
     tag = "run2"
     # directory of the easytrees
-    sample_directory = ["/data/atlas/projects/AZhML/a/", "/data/atlas/projects/AZhML/d/", "/data/atlas/projects/AZhML/e/"]
+    sample_directory = ["../sample/a/"]
     data = ["data16", "data15", "data17", "data18"]
     # Text on the plot. Delete if not needed.
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
 
-    if tag == "a":
-        t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.2\:fb^{-1}}$"
-        sample_directory = ["/data/atlas/projects/AZhML/a/"]
-        data = ["data16", "data15"]
-    if tag == "d":
-        t2 = r"$\mathit{\sqrt{s}=13\:TeV,44.3\:fb^{-1}}$"
-        sample_directory = ["/data/atlas/projects/AZhML/d/"]
-        data = ["data17"]
-    if tag == "e":
-        t2 = r"$\mathit{\sqrt{s}=13\:TeV,58.45\:fb^{-1}}$"
-        sample_directory = ["/data/atlas/projects/AZhML/e/"]
-        data = ["data18"]
-    if tag == "run2":
-        t2 = r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$"
-        sample_directory = ["/data/atlas/projects/AZhML/a/", "/data/atlas/projects/AZhML/d/", "/data/atlas/projects/AZhML/e/"]
-        data = ["data16", "data15", "data17", "data18"]
+    # if tag == "a":
+    #     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.2\:fb^{-1}}$"
+    #     sample_directory = ["/data/atlas/projects/AZhML/a/"]
+    #     data = ["data16", "data15"]
+    # if tag == "d":
+    #     t2 = r"$\mathit{\sqrt{s}=13\:TeV,44.3\:fb^{-1}}$"
+    #     sample_directory = ["/data/atlas/projects/AZhML/d/"]
+    #     data = ["data17"]
+    # if tag == "e":
+    #     t2 = r"$\mathit{\sqrt{s}=13\:TeV,58.45\:fb^{-1}}$"
+    #     sample_directory = ["/data/atlas/projects/AZhML/e/"]
+    #     data = ["data18"]
+    # if tag == "run2":
+    #     t2 = r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$"
+    #     sample_directory = ["/data/atlas/projects/AZhML/a/", "/data/atlas/projects/AZhML/d/", "/data/atlas/projects/AZhML/e/"]
+    #     data = ["data16", "data15", "data17", "data18"]
 
     # define root files of each backgorund here. 
     # background files. Do not change!
     # --------------------------------------------------------------------
     mc_Wlvjet = ["Wenu_Sh221", "WenuB_Sh221", "WenuC_Sh221", "WenuL_Sh221", "Wmunu_Sh221", "WmunuB_Sh221", "WmunuC_Sh221", "WmunuL_Sh221", "Wtaunu_Sh221", "WtaunuB_Sh221", "WtaunuC_Sh221", "WtaunuL_Sh221"]
-    mc_Zlljet1 = ["Zee_Sh221", "ZeeB_Sh221"]
-    mc_Zlljet2 = ["ZeeC_Sh221", "ZeeL_Sh221"]
-    mc_Zlljet3 = ["Zmumu_Sh221", "ZmumuB_Sh221"]
-    mc_Zlljet4 = ["ZmumuC_Sh221", "ZmumuL_Sh221"]
-    mc_Zlljet5 = ["Ztautau_Sh221", "ZtautauB_Sh221", "ZtautauC_Sh221", "ZtautauL_Sh221", "Znunu_Sh221", "ZnunuB_Sh221", "ZnunuC_Sh221", "ZnunuL_Sh221"]
+    mc_Zlljet1 = ["ZeeB_MGPy8"]
+    mc_Zlljet2 = ["ZeeC_MGPy8", "ZeeL_MGPy8"]
+    mc_Zlljet3 = ["ZmumuB_MGPy8"]
+    mc_Zlljet4 = ["ZmumuC_MGPy8", "ZmumuL_MGPy8"]
+    mc_Zlljet5 = ["Ztautau_MGPy8", "Znunu_MGPy8"]
     mc_tt_bar = [ "ttbar_nonallhad_PwPy8", "ttbar_allhad_PwPy8", "ttbar_dilep_PwPy8"] # must include all three
     mc_singletop = ["stops_PwPy8", "stopt_PwPy8", "stopWt_PwPy8"]
     mc_Diboson = ["WqqWlv_Sh221", "WqqZll_Sh221", "WqqZvv_Sh221", "ZqqZll_Sh221", "ZqqZvv_Sh221", "WlvZqq_Sh221", "ggZqqZll_Sh222", "ggWqqWlv_Sh222"]
@@ -146,7 +146,7 @@ if __name__ == '__main__':
     colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm', "r"]
 
     # Variables to load.
-    branches_list_data = [b"mBBres", b"EventWeight", b"METHT", b'mVHres', b'nTags', b"mLL", b"ptL1", b"ptL2", b"pTB1", b"pTB2", b"ptH", b"pTV", b"dEtaBB", b"dEtaLL", b"dPhiBB", b"dPhiLL", b"MV2c10B1", b"MV2c10B2"]
+    branches_list_data = [b"EventWeight", b'mVHres', b'nTags']
     # Strings to load.
     matas = ["Regime", "Description" ]
     branches_list_MC = copy.deepcopy(branches_list_data)
@@ -235,10 +235,10 @@ if __name__ == '__main__':
 
     # make stack plot. delete if not needed.
     print("Making plots...")
-    title3="SR"
+    title3="mbbcr"
     direct = ""
     name = "SR-"
     bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
-    stackplot(backgroundlist,b'mVHres',bins,1000.,
+    stackplot(backgroundlist+datalist,b'mVHres',bins,1000.,
         xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
-        title2=t2, auto_colour=False, limit_y=0.5, upper_y=2.0, log_y=True, blind=True, signal=[new_signallist[5]])
+        title2=t2, auto_colour=False, limit_y=0.5, upper_y=2.0, log_y=True)

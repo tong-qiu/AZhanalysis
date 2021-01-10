@@ -17,7 +17,7 @@ sys.path.append(lib_path)
 sys.path.append('../package')
 
 from package.events import *
-from mlcut import *
+from cut import *
 from package.stackplot import *
 from curveplot import *
 from cutstring import *
@@ -79,32 +79,31 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
         # This is a value-based event selection. The easytree branch which contains the values 
         # should be defined in the "branches_list_data" list.
         # The event selection criterion is defined in ml/mlcut.py
-        ntag = 2
-        sample.cut_parameter(cut_btag_is, ntag)
+        # ntag = 2
+        # sample.cut_parameter(cut_btag_is, ntag)
 
         # other user defined event selection
         # sample.cut(cut_basic)
 
         m_allsamples.append(sample)
     if not cut:
-        sample.cut_parameter(cut_btag_more, 0)
-        sample.add_region()
-        sample.add_regime()
-        sample.mata = 0
+        # sample.cut_parameter(cut_btag_more, 0)
+        # sample.add_region()
+        # sample.add_regime()
+        # sample.mata = 0
         m_allsamples.append(sample)
     return 0
 
 if __name__ == '__main__':
     # only load limited number of the events if debug
-    debug = True
+    debug = False
     # Do event selection?
-    cut = False
+    cut = True
     # save event after selection as root file?
     saveevent = True
     tag = "a"
     # directory of the easytrees
     sample_directory = ["../sample/a/", "../sample/d/", "../sample/e/"]
-    # sample_directory = ["../sample/e/"]
     data = ["data16", "data15", "data17", "data18"]
     # Text on the plot. Delete if not needed.
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
@@ -143,17 +142,17 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------
 
     # signal files
-    ggA = ["ggA"]
+    HVT = ["HVT"]
 
     # signal/background to be loaded
-    file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet, ggA, ttV, sm_Higgs]
+    file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet, HVT, ttV, sm_Higgs]
     # choose a name for your backgrounds
-    alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet", "ggA", 'ttV', 'sm_Higgs']
+    alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet", "HVT", 'ttV', 'sm_Higgs']
     # Colours of each background on the plot. Delete if not needed.
     colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm', "r", 'dimgrey', 'teal']
 
     # Variables to load.
-    branches_list_data = [b"mBBres", b"EventWeight", b"METHT", b'mVHres', b'nTags', b"mLL", b"ptL1", b"ptL2", b"pTB1", b"pTB2", b"ptH", b"pTV", b"dEtaBB", b"dEtaLL", b"dPhiBB", b"dPhiLL", b"MV2c10B1", b"MV2c10B2", b"MV2c10B3", b"pTJ3", b"etaJ3",b"etaB1",b"etaB2", b"phiJ3", b"phiB1", b"phiB2"]
+    branches_list_data = [b"EventWeight", b'mVHres', b'nTags', b'nbTagsInFJ', b'nbTagsOutsideFJ', b'ptL1', b'flavL1', b'flavL2']
     # Strings to load.
     matas = ["Regime", "Description"]
     branches_list_MC = copy.deepcopy(branches_list_data)
@@ -216,38 +215,40 @@ if __name__ == '__main__':
         for content in all_sample_after:
             if "data" in content.alias:
                 datalist.append(content)
-            elif "A" in content.alias:
+            elif "HVT" in content.alias:
                 signallist.append(content)
             else:
                 backgroundlist.append(content)
         
-        test = get_signalid("ggA")
+        test = get_signalid("HVT")
         out = splitesamples(signallist[0], test)
-        sumbkg = 0
-        for each in backgroundlist:
-            if sumbkg == 0:
-                sumbkg = each
-            else:
-                sumbkg = sumbkg + each
-        binning2tagresolvedsr = [0.0, 200.0, 220.0, 240.0, 260.0, 280.0, 300.0, 320.0, 340.0, 360.0, 380.0, 400.0, 420.0, 
-        440.0, 460.0, 480.0, 500.0, 520.0, 540.0, 560.0, 580.0, 600.0, 630.0, 660.0, 690.0, 720.0, 750.0, 
-        780.0, 810.0, 850.0, 910.0, 970.0, 1030.0, 1090.0, 1150.0, 1210.0, 1270.0, 1330.0, 1390.0, 1450.0, 
-        1510.0, 1570.0, 1900.0, 2300.0, 2700.0, 3100.0, 9000.0]
-        significance = significant(sumbkg, signallist[0],b'mVHres', binning2tagresolvedsr, 1000)
-        print(significance)
-        exit(1)
 
-        for each in out:
-            print(each[0], sum(each[1].weight))
-            saveevents_pandas([each[1]], str(each[0])+".csv")
-        saveevents_pandas(backgroundlist, "background.csv")
+    signaltest = copy.deepcopy(out)
+    muon300ratio = []
+    for each in signaltest:
+        each[1].cut(cut_muon)
+        each[1].maskcut(cutobj_1tagrm(each[1]))
+        each2 = copy.deepcopy(each)
+        each2[1].cut_parameter(cut_ptl1_more, 300)
+        muon300ratio.append([each[0], sum(each2[1].weight)/sum(each[1].weight)])
+    muon300ratio.sort(key=lambda x: x[0])
+    print(muon300ratio)
+    curveplot([[each[0] for each in muon300ratio]], [[each[1] for each in muon300ratio]], filename="muon", ylimit=[0,3], xlimit=[200, 9000], horizontalline=1,
+              yshift=0.05, xshift=0.03, ylabel="pt > 300 GeV ratio", xlabel="A resonance mass [GeV]", title2=r"", title3="2 lep. all SRs, >=1 b-tags")
 
-        # if datalist:
-        #     saveevents(datalist,"data")
-        # if signallist:
-        #     saveevents(signallist,"signal")
-        # if backgroundlist:
-        #     saveevents(backgroundlist,"backgrounds")
+    allevent = 0
+    eventablve = 0
+    bkgtest = copy.deepcopy(backgroundlist)
+    for each in bkgtest:
+        each.cut(cut_muon)
+        each.maskcut(cutobj_1tagrm(each))
+        each2 = copy.deepcopy(each)
+        each2.cut_parameter(cut_ptl1_more, 300)
+        allevent += sum(each.weight)
+        eventablve += sum(each2.weight)
+    print(allevent, eventablve)
+
+
 
 
     # make stack plot. delete if not needed.

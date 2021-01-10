@@ -1,13 +1,79 @@
 import matplotlib as mpl
 mpl.use('Agg')
+import matplotlib
 import math
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MultipleLocator
 import numpy as np
 import pickle
 from matplotlib import rc, rcParams
 from events import *
 import matplotlib.font_manager as font_manager
 import matplotlib.patches as mpatches
+
+def histplot_raw(datas, bins, labels, weights=None, removenorm=False, scale=1., **kwargs):
+    settings = {
+        "xlabel" : r"$m_{Vh}[GeV]$",
+        "ylabel": 'Number of Events',
+        "title1": r"ATLAS",# \newline Ptl next-leading, full cuts, 2 b-tags $",
+        "title1_1": r"Internal",
+        "title2": r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$",# Ptl next-leading, full cuts, 2 b-tags $",
+        #"title3": r"$\mathbf{2\;lep.,2\;b-tag}$",
+        "title3": "2 lep., 2 b-tag",
+        "filename": "deltatest2",
+        "log_y":False,
+        "norm":False,
+        "upper_y": 1.5, 
+        }
+    for each_key in kwargs.items():
+        settings[each_key[0]] = kwargs[each_key[0]]
+    
+
+    if weights is None:
+        weights = []
+        for each in datas:
+            weights.append(np.ones(len(each)))
+    
+    if removenorm:
+        for i in range(len(weights)):
+            weights[i] = np.array(weights[i]) / np.sum(weights[i])
+    sigmas = []
+    weight_in_binses = []
+    for i in range(len(datas)):
+        event_location = np.digitize(datas[i]/scale, bins)
+        sigma2 = []
+        weight_in_bins = []
+        for j in range(np.size(bins) - 1):
+            bin_weight = weights[i][np.where(event_location == j+1)[0]]
+            sigma2.append(np.sum(bin_weight**2.))
+            weight_in_bins.append(np.sum(bin_weight))
+        sigmas.append(np.array(sigma2)**0.5)
+        weight_in_binses.append(np.array(weight_in_bins))
+
+    colors = ['b', 'g', 'r', 'c', 'm', 'y']
+    fig, ax = plt.subplots(figsize=(10,8))
+    ax.hist(np.array(datas)/scale, bins, histtype='step', fill=False, color=colors[0:len(datas)], weights=weights)
+    bins = np.array(bins)
+    for i in range(len(datas)):
+        bin_centre = (bins[0:-1] + bins[1:])/2
+        ax.errorbar(bin_centre, weight_in_binses[i], xerr=0.0001, yerr=sigmas[i], fmt='.', color=colors[i], label=str(labels[i]))
+    ax.legend(loc='upper right',prop={'size': 20}, frameon=False)
+    
+    ymin, ymax = ax.get_ylim()
+    ax.set_ylim([0,ymax* settings["upper_y"]])
+    ax.text(0.05, 1.55 / 1.7, settings['title1'], fontsize=25, transform=ax.transAxes, style='italic', fontweight='bold')
+    ax.text(0.227, 1.55/ 1.7, settings['title1_1'], fontsize=25, transform=ax.transAxes)
+    ax.text(0.05, 1.40 / 1.7, settings['title2'], fontsize=23, transform=ax.transAxes, style='italic', fontweight='bold')
+    ax.text(0.05, 1.26 / 1.7, settings['title3'], fontsize=18, weight='bold', style='italic', transform=ax.transAxes)
+    ax.set_ylabel(settings['ylabel'], fontsize=20)
+    ax.set_xlabel(settings['xlabel'], fontsize=20)
+    if settings['log_y']:
+        ax.set_yscale('log')
+        ax.set_ylim([0.1, 10**(math.log10(ymax) * settings["upper_y"])])
+        ax.yaxis.set_major_locator(matplotlib.ticker.LogLocator(base=10,numticks=100))
+        ax.minorticks_on()
+
+    fig.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0.25)
 
 def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
     # rcParams['mathtext.fontset'] = 'custom'
@@ -19,7 +85,7 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
         "ylabel": 'Number of Events',
         "title1": r"ATLAS",# \newline Ptl next-leading, full cuts, 2 b-tags $",
         "title1_1": r"Internal",
-        "title2": r"$\sqrt{s}=13\:TeV,36.1\:fb^{-1}$",# Ptl next-leading, full cuts, 2 b-tags $",
+        "title2": r"$\sqrt{s}=13\:TeV,139\:fb^{-1}$",# Ptl next-leading, full cuts, 2 b-tags $",
         #"title3": r"$\mathbf{2\;lep.,2\;b-tag}$",
         "title3": "2 lep., 2 b-tag",
         "filename": "deltatest2",

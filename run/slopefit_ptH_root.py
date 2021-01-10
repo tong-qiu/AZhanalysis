@@ -40,7 +40,7 @@ def poly(x, *argv):
 
 labelshift = 0
 nbtag = 1
-highlow = "low"
+highlow = "high"
 limity = False
 if nbtag == 1:
     labelshift = 0.55
@@ -67,12 +67,12 @@ if nbtag == 2:
         plt.ylim(top=3)
         plt.ylim(bottom=-0.4)
     g1 = 1
-    g2 = 0
+    g2 = 10
     g3 = 0
-    g4 = 200
-    # if highlow == "low":
-    #     g1 = 1
-    #     g2 = 200
+    g4 = 180
+    if highlow == "high":
+        g1 = 1
+        g2 = 100
     #     g3 = 0
     #     g4 = 300
     # def fitfunction1(x, p0, p1, p2):# p5, p6):
@@ -202,10 +202,9 @@ plt.show()
 #popt1 = popt1.tolist()
 #pcov1 = np.sqrt(np.diag(pcov1)).tolist()
 
-# print data
-# with open("output/slopefit/" + filename + "polyfitresult.csv", "w") as f:
-#     for each in popt1:
-#         f.write(str(Decimal(repr(each))) + ',')
-#     f.write('\n')
-#     for each in pcov1:
-#         f.write(str(Decimal(repr(each))) + ',')
+with open("output/slopefit/" + filename + "polyfitresult.csv", "w") as f:
+    for each in popt1:
+        f.write(str(Decimal(repr(each))) + ',')
+    f.write('\n')
+    for each in pcov1:
+        f.write(str(Decimal(repr(each))) + ',')

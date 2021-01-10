@@ -144,8 +144,28 @@ def resolved1btag(data):
     mask = data[b'nTags'] >= 1
     return mask
 
+def resolved2btag(data):
+    mask = data[b'nTags'] >= 2
+    return mask
+
+def resolved3pbtag(data):
+    mask = data[b'nTags'] >= 3
+    return mask
+
 def merged1btag(data):
     mask = data[b'nbTagsInFJ'] >= 1
+    return mask
+
+def merged2btag(data):
+    mask = data[b'nbTagsInFJ'] >= 2
+    return mask
+
+def jetcleaning(data):
+    mask = data[b'passNonOverlappingMatchedTrackJets'] == 1
+    return mask
+
+def highptmuon(data):
+    mask = data[b'passhighptmuon'] == 1
     return mask
 
 def calculatecutcommonflow(samples, domerged):
@@ -201,6 +221,14 @@ def calculatecutcommonflow(samples, domerged):
     resolveoutputlen.append(["muon eta", sum_temlen])
     mergedoutputlen.append(["muon eta", sum_temlen])
 
+    samples.cut(highptmuon)
+    sum_tem = np.sum(samples.weight)
+    resolveoutput.append(["highpt muon WP", sum_tem])
+    mergedoutput.append(["highpt muon WP", sum_tem])
+    sum_temlen = len(samples.weight)
+    resolveoutputlen.append(["highpt muon WP", sum_temlen])
+    mergedoutputlen.append(["highpt muon WP", sum_temlen])
+
     samplesmerged = copy.deepcopy(samples)
 
     samples.cut(mllres)
@@ -251,6 +279,17 @@ def calculatecutcommonflow(samples, domerged):
     sum_temlen = len(samples.weight)
     resolveoutputlen.append([">= 1 b-tagged", sum_temlen])
 
+    samples.cut(resolved2btag)
+    sum_tem = np.sum(samples.weight)
+    resolveoutput.append([">= 2 b-tagged", sum_tem])
+    sum_temlen = len(samples.weight)
+    resolveoutputlen.append([">= 2 b-tagged", sum_temlen])
+
+    samples.cut(resolved3pbtag)
+    sum_tem = np.sum(samples.weight)
+    resolveoutput.append([">= 3 b-tagged", sum_tem])
+    sum_temlen = len(samples.weight)
+    resolveoutputlen.append([">= 3 b-tagged", sum_temlen])
 
     if not domerged:
         return [{"resolved": resolveoutput}, {"resolved": resolveoutputlen}]
@@ -309,11 +348,23 @@ def calculatecutcommonflow(samples, domerged):
     sum_temlen = len(samplesmerged.weight)
     mergedoutputlen.append([">= 1 b-tagged", sum_temlen])
 
+    samplesmerged.cut(jetcleaning)
+    sum_tem = np.sum(samplesmerged.weight)
+    mergedoutput.append(["track jets overlap removal", sum_tem])
+    sum_temlen = len(samplesmerged.weight)
+    mergedoutputlen.append(["track jets overlap removal", sum_temlen])
+
     samplesmerged.matacut(s_merged)
     sum_tem = np.sum(samplesmerged.weight)
     mergedoutput.append(["priority resolved", sum_tem])
     sum_temlen = len(samplesmerged.weight)
     mergedoutputlen.append(["priority resolved", sum_temlen])
+
+    samplesmerged.cut(merged2btag)
+    sum_tem = np.sum(samplesmerged.weight)
+    mergedoutput.append([">= 2 b-tagged", sum_tem])
+    sum_temlen = len(samplesmerged.weight)
+    mergedoutputlen.append([">= 2 b-tagged", sum_temlen])
 
     return [{"resolved": resolveoutput, "merged": mergedoutput}, {"resolved": resolveoutputlen, "merged": mergedoutputlen}]
 def _stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_list_data, debug, m_allsamples, matas=None):
@@ -338,7 +389,7 @@ def unpickleit(path):
 
 if __name__ == "__main__":
     sample_directory = ["../sample/a/", "../sample/d/", "../sample/e/"]
-    branches_list_data = [b"EventWeight", b'mVHres', b'mVHmerg', b'mVH', b'nTags', b'nSigJets', b"passedTrigger", b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b"mLL", b"METHT", b'pTV', b'j1px', b'j1py', b'mBB', b'ptL1', b'ptL2', b'nFatJets', b'etaL1', b'MCChannelNumber', b'mBBres', b'mBBmerg', b'nbTagsInFJ', b'nTrkjetsInFJ', b'nbTagsOutsideFJ']
+    branches_list_data = [b"EventWeight", b'mVHres', b'mVHmerg', b'mVH', b'nTags', b'nSigJets', b"passedTrigger", b'flavL1', b'flavL2', b'chargeL1', b'chargeL2', b"mLL", b"METHT", b'pTV', b'j1px', b'j1py', b'mBB', b'ptL1', b'ptL2', b'nFatJets', b'etaL1', b'MCChannelNumber', b'mBBres', b'mBBmerg', b'passNonOverlappingMatchedTrackJets', b'passhighptmuon']#, b'nbTagsInFJ', b'nTrkjetsInFJ', b'nbTagsOutsideFJ']
     mc_Wlvjet = ["Wenu_Sh221", "WenuB_Sh221", "WenuC_Sh221", "WenuL_Sh221", "Wmunu_Sh221", "WmunuB_Sh221", "WmunuC_Sh221", "WmunuL_Sh221", "Wtaunu_Sh221", "WtaunuB_Sh221", "WtaunuC_Sh221", "WtaunuL_Sh221"]
     mc_Zlljet1 = ["Zee_Sh221", "ZeeB_Sh221"]
     mc_Zlljet2 = ["ZeeC_Sh221", "ZeeL_Sh221"]
@@ -369,36 +420,40 @@ if __name__ == "__main__":
     stop = []
     diboson = []
     if loadit:
-        # _stack_cxaod(sample_directory, mc_Diboson, "diboson", 'yellow', branches_list_data, False, diboson, matas)
-        # pickleit(diboson, "diboson")
-        # _stack_cxaod(sample_directory, mc_singletop, "stop", 'yellow', branches_list_data, False, stop, matas)
-        # pickleit(stop, "stop")
-        _stack_cxaod(sample_directory, dbls, "dbl", 'yellow', branches_list_data, False, dbl, matas)
-        pickleit(dbl, "dbl")
-        _stack_cxaod(sample_directory, mc_tt_bar, "ttbar", 'yellow', branches_list_data, False, ttbar, matas)
-        pickleit(ttbar, "ttbar")
-        _stack_cxaod(sample_directory, mc_Zlljet, "zlljet", 'blue', branches_list_data, False, zjet, matas)
-        pickleit(zjet, "zlljet")
+        _stack_cxaod(sample_directory, mc_Diboson, "diboson", 'yellow', branches_list_data, False, diboson, matas)
+        pickleit(diboson, "diboson")
+        _stack_cxaod(sample_directory, mc_singletop, "stop", 'yellow', branches_list_data, False, stop, matas)
+        pickleit(stop, "stop")
+        # _stack_cxaod(sample_directory, dbls, "dbl", 'yellow', branches_list_data, False, dbl, matas)
+        # pickleit(dbl, "dbl")
+        # _stack_cxaod(sample_directory, mc_tt_bar, "ttbar", 'yellow', branches_list_data, False, ttbar, matas)
+        # pickleit(ttbar, "ttbar")
+        # _stack_cxaod(sample_directory, mc_Zlljet, "zlljet", 'blue', branches_list_data, False, zjet, matas)
+        # pickleit(zjet, "zlljet")
         exit(1)
     ttbar = unpickleit("ttbar.pickle")
     outputtem = calculatecutcommonflow(ttbar[0], True)
     output["ttbar"] = outputtem[0]
     outputlen["ttbar"] = outputtem[1]
+    print("ttbar finished")
 
     zjet = unpickleit("zlljet.pickle")
     outputtem = calculatecutcommonflow(zjet[0], True)
     output["Z+jets"] = outputtem[0]
     outputlen["Z+jets"] = outputtem[1]
+    print("zlljet finished")
 
     diboson = unpickleit("diboson.pickle")
     outputtem = calculatecutcommonflow(diboson[0], False)
     output["diboson"] = outputtem[0]
     outputlen["diboson"] = outputtem[1]
+    print("diboson finished")
 
     stop = unpickleit("stop.pickle")
     outputtem = calculatecutcommonflow(stop[0], False)
     output["stop"] = outputtem[0]
     outputlen["stop"] = outputtem[1]
+    print("stop finished")
 
     dbl_tem = unpickleit("dbl.pickle")
     dbl_tem1 = copy.deepcopy(dbl_tem)
@@ -406,18 +461,21 @@ if __name__ == "__main__":
     outputtem = calculatecutcommonflow(dbl_tem1[0], True)
     output["HVT300"] = outputtem[0]
     outputlen["HVT300"] = outputtem[1]
+    print("HVT300 finished")
 
     dbl_tem1 = copy.deepcopy(dbl_tem)
     dbl_tem1[0].cut(hvt700)
     outputtem = calculatecutcommonflow(dbl_tem1[0], True)
     output["HVT700"] = outputtem[0]
     outputlen["HVT700"] = outputtem[1]
+    print("HVT700 finished")
 
     dbl_tem1 = copy.deepcopy(dbl_tem)
     dbl_tem1[0].cut(hvt2000)
     outputtem = calculatecutcommonflow(dbl_tem1[0], True)
     output["HVT2000"] = outputtem[0]
     outputlen["HVT2000"] = outputtem[1]
+    print("HVT2000 finished")
 
 
     dbl_tem1 = copy.deepcopy(dbl_tem)
@@ -425,6 +483,7 @@ if __name__ == "__main__":
     outputtem = calculatecutcommonflow(dbl_tem1[0], True)
     output["HVT5000"] = outputtem[0]
     outputlen["HVT5000"] = outputtem[1]
+    print("HVT5000 finished")
 
     with open("cutflow.json", "w") as f:
         f.write(json.dumps(output))

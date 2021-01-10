@@ -17,11 +17,12 @@ sys.path.append(lib_path)
 sys.path.append('../package')
 
 from package.events import *
-from mlcut import *
+from cut import *
 from package.stackplot import *
 from curveplot import *
 from cutstring import *
 import multiprocessing
+from package.loadnormfactor import *
 
 def get_signalid(samplenameininfo):
     masses = []
@@ -73,41 +74,43 @@ def stack_cxaod(sample_directory, each_names, each_alias, each_color, branches_l
         # should be defined in the "matas" list. 
         # The event selection criterion is defined in ml/cutstring.py
         # sample.matacut(s_resolved)
-        sample.matacut(s_sr)
+        sample.matacut(s_merged)
+        sample.matacut(s_mbbcr)
+        sample.ptfj1()
 
         # select events with certain number of b-tagged jets
         # This is a value-based event selection. The easytree branch which contains the values 
         # should be defined in the "branches_list_data" list.
         # The event selection criterion is defined in ml/mlcut.py
-        ntag = 2
-        sample.cut_parameter(cut_btag_is, ntag)
+        # ntag = 2
+        # sample.cut_parameter(cut_btag_is, ntag)
 
         # other user defined event selection
         # sample.cut(cut_basic)
 
         m_allsamples.append(sample)
     if not cut:
-        sample.cut_parameter(cut_btag_more, 0)
-        sample.add_region()
-        sample.add_regime()
-        sample.mata = 0
+        # sample.cut_parameter(cut_btag_more, 0)
+        # sample.add_region()
+        # sample.add_regime()
+        # sample.mata = 0
         m_allsamples.append(sample)
     return 0
 
 if __name__ == '__main__':
     # only load limited number of the events if debug
-    debug = True
+    debug = False
     # Do event selection?
-    cut = False
+    cut = True
     # save event after selection as root file?
     saveevent = True
+    rescale = True
     tag = "a"
     # directory of the easytrees
-    sample_directory = ["../sample/a/", "../sample/d/", "../sample/e/"]
-    # sample_directory = ["../sample/e/"]
+    sample_directory = ["../sample/LOOSE/a/", "../sample/LOOSE/d/", "../sample/LOOSE/e/"]
     data = ["data16", "data15", "data17", "data18"]
     # Text on the plot. Delete if not needed.
-    t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
+    t2 = r"$\mathit{\sqrt{s}=13\:TeV,139\:fb^{-1}}$"
 
     # if tag == "a":
     #     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
@@ -143,19 +146,21 @@ if __name__ == '__main__':
     # --------------------------------------------------------------------
 
     # signal files
-    ggA = ["ggA"]
+    HVT = ["HVT"]
 
     # signal/background to be loaded
-    file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet, ggA, ttV, sm_Higgs]
+    file_name_array = [data, mc_Diboson, mc_tt_bar,  mc_singletop, mc_Zlljet1, mc_Zlljet2, mc_Zlljet3, mc_Zlljet4, mc_Zlljet5, mc_Wlvjet, HVT, ttV, sm_Higgs]
+    # file_name_array = [HVT]
     # choose a name for your backgrounds
-    alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet", "ggA", 'ttV', 'sm_Higgs']
+    alias = ["data", "Diboson", "ttbar", "singletop", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Zlljet", "Wlvjet", "HVT", 'ttV', 'sm_Higgs']
+    # alias = ["HVT"]
     # Colours of each background on the plot. Delete if not needed.
     colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm', "r", 'dimgrey', 'teal']
 
     # Variables to load.
-    branches_list_data = [b"mBBres", b"EventWeight", b"METHT", b'mVHres', b'nTags', b"mLL", b"ptL1", b"ptL2", b"pTB1", b"pTB2", b"ptH", b"pTV", b"dEtaBB", b"dEtaLL", b"dPhiBB", b"dPhiLL", b"MV2c10B1", b"MV2c10B2", b"MV2c10B3", b"pTJ3", b"etaJ3",b"etaB1",b"etaB2", b"phiJ3", b"phiB1", b"phiB2"]
+    branches_list_data = [b"EventWeight", b'mVHres', b'nTags', b'nbTagsInFJ', b'nbTagsOutsideFJ', b'ptTrkJetsinFJ1', b'ptTrkJetsinFJ2', b'fj1px', b'fj1py']
     # Strings to load.
-    matas = ["Regime", "Description"]
+    matas = ["Regime", "Description", "Sample"]
     branches_list_MC = copy.deepcopy(branches_list_data)
     branches_list_MC.append(b'MCChannelNumber')
 
@@ -206,6 +211,21 @@ if __name__ == '__main__':
     # Event.alias: a string which stores the type of the background
     # Event.__add__: merged two event.Events object. Example: merged = Eventsobject1 + Eventsobject2
 
+
+    if rescale:
+        rescaledic = loadnorm("../fitconfig/config_m2000.cfg", "../fitconfig/GlobalFit_fitres_conditionnal_mu0.txt")
+        #rescaledic = loadnorm("../fitconfig/hvtcr/config_cr.cfg", "../fitconfig/hvtcr/GlobalFit_fitres_conditionnal_mu0.txt")
+        print("Performing rescale...")
+        for i in range(len(all_sample_after)):
+            for each_key in rescaledic.keys():
+                if 'ALL' in rescaledic[each_key]:
+                    factor = rescaledic[each_key]['ALL'] + 1
+                    if '1pfat0pjet' in rescaledic[each_key]:
+                        factor += rescaledic[each_key]['1pfat0pjet']
+                    mask = all_sample_after[i].mata["Sample"] == zlib.adler32(each_key.encode())
+                    if True in mask:
+                        all_sample_after[i].rescale(factor, mask)
+
     # save as root files for MVA. delete if not needed.
     if saveevent:
         print("Saving events for MVA training...")
@@ -216,46 +236,120 @@ if __name__ == '__main__':
         for content in all_sample_after:
             if "data" in content.alias:
                 datalist.append(content)
-            elif "A" in content.alias:
+            elif "HVT" in content.alias:
                 signallist.append(content)
             else:
                 backgroundlist.append(content)
         
-        test = get_signalid("ggA")
+        test = get_signalid("HVT")
         out = splitesamples(signallist[0], test)
-        sumbkg = 0
-        for each in backgroundlist:
-            if sumbkg == 0:
-                sumbkg = each
-            else:
-                sumbkg = sumbkg + each
-        binning2tagresolvedsr = [0.0, 200.0, 220.0, 240.0, 260.0, 280.0, 300.0, 320.0, 340.0, 360.0, 380.0, 400.0, 420.0, 
-        440.0, 460.0, 480.0, 500.0, 520.0, 540.0, 560.0, 580.0, 600.0, 630.0, 660.0, 690.0, 720.0, 750.0, 
-        780.0, 810.0, 850.0, 910.0, 970.0, 1030.0, 1090.0, 1150.0, 1210.0, 1270.0, 1330.0, 1390.0, 1450.0, 
-        1510.0, 1570.0, 1900.0, 2300.0, 2700.0, 3100.0, 9000.0]
-        significance = significant(sumbkg, signallist[0],b'mVHres', binning2tagresolvedsr, 1000)
-        print(significance)
-        exit(1)
-
-        for each in out:
-            print(each[0], sum(each[1].weight))
-            saveevents_pandas([each[1]], str(each[0])+".csv")
-        saveevents_pandas(backgroundlist, "background.csv")
-
-        # if datalist:
-        #     saveevents(datalist,"data")
-        # if signallist:
-        #     saveevents(signallist,"signal")
-        # if backgroundlist:
-        #     saveevents(backgroundlist,"backgrounds")
 
 
-    # make stack plot. delete if not needed.
+
+    # bkgtest = copy.deepcopy(backgroundlist)
+    # datatest = copy.deepcopy(datalist)
+    # sumbkg = 0
+    # sumdata = 0
+    # for each in bkgtest + datatest:
+    #     each.matacut(s_merged)
+    #     # each.cut_parameter(cut_btagin_is, 1)
+    #     # each.cut_parameter(cut_btagout_less, 0)
+    #     if "data" not in each.alias:
+    #         sumbkg += sum(each.weight)
+    #     else:
+    #         sumdata += len(each.weight)
+    # print(sumbkg)
+    # print(sumdata)
+
+
+
+
     # print("Making plots...")
-    # title3="mBBcr"
     # direct = ""
-    # name = "mbbcut-"
-    # bins = [50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 1000, 1150, 1350, 1550, 1800]
-    # stackplot(backgroundlist + datalist,b'mVHres',bins,1000.,
-    #     xlabel=r"$m_{VH}[GeV]$", title3=title3, filename=direct + "mVH" + name, print_height=True,
-    #     title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True)
+    # name = "mbbcut-0ptag"
+    # bins = [250, 350, 450, 550, 650, 750, 850, 1000, 1150, 1350, 1550, 1800, 2000, 2500, 3000, 4000, 5000]
+    # stackplot(bkgtest + datatest,b'mVHres',bins,1000.,
+    #     xlabel=r"$m_{VH}[GeV]$", filename=direct + "mVH" + name, print_height=True,
+    #     title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, title3="2 lep.",)
+
+    # bins = [10, 50, 100, 150, 250, 350, 450, 550, 650, 750, 850, 1000]
+    # stackplot(bkgtest + datatest,b'ptTrkJetsinFJ1',bins,1000.,
+    #     xlabel=r"$pT_{Trkj1}[GeV]$", filename=direct + "ptTrkJetsinFJ1" + name, print_height=True,
+    #     title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.5, log_y=True, title3="2 lep.",)
+
+
+    # bkgtest = copy.deepcopy(backgroundlist)
+    # datatest = copy.deepcopy(datalist)
+    # sumbkg = 0
+    # for each in bkgtest + datatest:
+    #     each.matacut(s_merged)
+    #     # each.cut_parameter(cut_btagin_is, 2)
+    #     # each.cut_parameter(cut_btagout_less, 0)
+    #     if "data" not in each.alias:
+    #         sumbkg += sum(each.weight)
+    # print(sumbkg)
+
+
+    # print("Making plots...")
+    # title3="merged mBBcr"
+    # direct = ""
+    # name = "mbbcut-0ptag"
+    # bins = [250, 350, 450, 550, 650, 750, 850, 1000, 1150, 1350, 1550, 1800, 2000, 2500, 3000, 4000, 5000]
+    # stackplot(bkgtest + datatest,b'mVHres',bins,1000.,
+    #     xlabel=r"$m_{VH}[GeV]$", filename=direct + "mVH" + name, print_height=True,
+    #     title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.0, log_y=True, title3="2 lep.",)
+
+    # bins = [10, 50, 100, 150, 250, 350, 450, 550, 650, 750]
+    # stackplot(bkgtest + datatest,b'ptTrkJetsinFJ2',bins,1000.,
+    #     xlabel=r"$pT_{Trkj2}[GeV]$", filename=direct + "ptTrkJetsinFJ2" + name, print_height=True,
+    #     title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.5, log_y=True, title3="2 lep.",)
+
+    datatest = copy.deepcopy(datalist)
+    bkgtest = copy.deepcopy(backgroundlist)
+    sumbkg = 0
+    sumdata = 0
+    for each in bkgtest + datatest:
+        each.cut_parameter(cut_btagin_is, 1)
+        # each.cut_parameter(cut_btagout_less, 0)
+        if "data" not in each.alias:
+            sumbkg += sum(each.weight)
+        else:
+            sumdata += len(each.weight)
+    print(sumbkg)
+    print(sumdata)
+
+
+
+
+    print("Making plots...")
+    direct = ""
+    name = "mbbcut-1tag"
+    bins = [200, 220, 240, 260, 290, 320, 350, 380, 410,  450, 550, 650, 750, 850, 1000, 1200, 1400, 1800]
+    stackplot(bkgtest + datatest,b'ptfj1',bins,1000.,
+    xlabel=r"$pT_{FJ}[GeV]$", filename=direct + "ptfj1" + name, print_height=True,
+    title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.5, log_y=True, title3="2 lep. 1 btag merged",)
+
+    datatest = copy.deepcopy(datalist)
+    bkgtest = copy.deepcopy(backgroundlist)
+    sumbkg = 0
+    sumdata = 0
+    for each in bkgtest + datatest:
+        each.cut_parameter(cut_btagin_is, 2)
+        # each.cut_parameter(cut_btagout_less, 0)
+        if "data" not in each.alias:
+            sumbkg += sum(each.weight)
+        else:
+            sumdata += len(each.weight)
+    print(sumbkg)
+    print(sumdata)
+
+
+
+
+    print("Making plots...")
+    direct = ""
+    name = "mbbcut-2tag"
+    bins = [200, 250, 350, 450, 550, 650, 750, 850, 1000, 1200, 1400]
+    stackplot(bkgtest + datatest,b'ptfj1',bins,1000.,
+    xlabel=r"$pT_{FJ}[GeV]$", filename=direct + "ptfj1" + name, print_height=True,
+    title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.5, log_y=True, title3="2 lep. 2 btag merged",)

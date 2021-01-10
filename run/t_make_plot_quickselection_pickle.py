@@ -30,7 +30,14 @@ def pickleit(obj, path):
 def unpickleit(path):
     infile = open(path, 'rb')
     output = pickle.load(infile)
+    allsample2 = []
+    for each in output[0]:
+        if "ggA" in each.alias or "bbA" in each.alias or "HVT" in each.alias:
+            continue
+        allsample2.append(each)
     infile.close()
+    output = list(output)
+    output[0] = allsample2
     return output
 
 def poly(x, argv):
@@ -131,7 +138,7 @@ def autobin_withdatazlljet(data_list, bins, alias, variable=b"pTV"):
 
     new_data = None
     for each in data_list:
-        if True:
+        if each.alias == "data":
             if new_data is None:
                 new_data = each
             else:
@@ -170,51 +177,52 @@ def get_slope_correction(path):
     return p1s
 
 if __name__ == '__main__':
-    ntag = 2
+    ntag = 1
     debug = False
     cut = True
-    sample_directory = ["../CxAOD31_01a/"]
     tag = "run2"
     rescale = True
     slopecorrection = True
-    loadeasytree = True
-    #region = "mbbcr"
-    region = "topemucr"
+    loadeasytree = False
+    region = "mbbcr"
+    #region = "topemucr"
     dorebin = True
     if loadeasytree:
         mysamplembbcr1tag, t2 = get_sample(["topemucr", "resolved", "1tag"])
-        pickleit((mysamplembbcr1tag, t2), "pickle/topemucr1tag")
+        pickleit((mysamplembbcr1tag, t2), "pickle/topemucr1tag.pickle")
         mysamplembbcr2tag, t2 = get_sample(["topemucr", "resolved", "2tag"])
-        pickleit((mysamplembbcr2tag, t2), "pickle/topemucr2tag")
+        pickleit((mysamplembbcr2tag, t2), "pickle/topemucr2tag.pickle")
         mysamplembbcr1tag, t2 = get_sample(["mbbcr", "resolved", "1tag"])
-        pickleit((mysamplembbcr1tag, t2), "pickle/mbbcr1tag")
+        pickleit((mysamplembbcr1tag, t2), "pickle/mbbcr1tag.pickle")
         mysamplembbcr2tag, t2 = get_sample(["mbbcr", "resolved", "2tag"])
-        pickleit((mysamplembbcr2tag, t2), "pickle/mbbcr2tag")
+        pickleit((mysamplembbcr2tag, t2), "pickle/mbbcr2tag.pickle")
+        mysamplembbcr3tag, t2 = get_sample(["mbbcr", "resolved", "3ptag"])
+        pickleit((mysamplembbcr3tag, t2), "pickle/mbbcr3ptag.pickle")
         mysamplesr1tag, t2 = get_sample(["sr", "resolved", "1tag"])
-        pickleit((mysamplesr1tag, t2), "pickle/sr1tag")
+        pickleit((mysamplesr1tag, t2), "pickle/sr1tag.pickle")
         mysamplesr2tag, t2 = get_sample(["sr", "resolved", "2tag"])
-        pickleit((mysamplesr2tag, t2), "pickle/sr2tag")
+        pickleit((mysamplesr1tag, t2), "pickle/sr2tag.pickle")
         # mysamplesr2tag, t2 = get_sample(["sr", "resolved", "3ptag"])
         # pickleit((mysamplesr2tag, t2), "pickle/sr2tag")
         exit(1)
     else:
         if ntag == 1 and region == "topemucr":
-            mysampletopemucr1tag, t2topemucr1tag = unpickleit("pickle/topemucr1tag")
+            mysampletopemucr1tag, t2topemucr1tag = unpickleit("pickle/topemucr1tag.pickle")
             all_sample = mysampletopemucr1tag
         if ntag == 2 and region == "topemucr":
-            mysampletopemucr2tag, t2topemucr2tag = unpickleit("pickle/topemucr2tag")
+            mysampletopemucr2tag, t2topemucr2tag = unpickleit("pickle/topemucr2tag.pickle")
             all_sample = mysampletopemucr2tag
         if ntag == 1 and region == "mbbcr":
-            mysamplembbcr1tag, t2mbbcr1tag = unpickleit("pickle/mbbcr1tag")
+            mysamplembbcr1tag, t2mbbcr1tag = unpickleit("pickle/mbbcr1tag.pickle")
             all_sample = mysamplembbcr1tag
         if ntag == 2 and region == "mbbcr":
-            mysamplembbcr2tag, t2mbbcr2tag = unpickleit("pickle/mbbcr2tag")
+            mysamplembbcr2tag, t2mbbcr2tag = unpickleit("pickle/mbbcr2tag.pickle")
             all_sample = mysamplembbcr2tag
         if ntag == 1 and region == "sr":
-            mysamplesr1tag, t2sr1tag = unpickleit("pickle/sr1tag")
+            mysamplesr1tag, t2sr1tag = unpickleit("pickle/sr1tag.pickle")
             all_sample = mysamplesr1tag
         if ntag == 2 and region == "sr":
-            mysamplesr2tag, t2sr2tag = unpickleit("pickle/sr2tag")
+            mysamplesr2tag, t2sr2tag = unpickleit("pickle/sr2tag.pickle")
             all_sample = mysamplesr2tag
     t2 = r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$"
     if tag == "a":
@@ -235,7 +243,7 @@ if __name__ == '__main__':
     if rescale:
         #rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/confignormonly.cfg",
         #"C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
-        rescaledic = loadnorm("../fitconfig/config_m2000.cfg", "../fitconfig/GlobalFit_fitres_conditionnal_mu0.txt")
+        rescaledic = loadnorm("../fitconfig/normonly12tag.cfg", "../fitconfig/normonly12tag.txt")
     if slopecorrection:
         p1s = get_slope_correction("output/slopefit/" + "pTH-mbbcut-"+str(ntag)+"tagpolyfitresult.csv")
 

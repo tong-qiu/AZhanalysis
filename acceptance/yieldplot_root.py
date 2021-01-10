@@ -57,9 +57,9 @@ def main():
     samplenameinhist = "AZhllbb"
     samplenameininfo = "ggA"
     signalname = "AZhllbb"
-    # samplenameinhist = "HVTZHllqq"
-    # samplenameininfo = "HVT"
-    # signalname = "HVTZHllqq"
+    samplenameinhist = "HVTZHllqq"
+    samplenameininfo = "HVT"
+    signalname = "HVTZHllqq"
     ids = []
     masses = []
     yields = {}
@@ -118,6 +118,8 @@ def main():
                 # if each_mass == 500:
                 #     print(each_histname)
                 if "topaddbjetcr" in each_histname or "4ptag2pjet" in each_histname or "3tag2pjet" in each_histname or "0tag" in each_histname or "bbA" in each_histname:
+                    continue
+                if "truth" in each_histname or "diff" in each_histname or "resolution"in each_histname:
                     continue
                 if each_mass not in selected:
                     selected[each_mass] = f[each_histname_b]._fEntries

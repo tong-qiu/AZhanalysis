@@ -101,7 +101,10 @@ if __name__ == "__main__":
     # "C:/Users/qiutt/Desktop/postreader/PlotTool_Root/jsonoutput/GlobalFit_fitres_unconditionnal_mu0_normonly.txt")
     # rescaledic = loadnorm("C:/Users/qiutt/Desktop/postreader/pullandcorrelation/2hdm_norm/config.cfg",
     # "C:/Users/qiutt/Desktop/postreader/pullandcorrelation/2hdm_norm/GlobalFit_fitres_unconditionnal_mu0.txt")
-    yamlfactor("../2HDMNPs/sf_hvt_20201031.yml")
+    # yamlfactor("../2HDMNPs/sf_hvt_20201031.yml")
+    # rescaledic = loadnorm("../fitconfig/hvtcr/config_cr.cfg", "../fitconfig/hvtcr/GlobalFit_fitres_conditionnal_mu0.txt")
+    rescaledic = loadnorm("../fitconfig/normonly12tag.cfg", "../fitconfig/normonly12tag.txt")
+    print(rescaledic)
     
     # rescaledic = loadnorm("../2HDMNPs/config_m300.cfg",
     # "../2HDMNPs/GlobalFit_fitres_conditionnal_mu0.txt")

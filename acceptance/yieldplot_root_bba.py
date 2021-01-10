@@ -63,11 +63,11 @@ text = {
     "HVTZHllqq": {"title": "2L channel, HVT Z' #rightarrow Zh #rightarrow llbb, llcc", "xtitle": r"#font[52]{m_{Z'}} [GeV]"},
     "AZhllbb": {
         "title": "2L channel, gg #rightarrow A #rightarrow Zh #rightarrow llbb",
-        "xtitle": r"#font[52]{m_{A}} [GeV]",
+        "xtitle": r"#font[52]{A} resonance mass [GeV]",
     },
     "bbAZhllbb": {
         "title": "2L channel, gg #rightarrow b#bar{b}A, A #rightarrow Zh",
-        "xtitle": r"#font[52]{m_{A}} mass [GeV]",
+        "xtitle": r"#font[52]{A} resonance mass [GeV]",
     },
 }
 def apply_style(graph, region):

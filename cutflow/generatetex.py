@@ -81,9 +81,10 @@ def main():
     samplename = [*datadic.keys()]
     resolvedcut = [each[0] for each in datadic[samplename[0]]['resolved']]
     mergedcut = [each[0] for each in datadic[samplename[0]]['merged']]
-
+    print(resolvedcut)
     resolvedcuttex = getcutname(resolvedcut)
     mergedcuttex = getcutname(mergedcut)
+    print(resolvedcut)
     createlist(resolvedcut, resolvedcuttex, "resolved", samplename, datadic)
     createlist(mergedcut, mergedcuttex, "merged", samplename, datadic)
 

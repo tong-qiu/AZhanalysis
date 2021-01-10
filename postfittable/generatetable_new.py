@@ -158,6 +158,8 @@ def writemain(f, bkgname, histocollection, lepton):
         label = "vvbb"
     selectedtags = [each for each in histocollection.keys() if label in each]
     selectedtags = sorted(selectedtags, key=getrank)
+    if(len(selectedtags)==0):
+        return
     f.write("         " + str(lepton) + "-lepton " )
 
 
@@ -244,7 +246,7 @@ def writeend(f):
     f.write(r"\end{table}"+ "\n")
 
 def main():
-    with open("prefit.pickle", 'rb') as f:
+    with open("postfit.pickle", 'rb') as f:
         inputfile = pickle.load(f)
     bkgname = set()
     tags = set()
@@ -289,7 +291,6 @@ def main():
     #print(bkgname)
     # print(inputfile.keys())
     # print(tags)
-
 
     with open("outtable.tex", "w") as f:
         writetitle(f, histocollection)

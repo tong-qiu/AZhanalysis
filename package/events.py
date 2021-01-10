@@ -68,7 +68,7 @@ def load_CxAODs(directories, sample_names, branches, debug=False, sys_name=None,
                             missingbranch = each_branch
                             break
                     if missingbranch is not None:
-                        print('Warning: variable ' + missingbranch.decode("utf-8") + " is missing from " + file_address + '.')
+                        print('Warning: variable ' + missingbranch.decode("utf-8") + " is missing from " + file_address + '.' "File not loaded.")
                         continue
                     #for each in branches
                     # loop over cycles
@@ -368,6 +368,9 @@ class Events:
                 regime.append(0)
         self.data[b"regime"] = np.array(regime)
 
+    def ptfj1(self):
+        self.data[b"ptfj1"] = (np.array(self.data[b"fj1px"])**2 + np.array(self.data[b"fj1py"])**2)**0.5
+    
     def pth(self):
         self.data[b"pTH"] = ( (np.array(self.data[b"j1px"]) + np.array(self.data[b"j2px"]))**2 + (np.array(self.data[b"j1py"]) + np.array(self.data[b"j2py"]))**2 )**0.5
     def more1(self):
@@ -556,6 +559,17 @@ class Events:
 
     def cut(self,cuts):
         mask = cuts(self.data)
+        #print(self.data.items())
+        for key, content in self.data.items():
+            self.data[key] = self.data[key][mask]
+        if self.weight is not None:
+            self.weight = self.weight[mask]
+        if self.mata:
+            for each_key in self.mata:
+                self.mata[each_key] = self.mata[each_key][mask]
+        return self
+
+    def maskcut(self,mask):
         #print(self.data.items())
         for key, content in self.data.items():
             self.data[key] = self.data[key][mask]

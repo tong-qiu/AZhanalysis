@@ -22,6 +22,13 @@ def fitfunction_2tag(x, p0, p1, p2, p3):
     y += (p1 * x + p0 ) * (x <= p2)
     y += p3 * (x > p2)
     return y
+    # y = np.zeros(len(x))
+    # y += p0 * (x <= p1)
+    # y += (p2 * (x - p1) + p0 ) * (x <= p3) * (x > p1)
+    # y +=  (p2 * (p3 - p1) + p0 ) * (x > p3)
+    # return y
+
+
 
 def get_slope_correction(path):
     p1s = []
