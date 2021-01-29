@@ -131,7 +131,7 @@ if __name__ == '__main__':
     # save event after selection as root file?
     saveevent = True
     rescale = True
-    slopecorrection = True
+    slopecorrection = False
     tag = "a"
     # directory of the easytrees
     sample_directory = ["../sample/a/", "../sample/d/", "../sample/e/"]
@@ -199,7 +199,7 @@ if __name__ == '__main__':
     colors = [None, 'g', 'yellow', 'tab:orange', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'royalblue', 'm', "r", 'dimgrey', 'teal']
 
     # Variables to load.
-    branches_list_data = [b"EventWeight", b'mVHres', b'nTags', b'nbTagsInFJ', b'nbTagsOutsideFJ', b'ptTrkJetsinFJ1', b'ptTrkJetsinFJ2', b'fj1px', b'fj1py']
+    branches_list_data = [b"EventWeight", b'mVH', b'nTags', b'nbTagsInFJ', b'nbTagsOutsideFJ', b'ptTrkJetsinFJ1', b'ptTrkJetsinFJ2', b'fj1px', b'fj1py']
     # Strings to load.
     matas = ["Regime", "Description", "Sample"]
     branches_list_MC = copy.deepcopy(branches_list_data)
@@ -312,8 +312,13 @@ if __name__ == '__main__':
     name = "mbbcut-1tag" + correctionname
     bins = [200, 220, 240, 260, 290, 320, 350, 380, 410,  450, 550, 650, 750, 850, 1000, 1200, 1400, 1800]
     stackplot(bkgtest + datatest,b'ptfj1',bins,1000.,
-    xlabel=r"$pT_{FJ}[GeV]$", filename=direct + "ptfj1" + name, print_height=True,
+    xlabel=r"$p_{T}^{FJ}[GeV]$", filename=direct + "ptfj1" + name, print_height=True,
     title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.5, log_y=True, title3="2 lep. 1 btag merged", chi2=True)
+    bins = [260, 300, 400, 500, 600, 700, 800, 1000, 1200, 1400, 1800, 2200]
+    stackplot(bkgtest + datatest,b'mVH',bins,1000.,
+    xlabel=r"$m_{VH}[GeV]$", filename=direct + "mvh" + name, print_height=True,
+    title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.5, log_y=True, title3="2 lep. 1 btag merged", chi2=True)
+
 
     datatest = copy.deepcopy(datalist)
     bkgtest = copy.deepcopy(backgroundlist)
@@ -331,9 +336,12 @@ if __name__ == '__main__':
     name = "mbbcut-1tag-noadd" + correctionname
     bins = [200, 220, 240, 260, 290, 320, 350, 380, 410,  450, 550, 650, 750, 850, 1000, 1200, 1400, 1800]
     stackplot(bkgtest + datatest,b'ptfj1',bins,1000.,
-    xlabel=r"$pT_{FJ}[GeV]$", filename=direct + "ptfj1" + name, print_height=True,
+    xlabel=r"$p_{T}^{FJ}[GeV]$", filename=direct + "ptfj1" + name, print_height=True,
     title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.5, log_y=True, title3="2 lep. 1 btag merged, no add.", chi2=True)
-
+    bins = [260, 300, 400, 500, 600, 700, 800, 1000, 1200, 1400, 1800, 2200]
+    stackplot(bkgtest + datatest,b'mVH',bins,1000.,
+    xlabel=r"$m_{VH}[GeV]$", filename=direct + "mvh" + name, print_height=True,
+    title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.5, log_y=True, title3="2 lep. 1 btag merged, no add.", chi2=True)
 
     datatest = copy.deepcopy(datalist)
     bkgtest = copy.deepcopy(backgroundlist)
@@ -351,10 +359,12 @@ if __name__ == '__main__':
     name = "mbbcut-1tag-add" + correctionname
     bins = [200, 220, 240, 260, 290, 320, 350, 380, 410,  450, 550, 650, 750, 850, 1000, 1200, 1400, 1800]
     stackplot(bkgtest + datatest,b'ptfj1',bins,1000.,
-    xlabel=r"$pT_{FJ}[GeV]$", filename=direct + "ptfj1" + name, print_height=True,
+    xlabel=r"$p_{T}^{FJ}[GeV]$", filename=direct + "ptfj1" + name, print_height=True,
     title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.5, log_y=True, title3="2 lep. 1 btag merged, with add.", chi2=True)
-
-
+    bins = [260, 300, 400, 500, 600, 700, 800, 1000, 1200, 1400, 1800, 2200]
+    stackplot(bkgtest + datatest,b'mVH',bins,1000.,
+    xlabel=r"$m_{VH}[GeV]$", filename=direct + "mvh" + name, print_height=True,
+    title2=t2,auto_colour=False, limit_y = 0.5, upper_y=2.5, log_y=True, title3="2 lep. 1 btag merged, with add.", chi2=True)
 
 
     if not slopecorrection:

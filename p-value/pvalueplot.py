@@ -9,6 +9,7 @@ from matplotlib.ticker import (MultipleLocator, FormatStrFormatter, AutoMinorLoc
 def z2p(z):
     return 0.5 * (1 - math.erf(z / np.sqrt(2)))
 ifhvt = True
+ifggA = False
 alldirs = os.listdir("OutputDir")
 masses = []
 ps = []
@@ -52,7 +53,10 @@ plt.text(0.05, 0.82, title3, fontsize=14, weight='bold', style='italic', transfo
 if ifhvt:
     plt.text(0.05, 0.75, "HVT Z', 2 lep.", fontsize=14, transform=ax.transAxes)
     plt.savefig("hvt.pdf" ,bbox_inches='tight', pad_inches = 0.02)
-else:
+elif ifggA:
     plt.text(0.05, 0.75, "2HDM ggA, 2 lep.", fontsize=14, transform=ax.transAxes)
     plt.savefig("ggA.pdf" ,bbox_inches='tight', pad_inches = 0.02)
+else:
+    plt.text(0.05, 0.75, "2HDM bbA, 2 lep.", fontsize=14, transform=ax.transAxes)
+    plt.savefig("bbA.pdf" ,bbox_inches='tight', pad_inches = 0.02)
 plt.show()

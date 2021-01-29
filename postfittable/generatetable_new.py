@@ -133,7 +133,7 @@ def formatbkg(name):
         return "ttbar+HF"
     if name in ("top", "topLF"):
         #return "ttbar+LF, stop, ttH"
-        return "ttbar, stop, ttH"
+        return "ttbar, stop, ttH, ttV"
     if name in ("Wclbl", "Wc"):
         return "W+(bl, cl)"
     if name in ("Whf", "Wb"):
