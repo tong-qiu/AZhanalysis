@@ -4,6 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import matplotlib
+# ROOT.gROOT.ProcessLine(".L My_modified_bw.cxx+")
+# ROOT.gInterpreter.ProcessLine('#include "My_modified_bw.h"')
+# ROOT.gSystem.Load('My_modified_bw_cxx.so')
+# # ROOT.gSystem.Load("My_modified_bw.cxx")
+# from ROOT import My_modified_bw
 
 def histplot_withsub_raw(datas, bins, weights=None, usererror = None, labels = None, scale=1., removenorm = None, **kwargs,):
     settings = {
@@ -104,6 +109,7 @@ def histplot_withsub_raw(datas, bins, weights=None, usererror = None, labels = N
 
     fig.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0.25)
 
+glabalx = None
 class loadroot():
     def __init__(self, path):
         self.path = path
@@ -117,7 +123,7 @@ class loadroot():
         self.loadfile()
     
     def loadfile(self):
-        self.hist = ROOT.TH1F("hist" + self.name, "", 1000, -1000., 4000.)
+        self.hist = ROOT.TH1F("hist" + self.name, "", 1000, -2000, 4000.)
         self.hist.Sumw2()
         f = ROOT.TFile(self.path)
         t1 = f.Get("data")
@@ -129,9 +135,12 @@ class loadroot():
             if entry.ptb1/1000. < 45:
                 continue
             self.hist.Fill(entry.mA/1000.)
-        self.x = ROOT.RooRealVar("x1","mA", -1000., 4000.)
+        self.x = glabalx
         self.datahist = ROOT.RooDataHist("datahist" + self.name, "datahist", ROOT.RooArgList(self.x), self.hist)
         self.pdf = ROOT.RooHistPdf("pdf" + self.name, "your pdf", ROOT.RooArgSet(self.x), self.datahist)
+    
+    def getDatahist(self):
+        return self.datahist
 
         # xframe= self.x.frame()
         # self.pdf.plotOn(xframe)
@@ -163,6 +172,48 @@ class loadroot():
         for i in range(0, 1000000-1):
             outlist.append(data.get(i).getRealValue("x1"))
         return np.array(outlist)
+    
+    # def test(self, width):
+    #     width = self.mass * (width)
+    #     self.x.setBins(1000, "cache")
+    #     self.m0 = ROOT.RooRealVar("m0" + self.name + str(width), "m0", 0)
+    #     self.w = ROOT.RooRealVar("width" + self.name + str(width), "width", width)
+
+    #     self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(width), "lnm0", self.mass - width * 2, self.mass + width * 2)
+    #     self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(width), "lnmk", 1.1, 100)
+    #     self.bw = ROOT.RooBreitWigner("bw" + self.name + str(width), "bw", self.x, self.m0, self.w)
+    #     self.ln = ROOT.RooLognormal("ln" + self.name + str(width), "ln", self.x, self.lnm0, self.lnk)
+    #     self.modifedbw = ROOT.RooProdPdf("modifedbw" + self.name + str(width), "modifedbw", ROOT.RooArgSet(self.bw, self.ln))
+    #     out = ROOT.RooFFTConvPdf("out" + self.name + str(width), "out", self.x, self.modifedbw, self.pdf)
+    #     return out
+
+    def test(self, width):
+        width = self.mass * (width)
+        self.x.setBins(1000, "cache")
+        self.m0 = ROOT.RooRealVar("m0" + self.name + str(width), "m0", 0)
+        self.m0.setConstant()
+        self.w = ROOT.RooRealVar("width" + self.name + str(width), "width", width)
+        self.w.setConstant()
+
+        self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(width), "lnm0", self.mass - width * 2, self.mass + width * 2)
+        self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(width), "lnmk", 1.001, 100)
+        #self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(width), "lnmk", 1.1)
+        self.bw = ROOT.RooBreitWigner("bw" + self.name + str(width), "bw", self.x, self.m0, self.w)
+
+        self.shift = ROOT.RooRealVar("shift" + self.name + str(width), "shift", self.mass)
+        self.shift.setConstant()
+        self.xshift = ROOT.RooFormulaVar("xshift" + self.name + str(width), "@0+@1", ROOT.RooArgSet(self.x, self.shift))
+        self.ln = ROOT.RooLognormal("ln" + self.name + str(width), "ln", self.xshift, self.lnm0, self.lnk)
+
+        self.bfgmean = ROOT.RooRealVar("bfgmean" + self.name + str(width), "bfgmean", 0)
+        self.bfgmean.setConstant()
+        self.bfgsig1 = ROOT.RooRealVar("bfgsig1" + self.name + str(width), "sig1", 10)
+        self.bfgsig2 = ROOT.RooRealVar("bfgsig2" + self.name + str(width), "sig2", 10)
+        self.bfg = ROOT.RooBifurGauss("bfg" + self.name + str(width), "bfg", self.x, self.bfgmean, self.bfgsig1, self.bfgsig2)
+        self.modifedbw = ROOT.RooProdPdf("modifedbw" + self.name + str(width), "modifedbw", ROOT.RooArgSet(self.bfg, self.ln))
+        out = ROOT.RooFFTConvPdf("out" + self.name + str(width), "out", self.x, self.pdf, self.modifedbw)
+
+        return out
 
 def plot_mass(mass, bins):
     mass = str(mass)
@@ -181,6 +232,28 @@ def plot_mass(mass, bins):
 
 
 def main():
+    global glabalx
+    glabalx = ROOT.RooRealVar("x1","mA", -2000, 4000.)
+    mass = str(500)
+    NWidthobj = loadroot("ntuples/" + mass + "w0.root")
+    outpdf = NWidthobj.test(0.1)
+    LWidthobj = loadroot("ntuples/" + mass + "w10.root")
+    datahist = LWidthobj.getDatahist()
+    #outpdf.fitTo(datahist)
+    xframe = glabalx.frame()
+    #datahist.plotOn(xframe)
+    outpdf.plotOn(xframe)
+    xframe.Draw()
+    # lnm0 = ROOT.RooRealVar("lnm0", "lnm0", 1000)
+    # lnk = ROOT.RooRealVar("lnmk", "lnmk", 1.1)
+    # # bw = ROOT.RooBreitWigner("bw", "bw", glabalx, lnm0, w)
+    # ln = ROOT.RooLognormal("ln", "ln", glabalx, lnm0, lnk)
+    # xframe = glabalx.frame()
+    # ln.plotOn(xframe)
+    # xframe.Draw()
+    input()
+
+    exit(1)
     # b = loadroot("ntuples300w5.root")
     # b.loadfile()
     # # b.getwidthdata(0.1)
