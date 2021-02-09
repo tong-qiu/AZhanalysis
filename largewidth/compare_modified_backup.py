@@ -4,12 +4,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import matplotlib
-
-ROOT.gROOT.ProcessLine(".L My_modified_bw.cxx+")
-ROOT.gInterpreter.ProcessLine('#include "My_modified_bw.h"')
-ROOT.gSystem.Load('My_modified_bw_cxx.so')
-# ROOT.gSystem.Load("My_modified_bw.cxx")
-from ROOT import My_modified_bw
+# ROOT.gROOT.ProcessLine(".L My_modified_bw.cxx+")
+# ROOT.gInterpreter.ProcessLine('#include "My_modified_bw.h"')
+# ROOT.gSystem.Load('My_modified_bw_cxx.so')
+# # ROOT.gSystem.Load("My_modified_bw.cxx")
+# from ROOT import My_modified_bw
 
 def histplot_withsub_raw(datas, bins, weights=None, usererror = None, labels = None, scale=1., removenorm = None, **kwargs,):
     settings = {
@@ -191,33 +190,39 @@ class loadroot():
     def test(self, width):
         width = self.mass * (width)
         self.x.setBins(1000, "cache")
-        self.m0 = ROOT.RooRealVar("m0" + self.name + str(width), "m0", -self.mass)
+        self.m0 = ROOT.RooRealVar("m0" + self.name + str(width), "m0", 0)
         self.m0.setConstant()
         self.w = ROOT.RooRealVar("width" + self.name + str(width), "width", width)
         self.w.setConstant()
-        # self.massv = ROOT.RooRealVar("massv" + self.name + str(width), "massv", self.mass)
-        # self.massv.setConstant()
 
-
-        self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(width), "lnm0", 0, 3000)
+        self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(width), "lnm0", self.mass - width * 2, self.mass + width * 2)
         self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(width), "lnmk", 1.001, 100)
-        self.bw = My_modified_bw("bw" + self.name + str(width), "bw", self.x, self.w, self.lnm0, self.lnk, self.m0)
+        #self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(width), "lnmk", 1.1)
+        self.bw = ROOT.RooBreitWigner("bw" + self.name + str(width), "bw", self.x, self.m0, self.w)
 
-        # self.m0test = ROOT.RooRealVar("m0test" + self.name + str(width), "m0test", 0)
-        # self.testbw = ROOT.RooBreitWigner("bwtest" + self.name + str(width), "bwtest", self.x, self.m0test, self.w)
+        self.shift = ROOT.RooRealVar("shift" + self.name + str(width), "shift", self.mass)
+        self.shift.setConstant()
+        self.xshift = ROOT.RooFormulaVar("xshift" + self.name + str(width), "@0+@1", ROOT.RooArgSet(self.x, self.shift))
+        self.ln = ROOT.RooLognormal("ln" + self.name + str(width), "ln", self.xshift, self.lnm0, self.lnk)
 
-        out = ROOT.RooFFTConvPdf("out" + self.name + str(width), "out", self.x, self.pdf, self.bw)
+        # self.bfgmean = ROOT.RooRealVar("bfgmean" + self.name + str(width), "bfgmean", 0)
+        # self.bfgmean.setConstant()
+        # self.bfgsig1 = ROOT.RooRealVar("bfgsig1" + self.name + str(width), "sig1", 10)
+        # self.bfgsig2 = ROOT.RooRealVar("bfgsig2" + self.name + str(width), "sig2", 10)
+        # self.bfg = ROOT.RooBifurGauss("bfg" + self.name + str(width), "bfg", self.x, self.bfgmean, self.bfgsig1, self.bfgsig2)
+        self.modifedbw = ROOT.RooProdPdf("modifedbw" + self.name + str(width), "modifedbw", ROOT.RooArgSet(self.bw, self.ln))
+        out = ROOT.RooFFTConvPdf("out" + self.name + str(width), "out", self.x, self.pdf, self.modifedbw)
 
-        # c = ROOT.TCanvas("rf208_convolution", "rf208_convolution", 600, 600)
-        # ROOT.gPad.SetLeftMargin(0.15)
-        # # xframe = glabalx.frame()
-        # xframe = glabalx.frame(ROOT.RooFit.Title("landau (x) gauss convolution"))
-        # xframe.GetYaxis().SetTitleOffset(1.4)
-        # #datahist.plotOn(xframe)
-        # out.plotOn(xframe)
-        # xframe.Draw()
-        # # input()
-        # c.SaveAs("test.png")
+        c = ROOT.TCanvas("rf208_convolution", "rf208_convolution", 600, 600)
+        ROOT.gPad.SetLeftMargin(0.15)
+        # xframe = glabalx.frame()
+        xframe = glabalx.frame(ROOT.RooFit.Title("landau (x) gauss convolution"))
+        xframe.GetYaxis().SetTitleOffset(1.4)
+        #datahist.plotOn(xframe)
+        out.plotOn(xframe)
+        xframe.Draw()
+        # input()
+        c.SaveAs("test.png")
 
         return out
 
@@ -242,16 +247,16 @@ def main():
     glabalx = ROOT.RooRealVar("x1","mA", -2000, 4000.)
     mass = str(500)
     NWidthobj = loadroot("ntuples/" + mass + "w0.root")
-    outpdf = NWidthobj.test(0.2)
-    LWidthobj = loadroot("ntuples/" + mass + "w20.root")
+    outpdf = NWidthobj.test(0.1)
+    LWidthobj = loadroot("ntuples/" + mass + "w10.root")
     datahist = LWidthobj.getDatahist()
-    outpdf.fitTo(datahist)
+    #outpdf.fitTo(datahist)
 
-    xframe = glabalx.frame()
-    datahist.plotOn(xframe)
-    outpdf.plotOn(xframe)
-    xframe.Draw()
-    input()
+    # xframe = glabalx.frame()
+    #datahist.plotOn(xframe)
+    # outpdf.plotOn(xframe)
+    # xframe.Draw()
+    # input()
     # lnm0 = ROOT.RooRealVar("lnm0", "lnm0", 1000)
     # lnk = ROOT.RooRealVar("lnmk", "lnmk", 1.1)
     # # bw = ROOT.RooBreitWigner("bw", "bw", glabalx, lnm0, w)

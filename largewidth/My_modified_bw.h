@@ -12,9 +12,10 @@ class My_modified_bw : public RooAbsPdf {
   My_modified_bw() {} ;
   My_modified_bw(const char *name, const char *title,
 		 RooAbsReal& _x,
-		 RooAbsReal& _p0,
-		 RooAbsReal& _p1,
-		 RooAbsReal& _p2);
+		 RooAbsReal& _width,
+		 RooAbsReal& _m0,
+     RooAbsReal& _k,
+     RooAbsReal& _mass);
   My_modified_bw(const My_modified_bw& other, const char* name=0) ;
   virtual TObject* clone(const char* newname) const { return new My_modified_bw(*this,newname); }
   inline virtual ~My_modified_bw() { }
@@ -22,9 +23,10 @@ class My_modified_bw : public RooAbsPdf {
  protected:
 
   RooRealProxy x ;
-  RooRealProxy p0 ;
-  RooRealProxy p1 ;
-  RooRealProxy p2 ;
+  RooRealProxy width ;
+  RooRealProxy m0 ;
+  RooRealProxy k ;
+  RooRealProxy mass ;
 
   Double_t evaluate() const ;
 
