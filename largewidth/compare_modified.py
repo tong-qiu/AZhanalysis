@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import math
 import matplotlib
+import os
 
 ROOT.gROOT.ProcessLine(".L My_modified_bw.cxx+")
 ROOT.gInterpreter.ProcessLine('#include "My_modified_bw.h"')
@@ -110,7 +111,8 @@ def histplot_withsub_raw(datas, bins, weights=None, usererror = None, labels = N
 
     fig.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0.25)
 
-glabalx = None
+xg = ROOT.RooRealVar("x1","mA", -2000, 4000.)
+
 class loadroot():
     def __init__(self, path):
         self.path = path
@@ -136,7 +138,8 @@ class loadroot():
             if entry.ptb1/1000. < 45:
                 continue
             self.hist.Fill(entry.mA/1000.)
-        self.x = glabalx
+        # self.x = ROOT.RooRealVar("x1" + self.name,"mA", -2000, 4000.)
+        self.x = xg
         self.datahist = ROOT.RooDataHist("datahist" + self.name, "datahist", ROOT.RooArgList(self.x), self.hist)
         self.pdf = ROOT.RooHistPdf("pdf" + self.name, "your pdf", ROOT.RooArgSet(self.x), self.datahist)
     
@@ -211,7 +214,7 @@ class loadroot():
         # c = ROOT.TCanvas("rf208_convolution", "rf208_convolution", 600, 600)
         # ROOT.gPad.SetLeftMargin(0.15)
         # # xframe = glabalx.frame()
-        # xframe = glabalx.frame(ROOT.RooFit.Title("landau (x) gauss convolution"))
+        # xframe = self.x.frame(ROOT.RooFit.Title("landau (x) gauss convolution"))
         # xframe.GetYaxis().SetTitleOffset(1.4)
         # #datahist.plotOn(xframe)
         # out.plotOn(xframe)
@@ -236,22 +239,99 @@ def plot_mass(mass, bins):
                              labels = ["MC", "smearing"], removenorm=True, filename="com"+mass+"w"+str(each_width),
                              title2=r"$\mathit{\sqrt{s}=13\:TeV}$", title3="mass = "+mass+"GeV, W = " + str(each_width) + "%", central="smearing")
 
+def bw(x, width):
+    return 1/(x * x + 0.25 * width * width)
+
+def lognorm(x, m0, k, mass):
+    ln_k =  ROOT.TMath.Abs(ROOT.TMath.Log(k))
+    ln_m0 = ROOT.TMath.Log(m0)
+    return ROOT.Math.lognormal_pdf(x, ln_m0, ln_k, mass)
+
+def plot_mass_modified(mass, bins):
+    mass = str(mass)
+    NWidthobj = loadroot("ntuples/" + mass + "w0.root")
+    outdic = {}
+    for each_width in [1, 2, 5, 10, 20]:
+        outpdf = NWidthobj.test(each_width/100.)
+        LWidthobj = loadroot("ntuples/" + mass + "w" + str(each_width) + ".root")
+        datahist = LWidthobj.getDatahist()
+        outpdf.fitTo(datahist)
+        data= outpdf.generate(ROOT.RooArgSet(NWidthobj.x), 1000000)
+        datalist = []
+        for i in range(0, 1000000-1):
+            datalist.append(data.get(i).getRealValue("x1"))
+        center, height, error = LWidthobj.gethist()
+        histplot_withsub_raw([center, datalist], bins, weights=[np.array(height), np.array([1]*len(datalist))], usererror=[error, None], 
+                                labels = ["MC", "smearing"], removenorm=True, filename="output/com"+mass+"w"+str(each_width),
+                                title2=r"$\mathit{\sqrt{s}=13\:TeV}$", title3="mass = "+mass+"GeV, W = " + str(each_width) + "%", central="smearing")
+
+        # pdfplot
+        bwlist = []
+        lognormlist = []
+        # getError () 
+        v_width = NWidthobj.w.getValV()
+        v_m0 = NWidthobj.m0.getValV()
+        v_lnm0 = NWidthobj.lnm0.getValV()
+        v_lnk = NWidthobj.lnk.getValV()
+
+        e_width = NWidthobj.w.getError()
+        e_m0 = NWidthobj.m0.getError()
+        e_lnm0 = NWidthobj.lnm0.getError()
+        e_lnk = NWidthobj.lnk.getError()
+        for each_x in range(-2000, 1000):
+            bwlist.append(bw(each_x, v_width))
+            lognormlist.append(lognorm(each_x, v_lnm0, v_lnk, v_m0))
+        fig, (ax1) = plt.subplots(figsize=(10, 10))
+        ax1.plot(range(-2000, 1000), bwlist, label="Breit–Wigner")
+        ax1.plot(range(-2000, 1000), lognormlist, label="Log-normal")
+        ymin, ymax = ax1.get_ylim()
+        factor = int(ymax / max(np.array(lognormlist) * np.array(bwlist)) * 0.8)
+        ax1.plot(range(-2000, 1000), np.array(lognormlist) * np.array(bwlist) * factor, label=r"product $\times$ " + str(factor))
+        ax1.set_xlabel(r"m_{A} [GeV]", fontsize=20)
+        ax1.set_ylabel(r"arbitrary unit", fontsize=20)
+        ax1.legend(loc='upper right',prop={'size': 20}, frameon=False)
+        ymin, ymax = ax1.get_ylim()
+        ax1.set_ylim([0,ymax * 1.4])
+        ax1.text(0.05, 1.55 / 1.7, "ATLAS", fontsize=25, transform=ax1.transAxes, style='italic', fontweight='bold')
+        ax1.text(0.227, 1.55/ 1.7, "Internal", fontsize=25, transform=ax1.transAxes)
+        ax1.text(0.05, 1.40 / 1.7, "m = " + mass + " GeV, width = " + str(each_width) + "%", fontsize=17, transform=ax1.transAxes)
+        fig.savefig("output/pdfm" + mass + "w" + str(each_width) + ".pdf", bbox_inches='tight', pad_inches = 0.25)
+        outdic[each_width] = ((v_lnm0, e_lnm0), (v_lnk, e_lnk), (v_width, e_width), (v_m0, e_m0))
+    return outdic
 
 def main():
-    global glabalx
-    glabalx = ROOT.RooRealVar("x1","mA", -2000, 4000.)
-    mass = str(500)
-    NWidthobj = loadroot("ntuples/" + mass + "w0.root")
-    outpdf = NWidthobj.test(0.2)
-    LWidthobj = loadroot("ntuples/" + mass + "w20.root")
-    datahist = LWidthobj.getDatahist()
-    outpdf.fitTo(datahist)
+    massset = set()
+    for each in os.listdir("ntuples"):
+        if ".root" in each:
+            massset.add(int(each.split("w")[0]))
+    
+    paras = {}
+    for each_mass in massset:
+        outdic = plot_mass_modified(each_mass, linspace(0, int(each_mass * 1.5), 20))
+        paras[each_mass] = outdic
 
-    xframe = glabalx.frame()
-    datahist.plotOn(xframe)
-    outpdf.plotOn(xframe)
-    xframe.Draw()
-    input()
+
+    # mass = str(2000)
+    # NWidthobj = loadroot("ntuples/" + mass + "w0.root")
+    # outpdf = NWidthobj.test(0.1)
+    # LWidthobj = loadroot("ntuples/" + mass + "w10.root")
+    # datahist = LWidthobj.getDatahist()
+    # outpdf.fitTo(datahist)
+
+    # data= outpdf.generate(ROOT.RooArgSet(glabalx), 1000000)
+    # datalist = []
+    # for i in range(0, 1000000-1):
+    #     datalist.append(data.get(i).getRealValue("x1"))
+    # center, height, error = LWidthobj.gethist()
+    # bins = linspace(1000, 3000, 20)
+    # histplot_withsub_raw([center, datalist], bins, weights=[np.array(height), np.array([1]*len(datalist))], usererror=[error, None], 
+    #                         labels = ["MC", "smearing"], removenorm=True, filename="com"+mass+"w"+str("test"),
+    #                         title2=r"$\mathit{\sqrt{s}=13\:TeV}$", title3="mass = "+mass+"GeV, W = " + str("test") + "%", central="smearing")
+    # xframe = glabalx.frame()
+    # datahist.plotOn(xframe)
+    # outpdf.plotOn(xframe)
+    # xframe.Draw()
+    # input()
     # lnm0 = ROOT.RooRealVar("lnm0", "lnm0", 1000)
     # lnk = ROOT.RooRealVar("lnmk", "lnmk", 1.1)
     # # bw = ROOT.RooBreitWigner("bw", "bw", glabalx, lnm0, w)
