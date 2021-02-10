@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import math
 import matplotlib
 import os
+import pickle
 
 ROOT.gROOT.ProcessLine(".L My_modified_bw.cxx+")
 ROOT.gInterpreter.ProcessLine('#include "My_modified_bw.h"')
@@ -79,7 +80,7 @@ def histplot_withsub_raw(datas, bins, weights=None, usererror = None, labels = N
     ax1.set_ylim([0,ymax* settings["upper_y"]])
     ax1.text(0.05, 1.55 / 1.7, settings['title1'], fontsize=25, transform=ax1.transAxes, style='italic', fontweight='bold')
     ax1.text(0.227, 1.55/ 1.7, settings['title1_1'], fontsize=25, transform=ax1.transAxes)
-    ax1.text(0.05, 1.40 / 1.7, settings['title2'], fontsize=23, transform=ax1.transAxes, style='italic', fontweight='bold')
+    ax1.text(0.05, 1.40 / 1.7, settings['title2'], fontsize=20, transform=ax1.transAxes, style='italic', fontweight='bold')
     ax1.text(0.05, 1.26 / 1.7, settings['title3'], fontsize=18, weight='bold', style='italic', transform=ax1.transAxes)
     ax1.set_ylabel(settings['ylabel'], fontsize=20)
     if settings['log_y']:
@@ -133,9 +134,13 @@ class loadroot():
         for entry in t1:
             if entry.ptl2/1000. < 20:
                 continue
-            if entry.ptl2/1000. < 27:
+            if entry.ptl1/1000. < 27:
                 continue
             if entry.ptb1/1000. < 45:
+                continue
+            # if entry.ptl2/1000. > 25 and entry.ptb1/1000. > 250:
+            #     continue
+            if not(entry.ptl2/1000. > 25 and entry.ptb1/1000. > 250):
                 continue
             self.hist.Fill(entry.mA/1000.)
         # self.x = ROOT.RooRealVar("x1" + self.name,"mA", -2000, 4000.)
@@ -145,11 +150,6 @@ class loadroot():
     
     def getDatahist(self):
         return self.datahist
-
-        # xframe= self.x.frame()
-        # self.pdf.plotOn(xframe)
-        # xframe.Draw()
-        # input()
 
     def gethist(self):
         # hist = self.pdf.createHistogram("x1", 1000)
@@ -164,34 +164,21 @@ class loadroot():
             error.append(hist.GetBinError(i))
         return(np.array(center), np.array(height), np.array(error))
 
-    def getwidthdata(self, width):
+    def convbw(self, width):
         width = self.mass * (width)
         self.x.setBins(1000, "cache")
-        m0 = ROOT.RooRealVar("m0" + self.name + str(width), "m0", 0)
-        w = ROOT.RooRealVar("width" + self.name + str(width), "width", width)
-        bw = ROOT.RooBreitWigner("bw" + self.name + str(width), "bw", self.x, m0, w)
-        out = ROOT.RooFFTConvPdf("out" + self.name + str(width), "out", self.x, bw, self.pdf)
-        data= out.generate(ROOT.RooArgSet(self.x), 1000000)
-        outlist = []
-        for i in range(0, 1000000-1):
-            outlist.append(data.get(i).getRealValue("x1"))
-        return np.array(outlist)
+        self.bwm0 = ROOT.RooRealVar("bwm0" + self.name + str(width), "bwm0", 0)
+        self.bww = ROOT.RooRealVar("bwwidth" + self.name + str(width), "bwwidth", width)
+        self.bworiginal = ROOT.RooBreitWigner("bworiginal" + self.name + str(width), "bworiginal", self.x, self.bwm0, self.bww)
+        out = ROOT.RooFFTConvPdf("outbw" + self.name + str(width), "outbw", self.x, self.bworiginal, self.pdf)
+        # data= out.generate(ROOT.RooArgSet(self.x), 1000000)
+        # outlist = []
+        # for i in range(0, 1000000-1):
+        #     outlist.append(data.get(i).getRealValue("x1"))
+        return out
     
-    # def test(self, width):
-    #     width = self.mass * (width)
-    #     self.x.setBins(1000, "cache")
-    #     self.m0 = ROOT.RooRealVar("m0" + self.name + str(width), "m0", 0)
-    #     self.w = ROOT.RooRealVar("width" + self.name + str(width), "width", width)
 
-    #     self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(width), "lnm0", self.mass - width * 2, self.mass + width * 2)
-    #     self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(width), "lnmk", 1.1, 100)
-    #     self.bw = ROOT.RooBreitWigner("bw" + self.name + str(width), "bw", self.x, self.m0, self.w)
-    #     self.ln = ROOT.RooLognormal("ln" + self.name + str(width), "ln", self.x, self.lnm0, self.lnk)
-    #     self.modifedbw = ROOT.RooProdPdf("modifedbw" + self.name + str(width), "modifedbw", ROOT.RooArgSet(self.bw, self.ln))
-    #     out = ROOT.RooFFTConvPdf("out" + self.name + str(width), "out", self.x, self.modifedbw, self.pdf)
-    #     return out
-
-    def test(self, width):
+    def convbwmodified(self, width):
         width = self.mass * (width)
         self.x.setBins(1000, "cache")
         self.m0 = ROOT.RooRealVar("m0" + self.name + str(width), "m0", -self.mass)
@@ -204,7 +191,7 @@ class loadroot():
 
         self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(width), "lnm0", 0, 3000)
         self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(width), "lnmk", 1.001, 100)
-        self.bw = My_modified_bw("bw" + self.name + str(width), "bw", self.x, self.w, self.lnm0, self.lnk, self.m0)
+        self.bw = My_modified_bw("bwmodified" + self.name + str(width), "bwmodified", self.x, self.w, self.lnm0, self.lnk, self.m0)
 
         # self.m0test = ROOT.RooRealVar("m0test" + self.name + str(width), "m0test", 0)
         # self.testbw = ROOT.RooBreitWigner("bwtest" + self.name + str(width), "bwtest", self.x, self.m0test, self.w)
@@ -224,21 +211,6 @@ class loadroot():
 
         return out
 
-def plot_mass(mass, bins):
-    mass = str(mass)
-    NWidthobj = loadroot("ntuples/" + mass + "w0.root")
-
-    for each_width in [1, 5, 10, 20]:
-        LWidthobj = loadroot("ntuples/" + mass + "w" + str(each_width) + ".root")
-        center, height, error = LWidthobj.gethist()
-        # for i in range(len(height)):
-        #     if height[i] > 0.00001:
-        #         print(center[i], height[i], error[i])
-        datalist = NWidthobj.getwidthdata(each_width/100)
-        histplot_withsub_raw([center, datalist], bins, weights=[np.array(height), np.array([1]*len(datalist))], usererror=[error, None], 
-                             labels = ["MC", "smearing"], removenorm=True, filename="com"+mass+"w"+str(each_width),
-                             title2=r"$\mathit{\sqrt{s}=13\:TeV}$", title3="mass = "+mass+"GeV, W = " + str(each_width) + "%", central="smearing")
-
 def bw(x, width):
     return 1/(x * x + 0.25 * width * width)
 
@@ -247,23 +219,59 @@ def lognorm(x, m0, k, mass):
     ln_m0 = ROOT.TMath.Log(m0)
     return ROOT.Math.lognormal_pdf(x, ln_m0, ln_k, mass)
 
+def getloss(data1, w1, data2, w2, binning):
+    bin_heights1, bin_edges1 = np.histogram(data1, bins=binning, weights=w1)
+    bin_heights2, bin_edges2 = np.histogram(data2, bins=binning, weights=w2)
+    bin_heights1 = bin_heights1 / sum(bin_heights1)
+    bin_heights2 = bin_heights2 / sum(bin_heights2)
+    # print(bin_heights1)
+    # print(bin_heights2)
+    # print(sum((bin_heights1 - bin_heights2) ** 2) ** 0.5)
+    return sum((bin_heights1 - bin_heights2) ** 2) ** 0.5
+
 def plot_mass_modified(mass, bins):
     mass = str(mass)
     NWidthobj = loadroot("ntuples/" + mass + "w0.root")
     outdic = {}
     for each_width in [1, 2, 5, 10, 20]:
-        outpdf = NWidthobj.test(each_width/100.)
         LWidthobj = loadroot("ntuples/" + mass + "w" + str(each_width) + ".root")
         datahist = LWidthobj.getDatahist()
-        outpdf.fitTo(datahist)
-        data= outpdf.generate(ROOT.RooArgSet(NWidthobj.x), 1000000)
-        datalist = []
-        for i in range(0, 1000000-1):
-            datalist.append(data.get(i).getRealValue("x1"))
         center, height, error = LWidthobj.gethist()
+
+        # modified bw
+        outpdf1 = NWidthobj.convbwmodified(each_width/100.)
+        outpdf1.fitTo(datahist)
+        data1 = outpdf1.generate(ROOT.RooArgSet(NWidthobj.x), 1000000)
+        datalist1 = []
+        for i in range(0, 1000000-1):
+            datalist1.append(data1.get(i).getRealValue("x1"))
+        loss1 = getloss(center, height, datalist1, [1]*len(datalist1), bins)
+
+        # original bw
+        outpdf2 = NWidthobj.convbw(each_width/100.)
+        # outpdf2.fitTo(datahist)
+        data2 = outpdf2.generate(ROOT.RooArgSet(NWidthobj.x), 1000000)
+        datalist2 = []
+        for i in range(0, 1000000-1):
+            datalist2.append(data2.get(i).getRealValue("x1"))
+        loss2 = getloss(center, height, datalist2, [1]*len(datalist2), bins)
+        
+        method = "modified BW"
+        altmethod = "BW"
+        datalist = datalist1
+        datalistalt = datalist2
+        if loss2 < loss1:
+            method = "BW"
+            altmethod = "modified BW"
+            datalist = datalist2
+            datalistalt = datalist1
+
         histplot_withsub_raw([center, datalist], bins, weights=[np.array(height), np.array([1]*len(datalist))], usererror=[error, None], 
                                 labels = ["MC", "smearing"], removenorm=True, filename="output/com"+mass+"w"+str(each_width),
-                                title2=r"$\mathit{\sqrt{s}=13\:TeV}$", title3="mass = "+mass+"GeV, W = " + str(each_width) + "%", central="smearing")
+                                title2=r"$\mathit{\sqrt{s}=13\:TeV}$ ", title3="mass = "+mass+" GeV, W = " + str(each_width) + "%, " + method + " smearing", central="smearing")
+        histplot_withsub_raw([center, datalistalt], bins, weights=[np.array(height), np.array([1]*len(datalistalt))], usererror=[error, None], 
+                                labels = ["MC", "smearing"], removenorm=True, filename="output/altcom"+mass+"w"+str(each_width),
+                                title2=r"$\mathit{\sqrt{s}=13\:TeV}$ ", title3="mass = "+mass+" GeV, W = " + str(each_width) + "%, " + altmethod + " smearing", central="smearing")
 
         # pdfplot
         bwlist = []
@@ -296,7 +304,8 @@ def plot_mass_modified(mass, bins):
         ax1.text(0.227, 1.55/ 1.7, "Internal", fontsize=25, transform=ax1.transAxes)
         ax1.text(0.05, 1.40 / 1.7, "m = " + mass + " GeV, width = " + str(each_width) + "%", fontsize=17, transform=ax1.transAxes)
         fig.savefig("output/pdfm" + mass + "w" + str(each_width) + ".pdf", bbox_inches='tight', pad_inches = 0.25)
-        outdic[each_width] = ((v_lnm0, e_lnm0), (v_lnk, e_lnk), (v_width, e_width), (v_m0, e_m0))
+
+        outdic[each_width] = ((v_lnm0, e_lnm0), (v_lnk, e_lnk), (v_width, e_width), (v_m0, e_m0), method)
     return outdic
 
 def main():
@@ -306,54 +315,14 @@ def main():
             massset.add(int(each.split("w")[0]))
     
     paras = {}
-    for each_mass in massset:
-        outdic = plot_mass_modified(each_mass, linspace(0, int(each_mass * 1.5), 20))
+    for each_mass in sorted(massset):
+        maxv = int(each_mass * 3)
+        if maxv > 3000:
+            maxv = 3000
+        outdic = plot_mass_modified(each_mass, linspace(0, int(maxv), 20))
         paras[each_mass] = outdic
-
-
-    # mass = str(2000)
-    # NWidthobj = loadroot("ntuples/" + mass + "w0.root")
-    # outpdf = NWidthobj.test(0.1)
-    # LWidthobj = loadroot("ntuples/" + mass + "w10.root")
-    # datahist = LWidthobj.getDatahist()
-    # outpdf.fitTo(datahist)
-
-    # data= outpdf.generate(ROOT.RooArgSet(glabalx), 1000000)
-    # datalist = []
-    # for i in range(0, 1000000-1):
-    #     datalist.append(data.get(i).getRealValue("x1"))
-    # center, height, error = LWidthobj.gethist()
-    # bins = linspace(1000, 3000, 20)
-    # histplot_withsub_raw([center, datalist], bins, weights=[np.array(height), np.array([1]*len(datalist))], usererror=[error, None], 
-    #                         labels = ["MC", "smearing"], removenorm=True, filename="com"+mass+"w"+str("test"),
-    #                         title2=r"$\mathit{\sqrt{s}=13\:TeV}$", title3="mass = "+mass+"GeV, W = " + str("test") + "%", central="smearing")
-    # xframe = glabalx.frame()
-    # datahist.plotOn(xframe)
-    # outpdf.plotOn(xframe)
-    # xframe.Draw()
-    # input()
-    # lnm0 = ROOT.RooRealVar("lnm0", "lnm0", 1000)
-    # lnk = ROOT.RooRealVar("lnmk", "lnmk", 1.1)
-    # # bw = ROOT.RooBreitWigner("bw", "bw", glabalx, lnm0, w)
-    # ln = ROOT.RooLognormal("ln", "ln", glabalx, lnm0, lnk)
-    # xframe = glabalx.frame()
-    # ln.plotOn(xframe)
-    # xframe.Draw()
-    # input()
-
-    # exit(1)
-    # b = loadroot("ntuples300w5.root")
-    # b.loadfile()
-    # # b.getwidthdata(0.1)
-    # print(b.gethist())
-    # bins = linspace(0, 1000, 20)
-    # plot_mass(300, bins)
-    # bins = linspace(0, 1000, 20)
-    # plot_mass(500, bins)
-    # bins = linspace(400, 1600, 20)
-    # plot_mass(1000, bins)
-    # bins = linspace(1000, 3000, 20)
-    # plot_mass(2000, bins)
+    with open('fitvalues.pickle', 'wb') as f:
+        pickle.dump(paras, f)
 
 if __name__ == '__main__':
     main()
