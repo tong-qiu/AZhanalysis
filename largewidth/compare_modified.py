@@ -188,9 +188,12 @@ class loadroot():
         # self.massv = ROOT.RooRealVar("massv" + self.name + str(width), "massv", self.mass)
         # self.massv.setConstant()
 
-
-        self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(width), "lnm0", 0, 3000)
-        self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(width), "lnmk", 1.001, 100)
+        if width > 3:
+            self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(width), "lnm0", 0, 1050)
+            self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(width), "lnmk", 1.001, 1.75)
+        else:
+            self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(width), "lnm0", 0, 3000)
+            self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(width), "lnmk", 1.001, 100)
         self.bw = My_modified_bw("bwmodified" + self.name + str(width), "bwmodified", self.x, self.w, self.lnm0, self.lnk, self.m0)
 
         # self.m0test = ROOT.RooRealVar("m0test" + self.name + str(width), "m0test", 0)
@@ -316,7 +319,7 @@ def main():
     
     paras = {}
     for each_mass in sorted(massset):
-        maxv = int(each_mass * 3)
+        maxv = int(each_mass * 2)
         if maxv > 3000:
             maxv = 3000
         outdic = plot_mass_modified(each_mass, linspace(0, int(maxv), 20))

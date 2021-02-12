@@ -100,7 +100,7 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
         }
     for each_key in kwargs.items():
         settings[each_key[0]] = kwargs[each_key[0]]
-    plt.figure(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=(10,8))
     i = 0
     all_curve = []
     for each_x, each_y in zip(x_list, y_list):
@@ -108,15 +108,14 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
         if labels is not None:
             label = labels[i]
         if len(y_list) == 1:
-            cur = plt.plot(each_x, each_y, "k.", label=label)
-            plt.plot(each_x, each_y, "k")
+            cur = ax.plot(each_x, each_y, "k.", label=label)
+            ax.plot(each_x, each_y, "k")
         else:
-            cur = plt.plot(each_x, each_y, label=label)
+            cur = ax.plot(each_x, each_y, label=label)
         all_curve.append(cur)
         i += 1
     if labels is not None:
-        plt.legend(loc='upper right', prop={'size': 20})
-    ax = plt.gca()
+        ax.legend(loc='upper right', prop={'size': 20})
     shift = settings["yshift"]
     xshift = settings["xshift"]
     ax.text(0.05 + xshift, (1.55 - shift) / 1.7, settings['title1'], fontsize=25, transform=ax.transAxes, style='italic', fontweight='bold')
@@ -127,22 +126,22 @@ def curveplot(x_list, y_list, error_list=[], labels=None, **kwargs):
     
     if len(error_list)!=0:
         for each_x, each_y, each_error in zip(x_list, y_list, error_list):
-            plt.errorbar(each_x, each_y, yerr=each_error,  fmt='.')
-    plt.tick_params(labelsize=16)
-    plt.tick_params(labelsize=16)
-    axes = plt.gca()
-    axes.set_ylim(settings["ylimit"])
+            ax.errorbar(each_x, each_y, yerr=each_error,  fmt='.')
+    ax.tick_params(labelsize=16)
+    ax.tick_params(labelsize=16)
+    # axes = ax.gca()
+    ax.set_ylim(settings["ylimit"])
     if settings["xlimit"] is not None:
-        axes.set_xlim(settings["xlimit"])
+        ax.set_xlim(settings["xlimit"])
     if settings["verticleline"] is not None:
-        plt.plot([settings["verticleline"], settings["verticleline"]], [0,100000], ':', color='silver')
-        plt.annotate(settings["verticlelinetext"], xy=(settings["verticleline"],10), xycoords='data', color='grey')
+        ax.plot([settings["verticleline"], settings["verticleline"]], [0,100000], ':', color='silver')
+        ax.annotate(settings["verticlelinetext"], xy=(settings["verticleline"],10), xycoords='data', color='grey')
     if settings["horizontalline"] is not None:
-        plt.plot([0,100000], [settings["horizontalline"], settings["horizontalline"]], ':', color='silver')
-    plt.ylabel(settings['ylabel'], fontsize=20)
-    plt.xlabel(settings['xlabel'], fontsize=20)
-    plt.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0.25)
-    plt.show()
+        ax.plot([0,100000], [settings["horizontalline"], settings["horizontalline"]], ':', color='silver')
+    ax.set_ylabel(settings['ylabel'], fontsize=20)
+    ax.set_xlabel(settings['xlabel'], fontsize=20)
+    fig.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0.25)
+    # plt.show()
 
 def histplot(data_lists, varible_to_plot, bins, labels = None, scales=1., **kwargs):
     # data_list = [[sample1, sample2, ...],[sample3, sample4, ...], ...]
