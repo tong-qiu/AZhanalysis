@@ -129,20 +129,33 @@ class loadroot():
     def loadfile(self):
         self.hist = ROOT.TH1F("hist" + self.name, "", 1000, -2000, 4000.)
         self.hist.Sumw2()
+        print("loading " + self.path + " ...")
         f = ROOT.TFile(self.path)
         t1 = f.Get("data")
         for entry in t1:
-            if entry.ptl2/1000. < 20:
+            if entry.havetau == 1:
                 continue
-            if entry.ptl1/1000. < 27:
+            ptl1 = entry.ptl1
+            ptl2 = entry.ptl2
+            if ptl2 > ptl1:
+                ptl1, ptl2 = ptl2, ptl1
+            if ptl2/1000. < 20:
+                continue
+            if ptl1/1000. < 27:
                 continue
             if entry.ptb1/1000. < 45:
                 continue
-            # if entry.ptl2/1000. > 25 and entry.ptb1/1000. > 250:
-            #     continue
-            if not(entry.ptl2/1000. > 25 and entry.ptb1/1000. > 250):
+
+
+            # resolved
+            if ptl2/1000. > 25 and entry.pth/1000. > 250:
                 continue
+
+            # merged
+            # if not(ptl2/1000. > 25 and entry.pth/1000. > 250):
+            #     continue
             self.hist.Fill(entry.mA/1000.)
+        f.Close()
         # self.x = ROOT.RooRealVar("x1" + self.name,"mA", -2000, 4000.)
         self.x = xg
         self.datahist = ROOT.RooDataHist("datahist" + self.name, "datahist", ROOT.RooArgList(self.x), self.hist)
@@ -165,12 +178,13 @@ class loadroot():
         return(np.array(center), np.array(height), np.array(error))
 
     def convbw(self, width):
+        widthp = int(width * 100)
         width = self.mass * (width)
         self.x.setBins(1000, "cache")
-        self.bwm0 = ROOT.RooRealVar("bwm0" + self.name + str(width), "bwm0", 0)
-        self.bww = ROOT.RooRealVar("bwwidth" + self.name + str(width), "bwwidth", width)
-        self.bworiginal = ROOT.RooBreitWigner("bworiginal" + self.name + str(width), "bworiginal", self.x, self.bwm0, self.bww)
-        out = ROOT.RooFFTConvPdf("outbw" + self.name + str(width), "outbw", self.x, self.bworiginal, self.pdf)
+        self.bwm0 = ROOT.RooRealVar("bwm0" + self.name + str(widthp), "bwm0", 0)
+        self.bww = ROOT.RooRealVar("bwwidth" + self.name + str(widthp), "bwwidth", width)
+        self.bworiginal = ROOT.RooBreitWigner("bworiginal" + self.name + str(widthp), "bworiginal", self.x, self.bwm0, self.bww)
+        out = ROOT.RooFFTConvPdf("outbw" + self.name + str(widthp), "outbw", self.x, self.bworiginal, self.pdf)
         # data= out.generate(ROOT.RooArgSet(self.x), 1000000)
         # outlist = []
         # for i in range(0, 1000000-1):
@@ -179,27 +193,35 @@ class loadroot():
     
 
     def convbwmodified(self, width):
+        widthp = int(width * 100)
         width = self.mass * (width)
         self.x.setBins(1000, "cache")
-        self.m0 = ROOT.RooRealVar("m0" + self.name + str(width), "m0", -self.mass)
+        self.m0 = ROOT.RooRealVar("m0" + self.name + str(widthp), "m0", -self.mass)
         self.m0.setConstant()
-        self.w = ROOT.RooRealVar("width" + self.name + str(width), "width", width)
+        self.w = ROOT.RooRealVar("width" + self.name + str(widthp), "width", width)
         self.w.setConstant()
-        # self.massv = ROOT.RooRealVar("massv" + self.name + str(width), "massv", self.mass)
+        # self.massv = ROOT.RooRealVar("massv" + self.name + str(widthp), "massv", self.mass)
         # self.massv.setConstant()
 
-        if width > 3:
-            self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(width), "lnm0", 0, 1050)
-            self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(width), "lnmk", 1.001, 1.75)
+        if widthp >= 5: # merged
+            # self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 1050)
+            self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp), "lnmk", 1.001, 1.7)
+            if widthp > 10:
+                self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 500)
+            else:
+                self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 2000)
+        elif widthp == 1:
+            self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 2000)
+            self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp), "lnmk", 1.001, 1.2)
         else:
-            self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(width), "lnm0", 0, 3000)
-            self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(width), "lnmk", 1.001, 100)
-        self.bw = My_modified_bw("bwmodified" + self.name + str(width), "bwmodified", self.x, self.w, self.lnm0, self.lnk, self.m0)
+            self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 2000)
+            self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp), "lnmk", 1.001, 30)
+        self.bw = My_modified_bw("bwmodified" + self.name + str(widthp), "bwmodified", self.x, self.w, self.lnm0, self.lnk, self.m0)
 
         # self.m0test = ROOT.RooRealVar("m0test" + self.name + str(width), "m0test", 0)
         # self.testbw = ROOT.RooBreitWigner("bwtest" + self.name + str(width), "bwtest", self.x, self.m0test, self.w)
 
-        out = ROOT.RooFFTConvPdf("out" + self.name + str(width), "out", self.x, self.pdf, self.bw)
+        out = ROOT.RooFFTConvPdf("out" + self.name + str(widthp), "out", self.x, self.pdf, self.bw)
 
         # c = ROOT.TCanvas("rf208_convolution", "rf208_convolution", 600, 600)
         # ROOT.gPad.SetLeftMargin(0.15)
@@ -249,7 +271,7 @@ def plot_mass_modified(mass, bins):
         for i in range(0, 1000000-1):
             datalist1.append(data1.get(i).getRealValue("x1"))
         loss1 = getloss(center, height, datalist1, [1]*len(datalist1), bins)
-
+        # ROOT.RooTrace.printObjectCounts()
         # original bw
         outpdf2 = NWidthobj.convbw(each_width/100.)
         # outpdf2.fitTo(datahist)
@@ -258,11 +280,11 @@ def plot_mass_modified(mass, bins):
         for i in range(0, 1000000-1):
             datalist2.append(data2.get(i).getRealValue("x1"))
         loss2 = getloss(center, height, datalist2, [1]*len(datalist2), bins)
-        
-        method = "modified BW"
-        altmethod = "BW"
-        datalist = datalist1
-        datalistalt = datalist2
+        if loss2 >= loss1:
+            method = "modified BW"
+            altmethod = "BW"
+            datalist = datalist1
+            datalistalt = datalist2
         if loss2 < loss1:
             method = "BW"
             altmethod = "modified BW"
@@ -319,13 +341,30 @@ def main():
     
     paras = {}
     for each_mass in sorted(massset):
+        if each_mass < 1051:
+            continue
         maxv = int(each_mass * 2)
         if maxv > 3000:
             maxv = 3000
         outdic = plot_mass_modified(each_mass, linspace(0, int(maxv), 20))
         paras[each_mass] = outdic
+        with open('pickle/fitvalues' + str(each_mass) + '.pickle', 'wb') as f:
+            pickle.dump(outdic, f)
+
+    paras = {}
+    allfiles = os.listdir("pickle")
+    for each in allfiles:
+        mass = int(each.replace("fitvalues", "").replace(".pickle", ""))
+        with open("pickle/"  + each,'rb') as f:
+            pvalues = pickle.load(f)
+            paras[mass] = pvalues
     with open('fitvalues.pickle', 'wb') as f:
         pickle.dump(paras, f)
+    # with open('pickle/fitvalues.pickle', 'wb') as f:
+    #     pickle.dump(paras, f)
 
 if __name__ == '__main__':
+    # ROOT.RooMsgService.instance().setSilentMode(True)
+    # ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.FATAL)
+    # ROOT.RooTrace.active(1)
     main()

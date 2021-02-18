@@ -15,16 +15,39 @@ def loadnumber(path):
     f = ROOT.TFile(path)
     t1 = f.Get("data")
     for entry in t1:
-        if entry.ptl2/1000. < 20:
+
+        if entry.havetau == 1:
             continue
-        if entry.ptl1/1000. < 27:
+        ptl1 = entry.ptl1
+        ptl2 = entry.ptl2
+        if ptl2 > ptl1:
+            ptl1, ptl2 = ptl2, ptl1
+        if ptl2/1000. < 20:
+            continue
+        if ptl1/1000. < 27:
             continue
         if entry.ptb1/1000. < 45:
             continue
-        if entry.ptl2/1000. > 25 and entry.ptb1/1000. > 250:
+
+
+        # resolved
+        if ptl2/1000. > 25 and entry.pth/1000. > 250:
             merged += 1
-        if not (entry.ptl2/1000. > 25 and entry.ptb1/1000. > 250):
+        # merged
+        if not(ptl2/1000. > 25 and entry.pth/1000. > 250):
             resolved += 1
+
+        # if entry.ptl2/1000. < 20:
+        #     continue
+        # if entry.ptl1/1000. < 27:
+        #     continue
+        # if entry.ptb1/1000. < 45:
+        #     continue
+        # if entry.ptl2/1000. > 25 and entry.ptb1/1000. > 250:
+        #     merged += 1
+        # if not (entry.ptl2/1000. > 25 and entry.ptb1/1000. > 250):
+        #     resolved += 1
+    print(resolved, merged)
     return (resolved, merged)
 
 
@@ -36,8 +59,9 @@ def main():
         for each in os.listdir("ntuples"):
             if ".root" in each:
                 massset.add(int(each.split("w")[0]))
-
+        massset = [2000]
         for each_mass in sorted(massset):
+            print("loading" + str(each_mass))
             total_resolved, total_merged = loadnumber(
                 "ntuples/" + str(each_mass) + "w" + str(0) + ".root")
             acceptance[each_mass] = {}
@@ -47,9 +71,9 @@ def main():
                 each_resolved, each_merged = loadnumber(path)
                 acceptance[each_mass][each_width] = [
                     each_resolved/total_resolved, each_merged/total_merged]
-
         with open('acceptance.json', 'w') as f:
             json.dump(acceptance, f)
+        exit(1)
     else:
         with open('acceptance.json', 'r') as f:
             for eachline in f:
