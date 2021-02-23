@@ -27,3 +27,6 @@ testmodel
 *.ipynb_checkpoints
 ml/log
 ml/logs
+*.pcm
+*.so
+*.d

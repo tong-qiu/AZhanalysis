@@ -9,57 +9,98 @@ from package.events import *
 import package
 from package.curveplot import curveplot
 
+def ptll_cut(mvh):
+    if mvh < 320.:
+        return 0.
+    return 20. + 9. * pow(mvh - 320., 0.5)
+
+def resolvedselection(entry):
+    if entry.nsigjet < 2:
+        return False
+    if entry.nbjets == 0:
+        return False
+    ptl1 = entry.ptl1
+    ptl2 = entry.ptl2
+    if ptl2 > ptl1:
+        ptl1, ptl2 = ptl2, ptl1
+    if ptl2/1000. < 20:
+        return False
+    if ptl1/1000. < 27:
+        return False
+    if entry.ptb1/1000. < 45:
+        return False
+    lowmll = max(40, 87 - 0.03 * entry.mVHres/1000.)
+    highmll = 97 + 0.013 * entry.mVHres/1000.
+    if entry.mll/1000. < lowmll:
+        return False
+    if entry.mll/1000. > highmll:
+        return False
+    if entry.mbbres/1000. < 100:
+        return False
+    if entry.mbbres/1000. > 145:
+        return False
+    if entry.ptll/1000. < ptll_cut(entry.mVHres/1000.):
+        return False
+    # print(entry.met/1000. / (entry.ht/1000.)**0.5, 1.15 + 8 * (10**-3) * entry.mVHres/1000.)
+    # if entry.met/1000. / (entry.ht/1000.)**0.5 > 1.15 + 8 * (10**-3) * entry.mVHres/1000.:
+    #     return False
+    # print("5")
+    return True
+
+def mergedselection(entry):
+    if entry.ptfj1/1000. < 250:
+        return False
+
+    ptl1 = entry.ptl1
+    ptl2 = entry.ptl2
+    if ptl2/1000. < 25:
+        return False
+    if ptl1/1000. < 27:
+        return False
+    if entry.mfj1/1000. < 75:
+        return False
+    if abs(entry.etafj1) > 2:
+        return False
+    if entry.mfj1/1000. > 145:
+        return False
+
+    lowmll = max(40, 87 - 0.03 * entry.mVHmerg/1000.)
+    highmll = 97 + 0.013 * entry.mVHmerg/1000.
+    if entry.mll/1000. < lowmll:
+        return False
+    if entry.mll/1000. > highmll:
+        return False
+    if entry.ptll/1000. < ptll_cut(entry.mVHmerg/1000.):
+        return False
+    return True
+
 def loadnumber(path):
     resolved = 0
     merged = 0
     f = ROOT.TFile(path)
     t1 = f.Get("data")
+    dumped = 0
     for entry in t1:
-
-        if entry.havetau == 1:
+        if entry.nlepton != 2:
             continue
-        ptl1 = entry.ptl1
-        ptl2 = entry.ptl2
-        if ptl2 > ptl1:
-            ptl1, ptl2 = ptl2, ptl1
-        if ptl2/1000. < 20:
-            continue
-        if ptl1/1000. < 27:
-            continue
-        if entry.ptb1/1000. < 45:
-            continue
-
-
-        # resolved
-        if ptl2/1000. > 25 and entry.pth/1000. > 250:
-            merged += 1
-        # merged
-        if not(ptl2/1000. > 25 and entry.pth/1000. > 250):
+        if resolvedselection(entry):
             resolved += 1
-
-        # if entry.ptl2/1000. < 20:
-        #     continue
-        # if entry.ptl1/1000. < 27:
-        #     continue
-        # if entry.ptb1/1000. < 45:
-        #     continue
-        # if entry.ptl2/1000. > 25 and entry.ptb1/1000. > 250:
-        #     merged += 1
-        # if not (entry.ptl2/1000. > 25 and entry.ptb1/1000. > 250):
-        #     resolved += 1
-    print(resolved, merged)
+        elif mergedselection(entry):
+            merged += 1
+        else:
+            dumped += 1
+    print(resolved, merged, dumped)
     return (resolved, merged)
 
 
 def main():
-    loadfile = False
+    loadfile = True
     acceptance = {}
     if loadfile:
         massset = set()
         for each in os.listdir("ntuples"):
             if ".root" in each:
                 massset.add(int(each.split("w")[0]))
-        massset = [2000]
         for each_mass in sorted(massset):
             print("loading" + str(each_mass))
             total_resolved, total_merged = loadnumber(
