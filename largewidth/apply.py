@@ -12,7 +12,7 @@ import tqdm
 
 # This is a Python3 script
 
-x = ROOT.RooRealVar("x1","mA" , -2000, 4000.)
+# x = ROOT.RooRealVar("x1","mA" , -2000, 4000.)
 
 def loadhist(inFile):
     out = {}
@@ -46,13 +46,40 @@ def runMC(pdf, x, hist, newname, totalweight):
     data = pdf.generate(ROOT.RooArgSet(x), 100000)
     for i in range(0, 100000-1):
         outhist.Fill(data.get(i).getRealValue("x1"))
-        scale = totalweight/outhist.Integral()
-        outhist.Scale(scale)
+    total = outhist.Integral()
+    if total > 0:
+        scale = totalweight/total
+    else:
+        scale = 0
+    outhist.Scale(scale)
     return outhist
 
-def smearing(ps, nominalhist, smearingtype, name, newname, SF, outdic):
+def runMC2(pdf, x, hist, newname, totalweight):
+    outhist = hist.Clone(newname)
+    outhist.Reset()
+    nbins = outhist.GetNbinsX()
+    for i in range(nbins):
+        x.setVal(outhist.GetBinCenter(i))
+        outhist.SetBinContent(i, pdf.getVal())
+    # print(newname, outhist.Integral())
+    total = outhist.Integral()
+    if total > 0:
+        scale = totalweight/total
+    else:
+        scale = 0
+    outhist.Scale(scale)
+    # for i in range(nbins):
+    #     if outhist.GetBinContent(i) < 0.5:
+    #         # print("here", outhist.GetBinContent(i), outhist.GetBinCenter(i))
+    #         outhist.SetBinContent(i, 0)
+    # scale = totalweight/outhist.Integral()
+    # outhist.Scale(scale)
+    return outhist
+
+def smearing(ps, nominalhist, smearingtype, name, newname, SF, outdic=None):
     hup, hdown = getupdownhsit(nominalhist, newname + "before")
-    # x = ROOT.RooRealVar("x1","mA" , -2000, 4000.)
+    # x = ROOT.RooRealVar("x1" + newname,"mA" , -2000, 4000.)
+    x = ROOT.RooRealVar("x1","mA" , -2000, 4000.)
     datahist = ROOT.RooDataHist("datahist" + newname, "datahist", ROOT.RooArgList(x), nominalhist)
     datahistup = ROOT.RooDataHist("datahistup" + newname, "datahistup", ROOT.RooArgList(x), hup)
     datahistdown = ROOT.RooDataHist("datahistdown" + newname, "datahistdown", ROOT.RooArgList(x), hdown)
@@ -79,17 +106,20 @@ def smearing(ps, nominalhist, smearingtype, name, newname, SF, outdic):
     outpdfup = ROOT.RooFFTConvPdf("outpdfup" + newname, "outpdfup", x, pdfup, smearingpdf)
     outpdfdown = ROOT.RooFFTConvPdf("outpdfdown" + newname, "outpdfdown", x, pdfdown, smearingpdf)
 
-    outhist = runMC(outpdf, x, nominalhist, name, sum_nominal)
-    outhistup = runMC(outpdfup, x, hup, newname + "up", sum_up)
-    outhistdown = runMC(outpdfdown, x, hdown, newname + "down", sum_down)
+    outhist = runMC2(outpdf, x, nominalhist, name, sum_nominal)
+    outhistup = runMC2(outpdfup, x, hup, newname + "up", sum_up)
+    outhistdown = runMC2(outpdfdown, x, hdown, newname + "down", sum_down)
 
     nbins = nominalhist.GetNbinsX()
     for i in range(nbins):
         upvalue = outhistup.GetBinContent(i)
         downvalue = outhistdown.GetBinContent(i)
         error = abs(upvalue - downvalue) / 2.
+        if outhist.GetBinContent(i) - error < 0:
+            error = outhist.GetBinContent(i)
         outhist.SetBinError(i, error)
-    outdic[name] = outhist
+    if outdic is not None:
+        outdic[name] = outhist
     return outhist
 
 def multiprocess(hists, pvalues_resolved, pvalues_merged, SFs, width):
@@ -102,7 +132,7 @@ def multiprocess(hists, pvalues_resolved, pvalues_merged, SFs, width):
             mass = int(each_key.split("_")[0].split("AZhllbb")[1])
             if mass not in pvalues_merged or mass not in pvalues_resolved or str(mass) not in SFs:
                 missinghist += 1
-                # print("Error: cannot find parameters for " + each_key)
+                print("Error: cannot find parameters for " + each_key)
 
             new_name = each_key.replace("AZhllbb", "AZhllbb" + str(width))
             if "1pfat0pjet" in new_name:
@@ -116,11 +146,11 @@ def multiprocess(hists, pvalues_resolved, pvalues_merged, SFs, width):
             t = multiprocessing.Process(target=smearing, args=(p_tem, hists[each_key], smearingtype, each_key, new_name, sf_tem, all_sample))
             processes.append(t)
             t.start()
-            if (i+1)%6 == 0:
+            if (i+1)%4 == 0:
                 for each in processes:
                     each.join()
                     pbar.update(1)
-                    processes = []
+                processes = []
         for each in processes:
             each.join()
             pbar.update(1)
@@ -180,36 +210,39 @@ def main():
             break
 
     print("Loading histograms...")
-    nominalFile = ROOT.TFile("run2dbl_nosys.root","read")
+    nominalFile = ROOT.TFile("run2dbl_hvt.root","read")
     nominalHist = loadhist(nominalFile)
     sysFile = nominalFile.Get("Systematics")
     sysHist = loadhist(sysFile)
     singalhistnominal = getsignalhist(nominalHist, bbA, debug)
     singalhissys = getsignalhist(sysHist, bbA, debug)
 
-    # print(r"Doing 1% smearing..")
-    # print(" Smearning nominal...")
-    # outdicnominal = multiprocess(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 1)
-    # print(" Smearning systematics...")
-    # outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 1)
-    # print(r"Saving 1% smearing output..")
-    # savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblw1")
+    for each in singalhistnominal.keys():
+        print(each)
 
-    # print(r"Doing 2% smearing..")
-    # print(" Smearning nominal...")
-    # outdicnominal = multiprocess(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 2)
-    # print(" Smearning systematics...")
-    # outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 2)
-    # print(r"Saving 2% smearing output..")
-    # savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblw2")
+    print(r"Doing 1% smearing..")
+    print(" Smearning nominal...")
+    outdicnominal = multiprocess(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 1)
+    print(" Smearning systematics...")
+    outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 1)
+    print(r"Saving 1% smearing output..")
+    savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblggAw1")
 
-    # print(r"Doing 5% smearing..")
-    # print(" Smearning nominal...")
-    # outdicnominal = multiprocess(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 5)
-    # print(" Smearning systematics...")
-    # outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 5)
-    # print(r"Saving 5% smearing output..")
-    # savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblw5")
+    print(r"Doing 2% smearing..")
+    print(" Smearning nominal...")
+    outdicnominal = multiprocess(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 2)
+    print(" Smearning systematics...")
+    outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 2)
+    print(r"Saving 2% smearing output..")
+    savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblggAw2")
+
+    print(r"Doing 5% smearing..")
+    print(" Smearning nominal...")
+    outdicnominal = multiprocess(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 5)
+    print(" Smearning systematics...")
+    outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 5)
+    print(r"Saving 5% smearing output..")
+    savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblggAw5")
 
     print(r"Doing 10% smearing..")
     print(" Smearning nominal...")
@@ -217,21 +250,27 @@ def main():
     print(" Smearning systematics...")
     outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 10)
     print(r"Saving 10% smearing output..")
-    savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblw10")
+    savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblggAw10")
+
+    print(r"Doing 10% smearing..")
+    print(" Smearning nominal...")
+    outdicnominal = multiprocess(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 20)
+    print(" Smearning systematics...")
+    outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 20)
+    print(r"Saving 20% smearing output..")
+    savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblggAw20")
 
 
-
-    # sysFile = nominalFile.Get("Systematics")
-    # sysHist = loadhist(sysFile)
+    # print("testing")
     # p_tem = [pvalues_resolved[400][1][0][0], pvalues_resolved[400][1][1][0], pvalues_resolved[400][1][2][0], pvalues_resolved[400][1][3][0]]
     # testout = smearing(p_tem, singalhistnominal['AZhllbb400_1tag2pjet_0ptv_SR_mVH'], "BW", 'AZhllbb400_1tag2pjet_0ptv_SR_mVH', 'AZhllbbsmear400_1tag2pjet_0ptv_SR_mVH', 1)
     # c = ROOT.TCanvas()
     # testout.Draw()
     # c.Print("testhist.pdf")
-    # # c2 = ROOT.TCanvas()
-    # # nominalHist['AZhllbb400_1tag2pjet_0ptv_SR_mVH'].Draw()
-    # c.Print("testhistnominal.pdf")
-    # # print(nominalHist.keys())
+    # c2 = ROOT.TCanvas()
+    # singalhistnominal['AZhllbb400_1tag2pjet_0ptv_SR_mVH'].Draw()
+    # c2.Print("testhistnominal.pdf")
+    # print(nominalHist.keys())
 
 if __name__ == "__main__":
     ROOT.RooMsgService.instance().setSilentMode(True)

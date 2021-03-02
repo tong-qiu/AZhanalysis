@@ -6,12 +6,79 @@ import math
 import matplotlib
 import os
 import pickle
+import multiprocessing
 
 ROOT.gROOT.ProcessLine(".L My_modified_bw.cxx+")
 ROOT.gInterpreter.ProcessLine('#include "My_modified_bw.h"')
 ROOT.gSystem.Load('My_modified_bw_cxx.so')
 # ROOT.gSystem.Load("My_modified_bw.cxx")
 from ROOT import My_modified_bw
+
+def ptll_cut(mvh):
+    if mvh < 320.:
+        return 0.
+    return 20. + 9. * pow(mvh - 320., 0.5)
+
+def resolvedselection(entry):
+    if entry.nsigjet < 2:
+        return False
+    if entry.nbjets == 0:
+        return False
+    ptl1 = entry.ptl1
+    ptl2 = entry.ptl2
+    if ptl2 > ptl1:
+        ptl1, ptl2 = ptl2, ptl1
+    if ptl2/1000. < 20:
+        return False
+    if ptl1/1000. < 27:
+        return False
+    if entry.ptb1/1000. < 45:
+        return False
+    lowmll = max(40, 87 - 0.03 * entry.mVHres/1000.)
+    highmll = 97 + 0.013 * entry.mVHres/1000.
+    if entry.mll/1000. < lowmll:
+        return False
+    if entry.mll/1000. > highmll:
+        return False
+    if entry.mbbres/1000. < 100:
+        return False
+    if entry.mbbres/1000. > 145:
+        return False
+    if entry.ptll/1000. < ptll_cut(entry.mVHres/1000.):
+        return False
+    # print(entry.met/1000. / (entry.ht/1000.)**0.5, 1.15 + 8 * (10**-3) * entry.mVHres/1000.)
+    # if entry.met/1000. / (entry.ht/1000.)**0.5 > 1.15 + 8 * (10**-3) * entry.mVHres/1000.:
+    #     return False
+    # print("5")
+    return True
+
+def mergedselection(entry):
+    if entry.ptfj1/1000. < 250:
+        return False
+
+    ptl1 = entry.ptl1
+    ptl2 = entry.ptl2
+    if ptl2/1000. < 25:
+        return False
+    if ptl1/1000. < 27:
+        return False
+    if entry.mfj1/1000. < 75:
+        return False
+    if abs(entry.etafj1) > 2:
+        return False
+    if entry.mfj1/1000. > 145:
+        return False
+
+    lowmll = max(40, 87 - 0.03 * entry.mVHmerg/1000.)
+    highmll = 97 + 0.013 * entry.mVHmerg/1000.
+    if entry.mll/1000. < lowmll:
+        return False
+    if entry.mll/1000. > highmll:
+        return False
+    if entry.ptll/1000. < ptll_cut(entry.mVHmerg/1000.):
+        return False
+    return True
+
 
 def histplot_withsub_raw(datas, bins, weights=None, usererror = None, labels = None, scale=1., removenorm = None, **kwargs,):
     settings = {
@@ -68,7 +135,12 @@ def histplot_withsub_raw(datas, bins, weights=None, usererror = None, labels = N
         weight_in_binses.append(np.array(weight_in_bins))
 
     colors = ['b', 'g', 'r', 'c', 'm', 'y']
-    ax1.hist(np.array(datas)/scale, bins, histtype='step', fill=False, color=colors[0:len(datas)], weights=weights)
+    # print(np.array(datas).shape, np.array(weights).shape)
+    # print(np.array(datas[1]).shape, np.array(weights[1]).shape)
+    # print(np.array(datas[0]).shape, np.array(weights[0]).shape)
+    for i in range(len(datas)):
+        datas[i] = np.array(datas[i])/scale
+    ax1.hist(datas, bins, histtype='step', fill=False, color=colors[0:len(datas)], weights=weights)
     bins = np.array(bins)
     bin_centre = []
     for i in range(len(datas)):
@@ -95,6 +167,9 @@ def histplot_withsub_raw(datas, bins, weights=None, usererror = None, labels = N
     for each_height, each_label in zip(weight_in_binses, labels):
         if i == 0:
             centerheight = np.array(each_height)
+        for j in range(len(centerheight)):
+            if centerheight[j] == 0:
+                centerheight[j] = 0.00001
         new_each_height = np.array(each_height)/centerheight
         if i != 0:
             new_each_height[np.isnan(new_each_height)] = -10
@@ -111,6 +186,7 @@ def histplot_withsub_raw(datas, bins, weights=None, usererror = None, labels = N
     ax2.set_xlabel(settings['xlabel'], fontsize=20)
 
     fig.savefig(settings['filename'] + '.pdf', bbox_inches='tight', pad_inches = 0.25)
+    plt.close(fig)
 
 xg = ROOT.RooRealVar("x1","mA", -2000, 4000.)
 
@@ -133,28 +209,15 @@ class loadroot():
         f = ROOT.TFile(self.path)
         t1 = f.Get("data")
         for entry in t1:
-            if entry.havetau == 1:
+            if entry.nlepton != 2:
                 continue
-            ptl1 = entry.ptl1
-            ptl2 = entry.ptl2
-            if ptl2 > ptl1:
-                ptl1, ptl2 = ptl2, ptl1
-            if ptl2/1000. < 20:
-                continue
-            if ptl1/1000. < 27:
-                continue
-            if entry.ptb1/1000. < 45:
-                continue
+            if resolvedselection(entry):
+                self.hist.Fill(entry.mA/1000.)
 
-
-            # resolved
-            if ptl2/1000. > 25 and entry.pth/1000. > 250:
-                continue
-
-            # merged
-            # if not(ptl2/1000. > 25 and entry.pth/1000. > 250):
+            # if resolvedselection(entry):
             #     continue
-            self.hist.Fill(entry.mA/1000.)
+            # elif mergedselection(entry):
+            #     self.hist.Fill(entry.mA/1000.)   
         f.Close()
         # self.x = ROOT.RooRealVar("x1" + self.name,"mA", -2000, 4000.)
         self.x = xg
@@ -196,26 +259,54 @@ class loadroot():
         widthp = int(width * 100)
         width = self.mass * (width)
         self.x.setBins(1000, "cache")
-        self.m0 = ROOT.RooRealVar("m0" + self.name + str(widthp), "m0", -self.mass)
-        self.m0.setConstant()
+        # self.m0 = ROOT.RooRealVar("m0" + self.name + str(widthp), "m0", -self.mass)
+        # self.m0.setConstant()
         self.w = ROOT.RooRealVar("width" + self.name + str(widthp), "width", width)
         self.w.setConstant()
         # self.massv = ROOT.RooRealVar("massv" + self.name + str(widthp), "massv", self.mass)
         # self.massv.setConstant()
 
-        if widthp >= 5: # merged
-            # self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 1050)
-            self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp), "lnmk", 1.001, 1.7)
-            if widthp > 10:
-                self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 500)
-            else:
-                self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 2000)
-        elif widthp == 1:
-            self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 2000)
-            self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp), "lnmk", 1.001, 1.2)
-        else:
-            self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 2000)
-            self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp), "lnmk", 1.001, 30)
+        # if widthp >= 5: # merged
+        #     # self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 1050)
+        #     self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp), "lnmk", 1.001, 1.7)
+        #     if widthp > 10:
+        #         self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 500)
+        #     else:
+        #         self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 2000)
+        # elif widthp == 1:
+        #     self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 2000)
+        #     self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp), "lnmk", 1.001, 1.2)
+        # else:
+
+        # resolved
+        # if widthp == 5:
+        #     self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 2000)
+        #     self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp), "lnmk", 1.001, 2.2)
+        # elif widthp == 20:
+        #     if self.mass > 375:
+        #         self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 600)
+        #     else:
+        #         self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 475)
+        #     self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp), "lnmk", 1.001, 2.2)
+        # else:
+        #     self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 2000)
+        #     self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp), "lnmk", 1.001, 30)
+
+
+        # merged
+        # if widthp == 1:
+        #     print(widthp, "here", self.mass)
+        #     self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, self.mass*0.3)
+        # elif widthp == 2:
+        #     self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, self.mass*0.5)
+        # else:
+        #     self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, self.mass)
+        self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp), "lnmk", 1.001, 30)
+        if widthp < 6:
+            self.m0 = ROOT.RooRealVar("m0" + self.name + str(widthp), "m0", -self.mass * 0.8, self.mass * widthp * 2 / 100)
+        else: 
+            self.m0 = ROOT.RooRealVar("m0" + self.name + str(widthp), "m0", -self.mass, -self.mass * 0.5)
+        self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp), "lnm0", 0, 3000)
         self.bw = My_modified_bw("bwmodified" + self.name + str(widthp), "bwmodified", self.x, self.w, self.lnm0, self.lnk, self.m0)
 
         # self.m0test = ROOT.RooRealVar("m0test" + self.name + str(width), "m0test", 0)
@@ -236,6 +327,43 @@ class loadroot():
 
         return out
 
+    def convbw(self, width):
+        widthp = int(width * 100)
+        width = self.mass * (width)
+        self.x.setBins(1000, "cache")
+        self.bwm0 = ROOT.RooRealVar("bwm0" + self.name + str(widthp), "bwm0", 0)
+        self.bww = ROOT.RooRealVar("bwwidth" + self.name + str(widthp), "bwwidth", width)
+        self.bworiginal = ROOT.RooBreitWigner("bworiginal" + self.name + str(widthp), "bworiginal", self.x, self.bwm0, self.bww)
+        out = ROOT.RooFFTConvPdf("outbw" + self.name + str(widthp), "outbw", self.x, self.bworiginal, self.pdf)
+        # data= out.generate(ROOT.RooArgSet(self.x), 1000000)
+        # outlist = []
+        # for i in range(0, 1000000-1):
+        #     outlist.append(data.get(i).getRealValue("x1"))
+        return out
+    
+
+    def convbwmodifiedp(self, width, pm0, plnm0, plnk, i):
+        widthp = int(width * 100)
+        width = self.mass * (width)
+        self.x.setBins(1000, "cache")
+        self.w = ROOT.RooRealVar("width" + self.name + str(widthp) + str(i), "width", width)
+        self.w.setConstant()
+        self.lnk = ROOT.RooRealVar("lnmk" + self.name + str(widthp) + str(i), "lnmk", plnk, 1.001, 30)
+        # if widthp < 6:
+        #     self.m0 = ROOT.RooRealVar("m0" + self.name + str(widthp) + str(i), "m0", pm0, -self.mass * 0.8, self.mass * widthp * 2 / 100)
+        # else: 
+        self.m0 = ROOT.RooRealVar("m0" + self.name + str(widthp) + str(i), "m0", pm0, -self.mass, self.mass * 0.5)
+        self.lnm0 = ROOT.RooRealVar("lnm0" + self.name + str(widthp) + str(i), "lnm0", plnm0, 0, 3000)
+        self.bw = My_modified_bw("bwmodified" + self.name + str(widthp) + str(i), "bwmodified", self.x, self.w, self.lnm0, self.lnk, self.m0)
+
+        # self.m0test = ROOT.RooRealVar("m0test" + self.name + str(width), "m0test", 0)
+        # self.testbw = ROOT.RooBreitWigner("bwtest" + self.name + str(width), "bwtest", self.x, self.m0test, self.w)
+
+        out = ROOT.RooFFTConvPdf("out" + self.name + str(widthp) + str(i), "out", self.x, self.pdf, self.bw)
+
+
+        return out
+
 def bw(x, width):
     return 1/(x * x + 0.25 * width * width)
 
@@ -244,15 +372,73 @@ def lognorm(x, m0, k, mass):
     ln_m0 = ROOT.TMath.Log(m0)
     return ROOT.Math.lognormal_pdf(x, ln_m0, ln_k, mass)
 
-def getloss(data1, w1, data2, w2, binning):
+def getloss(data1, w1, error, data2, w2, binning):
     bin_heights1, bin_edges1 = np.histogram(data1, bins=binning, weights=w1)
     bin_heights2, bin_edges2 = np.histogram(data2, bins=binning, weights=w2)
     bin_heights1 = bin_heights1 / sum(bin_heights1)
     bin_heights2 = bin_heights2 / sum(bin_heights2)
-    # print(bin_heights1)
-    # print(bin_heights2)
-    # print(sum((bin_heights1 - bin_heights2) ** 2) ** 0.5)
-    return sum((bin_heights1 - bin_heights2) ** 2) ** 0.5
+
+    # event_location = np.digitize(data1, binning)
+    # error_in_bins = []
+    # for j in range(np.size(binning) - 1):
+    #     bin_error = error[np.where(event_location == j+1)[0]]
+    #     errorsum = np.sum(bin_error**2)
+    #     if errorsum == 0:
+    #         errorsum = 1
+    #     error_in_bins.append(errorsum)
+    # return sum((bin_heights1 - bin_heights2) ** 2/error_in_bins) ** 0.5
+    return np.sum((bin_heights1 - bin_heights2) ** 2) ** 0.5
+
+def crazyfit(NWidthobj, datahist, width, center, height, error, bins, mass):
+    mass = int(mass)
+    # if width < 6:
+    #     lowm0 = -mass * 0.8
+    #     highm0 = mass * width * 2 / 1000.
+    # else:
+    lowm0 = -mass
+    highm0 = mass * 0.5
+    # outpdf1 = NWidthobj.convbwmodified(width/100.)
+    minloss = 99999999999
+    optlnk = 0
+    optlnm0 = 0
+    optm0 = 0
+    optdatalist = []
+    i = 0
+    for each_lnk in np.linspace(1.1, 20, 10):
+        for each_lnm0 in np.linspace(100, 2000-1, 10):
+            for each_m0 in np.linspace(lowm0+10, highm0-10, 10):
+                i += 1
+                # NWidthobj.lnk.setVal(each_lnk, 1.001, 30)
+                # NWidthobj.lnm0.setVal(each_lnm0, 0, 3000)
+                # NWidthobj.m0.setVal(each_m0, lowm0, highm0)
+                outpdf1 = NWidthobj.convbwmodifiedp(width, each_m0, each_lnm0, each_lnk, i)
+                outpdf1.fitTo(datahist)
+                datalist1 = []
+                dataerror = []
+                for eachc in center:
+                    dataerror.append(0)
+                    if eachc > 0:
+                        NWidthobj.x.setVal(eachc)
+                        datalist1.append(outpdf1.getVal())
+                    else:
+                        datalist1.append(0)
+                datalist1 = np.array(datalist1) * ( np.sum(height) / np.sum(datalist1))
+                loss1 = getloss(center, height, error, center, datalist1, bins)
+                # exit(1)
+                if loss1 < minloss:
+                    # print(datalist1)
+                    # print(height)
+                    minloss = loss1
+                    
+                    optdatalist = datalist1
+                    optlnk = NWidthobj.lnk.getValV()
+                    optlnm0 = NWidthobj.lnm0.getValV()
+                    optm0 = NWidthobj.m0.getValV() 
+                    # print(minloss, optlnk, optlnm0, optm0)   
+    NWidthobj.lnk.setVal(optlnk)
+    NWidthobj.lnm0.setVal(optlnm0)
+    NWidthobj.m0.setVal(optm0)
+    return optdatalist, minloss, dataerror
 
 def plot_mass_modified(mass, bins):
     mass = str(mass)
@@ -264,22 +450,54 @@ def plot_mass_modified(mass, bins):
         center, height, error = LWidthobj.gethist()
 
         # modified bw
-        outpdf1 = NWidthobj.convbwmodified(each_width/100.)
-        outpdf1.fitTo(datahist)
-        data1 = outpdf1.generate(ROOT.RooArgSet(NWidthobj.x), 1000000)
-        datalist1 = []
-        for i in range(0, 1000000-1):
-            datalist1.append(data1.get(i).getRealValue("x1"))
-        loss1 = getloss(center, height, datalist1, [1]*len(datalist1), bins)
-        # ROOT.RooTrace.printObjectCounts()
+        # outpdf1 = NWidthobj.convbwmodified(each_width/100.)
+        # outpdf1.fitTo(datahist)
+        # datalist1 = []
+        # dataerror = []
+        # for eachc in center:
+        #     dataerror.append(0)
+        #     if eachc > 0:
+        #         NWidthobj.x.setVal(eachc)
+        #         datalist1.append(outpdf1.getVal())
+        #     else:
+        #         datalist1.append(0)
+        # datalist1 = np.array(datalist1) * ( np.sum(height) / np.sum(datalist1))
+        # loss1 = getloss(center, height, error, center, datalist1, bins)
+        datalist1, loss1, dataerror = crazyfit(NWidthobj, datahist, each_width/100., center, height, error, bins, mass)
+
         # original bw
         outpdf2 = NWidthobj.convbw(each_width/100.)
-        # outpdf2.fitTo(datahist)
-        data2 = outpdf2.generate(ROOT.RooArgSet(NWidthobj.x), 1000000)
         datalist2 = []
-        for i in range(0, 1000000-1):
-            datalist2.append(data2.get(i).getRealValue("x1"))
-        loss2 = getloss(center, height, datalist2, [1]*len(datalist2), bins)
+        for eachc in center:
+            if eachc > 0:
+                NWidthobj.x.setVal(eachc)
+                datalist2.append(outpdf2.getVal())
+            else:
+                datalist2.append(0)
+        datalist2 = np.array(datalist2) * ( np.sum(height) / np.sum(datalist2))
+        loss2 = getloss(center, height, error, center, datalist2, bins)
+        # print("BW loss ", loss2)
+
+
+
+        # # modified bw
+        # outpdf1 = NWidthobj.convbwmodified(each_width/100.)
+        # outpdf1.fitTo(datahist)
+        # data1 = outpdf1.generate(ROOT.RooArgSet(NWidthobj.x), 1000000)
+        # datalist1 = []
+        # for i in range(0, 1000000-1):
+        #     datalist1.append(data1.get(i).getRealValue("x1"))
+        # loss1 = getloss(center, height, error, datalist1, [1]*len(datalist1), bins)
+        # # ROOT.RooTrace.printObjectCounts()
+        # # original bw
+        # outpdf2 = NWidthobj.convbw(each_width/100.)
+        # # outpdf2.fitTo(datahist)
+        # data2 = outpdf2.generate(ROOT.RooArgSet(NWidthobj.x), 1000000)
+        # datalist2 = []
+        # for i in range(0, 1000000-1):
+        #     datalist2.append(data2.get(i).getRealValue("x1"))
+        # loss2 = getloss(center, height, error, datalist2, [1]*len(datalist2), bins)
+
         if loss2 >= loss1:
             method = "modified BW"
             altmethod = "BW"
@@ -291,13 +509,18 @@ def plot_mass_modified(mass, bins):
             datalist = datalist2
             datalistalt = datalist1
 
-        histplot_withsub_raw([center, datalist], bins, weights=[np.array(height), np.array([1]*len(datalist))], usererror=[error, None], 
+        # histplot_withsub_raw([center, datalist], bins, weights=[np.array(height), np.array([1]*len(datalist))], usererror=[error, None], 
+        #                         labels = ["MC", "smearing"], removenorm=True, filename="output/com"+mass+"w"+str(each_width),
+        #                         title2=r"$\mathit{\sqrt{s}=13\:TeV}$ ", title3="mass = "+mass+" GeV, W = " + str(each_width) + "%, " + method + " smearing", central="smearing")
+        # histplot_withsub_raw([center, datalistalt], bins, weights=[np.array(height), np.array([1]*len(datalistalt))], usererror=[error, None], 
+        #                         labels = ["MC", "smearing"], removenorm=True, filename="output/altcom"+mass+"w"+str(each_width),
+        #                         title2=r"$\mathit{\sqrt{s}=13\:TeV}$ ", title3="mass = "+mass+" GeV, W = " + str(each_width) + "%, " + altmethod + " smearing", central="smearing")
+        histplot_withsub_raw([center, center], bins, weights=[np.array(height), datalist], usererror=[error, dataerror], 
                                 labels = ["MC", "smearing"], removenorm=True, filename="output/com"+mass+"w"+str(each_width),
                                 title2=r"$\mathit{\sqrt{s}=13\:TeV}$ ", title3="mass = "+mass+" GeV, W = " + str(each_width) + "%, " + method + " smearing", central="smearing")
-        histplot_withsub_raw([center, datalistalt], bins, weights=[np.array(height), np.array([1]*len(datalistalt))], usererror=[error, None], 
+        histplot_withsub_raw([center, center], bins, weights=[np.array(height), datalistalt], usererror=[error, dataerror], 
                                 labels = ["MC", "smearing"], removenorm=True, filename="output/altcom"+mass+"w"+str(each_width),
                                 title2=r"$\mathit{\sqrt{s}=13\:TeV}$ ", title3="mass = "+mass+" GeV, W = " + str(each_width) + "%, " + altmethod + " smearing", central="smearing")
-
         # pdfplot
         bwlist = []
         lognormlist = []
@@ -329,8 +552,11 @@ def plot_mass_modified(mass, bins):
         ax1.text(0.227, 1.55/ 1.7, "Internal", fontsize=25, transform=ax1.transAxes)
         ax1.text(0.05, 1.40 / 1.7, "m = " + mass + " GeV, width = " + str(each_width) + "%", fontsize=17, transform=ax1.transAxes)
         fig.savefig("output/pdfm" + mass + "w" + str(each_width) + ".pdf", bbox_inches='tight', pad_inches = 0.25)
+        plt.close(fig)
 
         outdic[each_width] = ((v_lnm0, e_lnm0), (v_lnk, e_lnk), (v_width, e_width), (v_m0, e_m0), method)
+    with open('pickle/fitvalues' + str(mass) + '.pickle', 'wb') as f:
+        pickle.dump(outdic, f)
     return outdic
 
 def main():
@@ -338,18 +564,24 @@ def main():
     for each in os.listdir("ntuples"):
         if ".root" in each:
             massset.add(int(each.split("w")[0]))
-    
-    paras = {}
+    i = 0
+    processes = []
     for each_mass in sorted(massset):
-        if each_mass < 1051:
-            continue
-        maxv = int(each_mass * 2)
+        maxv = int(each_mass * 2.5)
         if maxv > 3000:
             maxv = 3000
-        outdic = plot_mass_modified(each_mass, linspace(0, int(maxv), 20))
-        paras[each_mass] = outdic
-        with open('pickle/fitvalues' + str(each_mass) + '.pickle', 'wb') as f:
-            pickle.dump(outdic, f)
+        i += 1
+        # plot_mass_modified(each_mass, linspace(0, int(maxv), 25))
+        t = multiprocessing.Process(target=plot_mass_modified, args=(each_mass, linspace(0, int(maxv), 25)))
+        processes.append(t)
+        t.start()
+        if (i+1)%8 == 0:
+            for each in processes:
+                each.join()
+            processes = []
+    for each in processes:
+        each.join()
+        
 
     paras = {}
     allfiles = os.listdir("pickle")
@@ -367,4 +599,7 @@ if __name__ == '__main__':
     # ROOT.RooMsgService.instance().setSilentMode(True)
     # ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.FATAL)
     # ROOT.RooTrace.active(1)
+    ROOT.RooMsgService.instance().setSilentMode(True)
+    ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.ERROR)
+    ROOT.gErrorIgnoreLevel = ROOT.kError
     main()

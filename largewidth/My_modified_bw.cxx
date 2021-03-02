@@ -45,7 +45,10 @@ Double_t My_modified_bw::evaluate() const
   Double_t xvalue = TMath::Power(x, 1.);
   Double_t widthvalue = TMath::Power(width, 1.);
   Double_t massvalue = TMath::Power(mass, 1.);
-
+  // if (x + massvalue < 0) {
+  //   // return -(x + massvalue) * 100;
+  //   return 0;
+  // }
   Double_t bw = 1/(xvalue * xvalue + 0.25 * widthvalue * widthvalue);
   Double_t ret = ROOT::Math::lognormal_pdf(xvalue, ln_m0, ln_k, massvalue) * bw;
   return ret;
