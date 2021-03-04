@@ -122,6 +122,56 @@ def smearing(ps, nominalhist, smearingtype, name, newname, SF, outdic=None):
         outdic[name] = outhist
     return outhist
 
+def smearing_batch(ps_b, nominalhist_b, smearingtype_b, name_b, newname_b, SF_b, outdic=None):
+    for ps, nominalhist, smearingtype, name, newname, SF in zip(ps_b, nominalhist_b, smearingtype_b, name_b, newname_b, SF_b):
+        hup, hdown = getupdownhsit(nominalhist, newname + "before")
+        # x = ROOT.RooRealVar("x1" + newname,"mA" , -2000, 4000.)
+        x = ROOT.RooRealVar("x1","mA" , -2000, 4000.)
+        datahist = ROOT.RooDataHist("datahist" + newname, "datahist", ROOT.RooArgList(x), nominalhist)
+        datahistup = ROOT.RooDataHist("datahistup" + newname, "datahistup", ROOT.RooArgList(x), hup)
+        datahistdown = ROOT.RooDataHist("datahistdown" + newname, "datahistdown", ROOT.RooArgList(x), hdown)
+
+        sum_nominal = nominalhist.Integral() * SF
+        sum_up = hup.Integral() * SF
+        sum_down = hdown.Integral() * SF
+
+        pdf = ROOT.RooHistPdf("pdf" + newname, "your pdf", ROOT.RooArgSet(x), datahist)
+        pdfup = ROOT.RooHistPdf("pdfup" + newname, "your pdfup", ROOT.RooArgSet(x), datahistup)
+        pdfdown = ROOT.RooHistPdf("pdfdown" + newname, "your pdfdown", ROOT.RooArgSet(x), datahistdown)
+        smearingpdf = None
+        if smearingtype == "BW":
+            bwm0 = ROOT.RooRealVar("bwm0" + newname, "bwm0", 0)
+            bww = ROOT.RooRealVar("bwwidth" + newname, "bwwidth", ps[2])
+            smearingpdf = ROOT.RooBreitWigner("bworiginal" + newname, "bworiginal", x, bwm0, bww)
+        else:
+            m0 = ROOT.RooRealVar("m0" + newname, "m0", ps[3])
+            w = ROOT.RooRealVar("width" + newname, "width", ps[2])
+            lnm0 = ROOT.RooRealVar("lnm0" + newname, "lnm0", ps[0])
+            lnk = ROOT.RooRealVar("lnmk" + newname, "lnmk", ps[1])
+            smearingpdf = My_modified_bw("bwmodified" + newname, "bwmodified", x, w, lnm0, lnk, m0)
+        outpdf = ROOT.RooFFTConvPdf("outpdf" + newname, "outpdf", x, pdf, smearingpdf)
+        outpdfup = ROOT.RooFFTConvPdf("outpdfup" + newname, "outpdfup", x, pdfup, smearingpdf)
+        outpdfdown = ROOT.RooFFTConvPdf("outpdfdown" + newname, "outpdfdown", x, pdfdown, smearingpdf)
+
+        outhist = runMC2(outpdf, x, nominalhist, name, sum_nominal)
+        outhistup = runMC2(outpdfup, x, hup, newname + "up", sum_up)
+        outhistdown = runMC2(outpdfdown, x, hdown, newname + "down", sum_down)
+
+        nbins = nominalhist.GetNbinsX()
+        for i in range(nbins):
+            upvalue = outhistup.GetBinContent(i)
+            downvalue = outhistdown.GetBinContent(i)
+            error = abs(upvalue - downvalue) / 2.
+            if outhist.GetBinContent(i) - error < 0:
+                error = outhist.GetBinContent(i)
+            outhist.SetBinError(i, error)
+        if outdic is not None:
+            outdic[name] = outhist
+        else:
+            print("error 1")
+            exit(1)
+    # return outhist
+
 def multiprocess(hists, pvalues_resolved, pvalues_merged, SFs, width):
     manager = multiprocessing.Manager()
     all_sample = manager.dict()
@@ -146,7 +196,7 @@ def multiprocess(hists, pvalues_resolved, pvalues_merged, SFs, width):
             t = multiprocessing.Process(target=smearing, args=(p_tem, hists[each_key], smearingtype, each_key, new_name, sf_tem, all_sample))
             processes.append(t)
             t.start()
-            if (i+1)%4 == 0:
+            if (i+1)%10 == 0:
                 for each in processes:
                     each.join()
                     pbar.update(1)
@@ -154,6 +204,90 @@ def multiprocess(hists, pvalues_resolved, pvalues_merged, SFs, width):
         for each in processes:
             each.join()
             pbar.update(1)
+    if len(all_sample) != len(hists):
+        print("Error. Smearing failed. Following histograms missing:")
+        for each in hists.keys():
+            if each not in all_sample:
+                print(each)
+        print(str(missinghist) + " histograms failed due to missing parameters.")
+    return all_sample
+
+def multiprocess_batch(hists, pvalues_resolved, pvalues_merged, SFs, width):
+    ncore = 10
+    nbatch = 200
+    manager = multiprocessing.Manager()
+    all_sample = manager.dict()
+    processes = []
+    missinghist = 0
+    with tqdm.tqdm(total=len(hists)) as pbar:
+        p_tem_b = []
+        hists_b = []
+        smearingtype_b = []
+        each_key_b = []
+        new_name_b = []
+        sf_tem_b = []
+        for i, each_key in enumerate(hists.keys()):
+            mass = int(each_key.split("_")[0].split("AZhllbb")[1])
+            if mass not in pvalues_merged or mass not in pvalues_resolved or str(mass) not in SFs:
+                missinghist += 1
+                print("Error: cannot find parameters for " + each_key)
+
+            new_name = each_key.replace("AZhllbb", "AZhllbb" + str(width))
+            if "1pfat0pjet" in new_name:
+                sf_tem = SFs[str(mass)][str(width)][1]
+                smearingtype = pvalues_merged[mass][width][4]
+                p_tem = [pvalues_merged[mass][width][0][0], pvalues_merged[mass][width][1][0], pvalues_merged[mass][width][2][0], pvalues_merged[mass][width][3][0]]
+            else:
+                sf_tem = SFs[str(mass)][str(width)][0]
+                smearingtype = pvalues_resolved[mass][width][4]
+                p_tem = [pvalues_resolved[mass][width][0][0], pvalues_resolved[mass][width][1][0], pvalues_resolved[mass][width][2][0], pvalues_resolved[mass][width][3][0]]
+            
+            p_tem_b.append(p_tem)
+            hists_b.append(hists[each_key])
+            smearingtype_b.append(smearingtype)
+            each_key_b.append(each_key)
+            new_name_b.append(new_name)
+            sf_tem_b.append(sf_tem)
+            if len(p_tem_b) < ncore * nbatch:
+                continue
+            for i_core in range(ncore):
+                lowi = i_core * nbatch
+                highi = (i_core + 1) * nbatch + 1
+                t = multiprocessing.Process(target=smearing_batch, args=(p_tem_b[lowi:highi], hists_b[lowi:highi], smearingtype_b[lowi:highi], each_key_b[lowi:highi], new_name_b[lowi:highi], sf_tem_b[lowi:highi], all_sample))
+                processes.append(t)
+                t.start()
+
+            for each in processes:
+                each.join()
+                pbar.update(nbatch)
+            processes = []
+            p_tem_b = []
+            hists_b = []
+            smearingtype_b = []
+            each_key_b = []
+            new_name_b = []
+            sf_tem_b = []
+        if len(sf_tem_b) != 0:
+            processes = []
+            if int(len(sf_tem_b)/ncore):
+                t = multiprocessing.Process(target=smearing_batch, args=(p_tem_b, hists_b, smearingtype_b, each_key_b, new_name_b, sf_tem_b, all_sample))
+                t.start()
+                t.join()
+                pbar.update(len(p_tem_b))
+            else:
+                for i_core in range(ncore):
+                    lowi = i_core * int(len(sf_tem_b)/ncore)
+                    highi = (i_core + 1) * int(len(sf_tem_b)/ncore) + 1
+                    if i_core == ncore - 1:
+                        t = multiprocessing.Process(target=smearing_batch, args=(p_tem_b[lowi:], hists_b[lowi:], smearingtype_b[lowi:], each_key_b[lowi:], new_name_b[lowi:], sf_tem_b[lowi:], all_sample))
+                    else:
+                        t = multiprocessing.Process(target=smearing_batch, args=(p_tem_b[lowi:highi], hists_b[lowi:highi], smearingtype_b[lowi:highi], each_key_b[lowi:highi], new_name_b[lowi:highi], sf_tem_b[lowi:highi], all_sample))
+                    processes.append(t)
+                    t.start()
+                for each in processes:
+                    each.join()
+                    pbar.update(int(len(sf_tem_b)/ncore))
+    
     if len(all_sample) != len(hists):
         print("Error. Smearing failed. Following histograms missing:")
         for each in hists.keys():
@@ -217,46 +351,46 @@ def main():
     singalhistnominal = getsignalhist(nominalHist, bbA, debug)
     singalhissys = getsignalhist(sysHist, bbA, debug)
 
-    for each in singalhistnominal.keys():
-        print(each)
+    # for each in singalhistnominal.keys():
+    #     print(each)
 
     print(r"Doing 1% smearing..")
     print(" Smearning nominal...")
-    outdicnominal = multiprocess(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 1)
+    outdicnominal = multiprocess_batch(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 1)
     print(" Smearning systematics...")
-    outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 1)
+    outdicsys = multiprocess_batch(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 1)
     print(r"Saving 1% smearing output..")
     savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblggAw1")
 
     print(r"Doing 2% smearing..")
     print(" Smearning nominal...")
-    outdicnominal = multiprocess(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 2)
+    outdicnominal = multiprocess_batch(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 2)
     print(" Smearning systematics...")
-    outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 2)
+    outdicsys = multiprocess_batch(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 2)
     print(r"Saving 2% smearing output..")
     savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblggAw2")
 
     print(r"Doing 5% smearing..")
     print(" Smearning nominal...")
-    outdicnominal = multiprocess(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 5)
+    outdicnominal = multiprocess_batch(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 5)
     print(" Smearning systematics...")
-    outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 5)
+    outdicsys = multiprocess_batch(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 5)
     print(r"Saving 5% smearing output..")
     savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblggAw5")
 
     print(r"Doing 10% smearing..")
     print(" Smearning nominal...")
-    outdicnominal = multiprocess(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 10)
+    outdicnominal = multiprocess_batch(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 10)
     print(" Smearning systematics...")
-    outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 10)
+    outdicsys = multiprocess_batch(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 10)
     print(r"Saving 10% smearing output..")
     savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblggAw10")
 
-    print(r"Doing 10% smearing..")
+    print(r"Doing 20% smearing..")
     print(" Smearning nominal...")
-    outdicnominal = multiprocess(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 20)
+    outdicnominal = multiprocess_batch(singalhistnominal, pvalues_resolved, pvalues_merged, acceptance, 20)
     print(" Smearning systematics...")
-    outdicsys = multiprocess(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 20)
+    outdicsys = multiprocess_batch(singalhissys, pvalues_resolved, pvalues_merged, acceptance, 20)
     print(r"Saving 20% smearing output..")
     savehist({**outdicnominal, **nominalHist}, {**outdicsys, **sysHist}, "run2dblggAw20")
 

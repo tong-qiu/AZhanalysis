@@ -138,7 +138,7 @@ def main():
     xlist = [w1, w2, w5, w10, w20]
     label = ["1%", "2%", "5%", "10%", "20%"]
     curveplot([masses] * len((xlist)), xlist, labels=label, ylabel="acceptance ratio", filename="acceptance_resolved", title3="resolved",
-    ylimit=[0, 5] ,yshift=0.05)
+    ylimit=[0, 3] ,yshift=0.05)
 
 
     masses = []
@@ -159,7 +159,7 @@ def main():
     xlist = [w1, w2, w5, w10, w20]
     label = ["1%", "2%", "5%", "10%", "20%"]
     curveplot([masses] * len((xlist)), xlist, labels=label, ylabel="acceptance ratio", filename="acceptance_merged", title3="merged",
-    ylimit=[0, 5] ,yshift=0.05)
+    ylimit=[0, 3] ,yshift=0.05)
 
 if __name__ == "__main__":
     main()
