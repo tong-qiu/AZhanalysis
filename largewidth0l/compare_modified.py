@@ -24,43 +24,26 @@ def resolvedselection(entry):
         return False
     if entry.nbjets == 0:
         return False
-    ptl1 = entry.ptl1
-    ptl2 = entry.ptl2
-    if ptl2 > ptl1:
-        ptl1, ptl2 = ptl2, ptl1
-    if ptl2/1000. < 20:
-        return False
-    if ptl1/1000. < 27:
-        return False
     if entry.ptb1/1000. < 45:
         return False
-    lowmll = max(40, 87 - 0.03 * entry.mVHres/1000.)
-    highmll = 97 + 0.013 * entry.mVHres/1000.
-    if entry.mll/1000. < lowmll:
+    if entry.mbbres/1000. < 110:
         return False
-    if entry.mll/1000. > highmll:
+    if entry.mbbres/1000. > 140:
         return False
-    if entry.mbbres/1000. < 100:
+    if entry.met/1000. < 150:
         return False
-    if entry.mbbres/1000. > 145:
+    if abs(entry.phiBB) > 7. * math.pi / 9.:
         return False
-    if entry.ptll/1000. < ptll_cut(entry.mVHres/1000.):
+    if entry.phiHMETres < 2. * math.pi / 3.:
         return False
-    # print(entry.met/1000. / (entry.ht/1000.)**0.5, 1.15 + 8 * (10**-3) * entry.mVHres/1000.)
-    # if entry.met/1000. / (entry.ht/1000.)**0.5 > 1.15 + 8 * (10**-3) * entry.mVHres/1000.:
-    #     return False
-    # print("5")
+    if entry.minJetMET < math.pi / 9 and (entry.nsigjet == 2 or entry.nsigjet == 3):
+        return False
+    if entry.minJetMET < math.pi / 6 and entry.nsigjet >= 4:
+        return False
     return True
 
 def mergedselection(entry):
     if entry.ptfj1/1000. < 250:
-        return False
-
-    ptl1 = entry.ptl1
-    ptl2 = entry.ptl2
-    if ptl2/1000. < 25:
-        return False
-    if ptl1/1000. < 27:
         return False
     if entry.mfj1/1000. < 75:
         return False
@@ -69,14 +52,14 @@ def mergedselection(entry):
     if entry.mfj1/1000. > 145:
         return False
 
-    lowmll = max(40, 87 - 0.03 * entry.mVHmerg/1000.)
-    highmll = 97 + 0.013 * entry.mVHmerg/1000.
-    if entry.mll/1000. < lowmll:
+    if entry.met/1000. < 200:
         return False
-    if entry.mll/1000. > highmll:
+    if entry.phiHMETmerg < 2. * math.pi / 3.:
         return False
-    if entry.ptll/1000. < ptll_cut(entry.mVHmerg/1000.):
-        return False
+    # if entry.minJetMET < math.pi / 9 and (entry.nsigjet == 2 or entry.nsigjet == 3):
+    #     return False
+    # if entry.minJetMET < math.pi / 6 and entry.nsigjet >= 4:
+    #     return False
     return True
 
 
@@ -88,7 +71,7 @@ def histplot_withsub_raw(datas, bins, weights=None, usererror = None, labels = N
         "title1_1": r"$\mathit{Internal}$",
         "title2": r"$\mathit{\sqrt{s}=13\:TeV,36.1\:fb^{-1}}$",# Ptl next-leading, full cuts, 2 b-tags $",
         #"title3": r"$\mathbf{2\;lep.,2\;b-tag}$",
-        "title3": "2 lep., 2 b-tag",
+        "title3": "0 lep., 2 b-tag",
         "filename": "deltatest2",
         "log_y":False,
         "norm":False,
@@ -209,8 +192,6 @@ class loadroot():
         f = ROOT.TFile(self.path)
         t1 = f.Get("data")
         for entry in t1:
-            if entry.nlepton != 2:
-                continue
             # if resolvedselection(entry):
             #     self.hist.Fill(entry.mVHres/1000.)
 
@@ -248,7 +229,6 @@ class loadroot():
         self.bww = ROOT.RooRealVar("bwwidth" + self.name + str(widthp), "bwwidth", width)
         self.bworiginal = ROOT.RooBreitWigner("bworiginal" + self.name + str(widthp), "bworiginal", self.x, self.bwm0, self.bww)
         out = ROOT.RooFFTConvPdf("outbw" + self.name + str(widthp), "outbw", self.x, self.bworiginal, self.pdf)
-        # out.setBufferFraction(20)
         # data= out.generate(ROOT.RooArgSet(self.x), 1000000)
         # outlist = []
         # for i in range(0, 1000000-1):
@@ -314,7 +294,6 @@ class loadroot():
         # self.testbw = ROOT.RooBreitWigner("bwtest" + self.name + str(width), "bwtest", self.x, self.m0test, self.w)
 
         out = ROOT.RooFFTConvPdf("out" + self.name + str(widthp), "out", self.x, self.pdf, self.bw)
-        # out.setBufferFraction(20)
 
         # c = ROOT.TCanvas("rf208_convolution", "rf208_convolution", 600, 600)
         # ROOT.gPad.SetLeftMargin(0.15)
@@ -337,7 +316,6 @@ class loadroot():
         self.bww = ROOT.RooRealVar("bwwidth" + self.name + str(widthp), "bwwidth", width)
         self.bworiginal = ROOT.RooBreitWigner("bworiginal" + self.name + str(widthp), "bworiginal", self.x, self.bwm0, self.bww)
         out = ROOT.RooFFTConvPdf("outbw" + self.name + str(widthp), "outbw", self.x, self.bworiginal, self.pdf)
-        # out.setBufferFraction(20)
         # data= out.generate(ROOT.RooArgSet(self.x), 1000000)
         # outlist = []
         # for i in range(0, 1000000-1):
@@ -363,7 +341,6 @@ class loadroot():
         # self.testbw = ROOT.RooBreitWigner("bwtest" + self.name + str(width), "bwtest", self.x, self.m0test, self.w)
 
         out = ROOT.RooFFTConvPdf("out" + self.name + str(widthp) + str(i), "out", self.x, self.pdf, self.bw)
-        # out.setBufferFraction(20)
 
 
         return out
@@ -571,6 +548,8 @@ def main():
     i = 0
     processes = []
     for each_mass in sorted(massset):
+        if each_mass < 300:
+            continue
         maxv = int(each_mass * 2.5)
         if maxv > 3000:
             maxv = 3000

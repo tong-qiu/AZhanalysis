@@ -59,11 +59,8 @@ def runMC2(pdf, x, hist, newname, totalweight):
     outhist.Reset()
     nbins = outhist.GetNbinsX()
     for i in range(nbins):
-        if outhist.GetBinCenter(i) > 3500:
-            outhist.SetBinContent(i, 0)
-        else:
-            x.setVal(outhist.GetBinCenter(i))
-            outhist.SetBinContent(i, pdf.getVal())
+        x.setVal(outhist.GetBinCenter(i))
+        outhist.SetBinContent(i, pdf.getVal())
     # print(newname, outhist.Integral())
     total = outhist.Integral()
     if total > 0:
@@ -82,7 +79,7 @@ def runMC2(pdf, x, hist, newname, totalweight):
 def smearing(ps, nominalhist, smearingtype, name, newname, SF, outdic=None):
     hup, hdown = getupdownhsit(nominalhist, newname + "before")
     # x = ROOT.RooRealVar("x1" + newname,"mA" , -2000, 4000.)
-    x = ROOT.RooRealVar("x1","mA" , -2000, 9000.)
+    x = ROOT.RooRealVar("x1","mA" , -2000, 4000.)
     datahist = ROOT.RooDataHist("datahist" + newname, "datahist", ROOT.RooArgList(x), nominalhist)
     datahistup = ROOT.RooDataHist("datahistup" + newname, "datahistup", ROOT.RooArgList(x), hup)
     datahistdown = ROOT.RooDataHist("datahistdown" + newname, "datahistdown", ROOT.RooArgList(x), hdown)
@@ -108,9 +105,6 @@ def smearing(ps, nominalhist, smearingtype, name, newname, SF, outdic=None):
     outpdf = ROOT.RooFFTConvPdf("outpdf" + newname, "outpdf", x, pdf, smearingpdf)
     outpdfup = ROOT.RooFFTConvPdf("outpdfup" + newname, "outpdfup", x, pdfup, smearingpdf)
     outpdfdown = ROOT.RooFFTConvPdf("outpdfdown" + newname, "outpdfdown", x, pdfdown, smearingpdf)
-    # outpdf.setBufferFraction(20)
-    # outpdfup.setBufferFraction(20)
-    # outpdfdown.setBufferFraction(20)
 
     outhist = runMC2(outpdf, x, nominalhist, name, sum_nominal)
     outhistup = runMC2(outpdfup, x, hup, newname + "up", sum_up)
@@ -132,7 +126,7 @@ def smearing_batch(ps_b, nominalhist_b, smearingtype_b, name_b, newname_b, SF_b,
     for ps, nominalhist, smearingtype, name, newname, SF in zip(ps_b, nominalhist_b, smearingtype_b, name_b, newname_b, SF_b):
         hup, hdown = getupdownhsit(nominalhist, newname + "before")
         # x = ROOT.RooRealVar("x1" + newname,"mA" , -2000, 4000.)
-        x = ROOT.RooRealVar("x1","mA" , -2000, 9000.)
+        x = ROOT.RooRealVar("x1","mA" , -2000, 4000.)
         datahist = ROOT.RooDataHist("datahist" + newname, "datahist", ROOT.RooArgList(x), nominalhist)
         datahistup = ROOT.RooDataHist("datahistup" + newname, "datahistup", ROOT.RooArgList(x), hup)
         datahistdown = ROOT.RooDataHist("datahistdown" + newname, "datahistdown", ROOT.RooArgList(x), hdown)
